@@ -10,7 +10,13 @@ from chunklens.deps import get_client
 
 @pytest.fixture()
 def chroma():
+    # Every EphemeralClient() in a process shares ONE in-memory System (cached
+    # under the "ephemeral" identifier) and that System requires identical
+    # settings across all callers. So we keep default settings and clear any
+    # collections leaked from a previous test before seeding.
     client = chromadb.EphemeralClient()
+    for c in client.list_collections():
+        client.delete_collection(c if isinstance(c, str) else c.name)
     col = client.create_collection("docs")
     col.add(
         ids=["a", "b", "c"],
