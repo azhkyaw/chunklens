@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from . import __version__
+from .routers import collections
 from .schemas import HealthResponse
 
 
@@ -15,6 +16,8 @@ def create_app() -> FastAPI:
     @app.get("/api/health", response_model=HealthResponse)
     def health() -> HealthResponse:
         return HealthResponse(status="ok", version=__version__)
+
+    app.include_router(collections.router)
 
     # SPA build (present only after `npm run build`); mounted last so /api wins.
     web_dir = Path(__file__).parent / "web"
