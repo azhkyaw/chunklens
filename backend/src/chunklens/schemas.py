@@ -55,3 +55,13 @@ class ConnectionConfig(BaseModel):
     database: str = "default_database"
     auth_mode: Literal["none", "token"] = "none"
     token: Optional[str] = None
+
+
+class ConnectionInfo(BaseModel):
+    host: str
+    port: int
+    ssl: bool
+    tenant: str
+    database: str
+    auth_mode: str
+    has_token: bool

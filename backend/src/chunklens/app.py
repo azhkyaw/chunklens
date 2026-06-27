@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from . import __version__
-from .routers import collections, query
+from .routers import collections, connection, query
 from .schemas import HealthResponse
 
 
@@ -19,6 +19,7 @@ def create_app() -> FastAPI:
 
     app.include_router(collections.router)
     app.include_router(query.router)
+    app.include_router(connection.router)
 
     # SPA build (present only after `npm run build`); mounted last so /api wins.
     web_dir = Path(__file__).parent / "web"

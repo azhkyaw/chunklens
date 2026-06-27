@@ -37,3 +37,14 @@ def api(chroma):
     app.dependency_overrides[get_client] = lambda: chroma
     yield TestClient(app)
     app.dependency_overrides.clear()
+
+
+@pytest.fixture()
+def conn_env(tmp_path, monkeypatch):
+    """Isolate connection config to a temp dir and reset the in-memory store."""
+    monkeypatch.setenv("CHUNKLENS_HOME", str(tmp_path))
+    from chunklens import connection
+
+    connection.reset()
+    yield
+    connection.reset()
