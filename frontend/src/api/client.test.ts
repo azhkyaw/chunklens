@@ -40,14 +40,18 @@ test("getConnection calls /api/connection", async () => {
 });
 
 test("saveConnection PUTs the body", async () => {
-  const f = vi.fn(async () =>
-    new Response(JSON.stringify({ has_token: true }), { status: 200 }),
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () =>
+      new Response(JSON.stringify({ has_token: true }), { status: 200 }),
+    ),
   );
-  vi.stubGlobal("fetch", f);
   await api.saveConnection({
     host: "h", port: 1, ssl: false,
     tenant: "t", database: "d", auth_mode: "none",
   });
-  const [, init] = f.mock.calls[0];
-  expect(init.method).toBe("PUT");
+  expect(fetch).toHaveBeenCalledWith(
+    "/api/connection",
+    expect.objectContaining({ method: "PUT" }),
+  );
 });
