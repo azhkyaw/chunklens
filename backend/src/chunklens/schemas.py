@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class HealthResponse(BaseModel):
@@ -45,3 +45,13 @@ class QueryHit(BaseModel):
 
 class QueryResult(BaseModel):
     hits: list[QueryHit]
+
+
+class ConnectionConfig(BaseModel):
+    host: str = "localhost"
+    port: int = Field(default=8000, ge=1, le=65535)
+    ssl: bool = False
+    tenant: str = "default_tenant"
+    database: str = "default_database"
+    auth_mode: Literal["none", "token"] = "none"
+    token: Optional[str] = None
