@@ -1,5 +1,8 @@
 import type {
   CollectionSummary,
+  ConnectionInfo,
+  ConnectionInput,
+  ConnectionTestResult,
   QueryRequest,
   QueryResult,
   RecordsPage,
@@ -24,5 +27,16 @@ export const api = {
     jsonFetch<QueryResult>(`/api/collections/${encodeURIComponent(name)}/query`, {
       method: "POST",
       body: JSON.stringify(body),
+    }),
+  getConnection: () => jsonFetch<ConnectionInfo>("/api/connection"),
+  saveConnection: (body: ConnectionInput) =>
+    jsonFetch<ConnectionInfo>("/api/connection", {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+  testConnection: (body?: ConnectionInput) =>
+    jsonFetch<ConnectionTestResult>("/api/connection/test", {
+      method: "POST",
+      body: JSON.stringify(body ?? null),
     }),
 };
