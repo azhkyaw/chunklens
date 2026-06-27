@@ -1,8 +1,9 @@
 import chromadb
 import pytest
 
-from chunklens import chroma_service
+from chunklens import chroma_client, chroma_service
 from chunklens.chroma_client import heartbeat
+from chunklens.schemas import ConnectionConfig
 
 
 def test_heartbeat_returns_int():
@@ -41,3 +42,27 @@ def test_query_with_metadata_filter(chroma):
 def test_query_requires_text_or_embedding(chroma):
     with pytest.raises(ValueError):
         chroma_service.query(chroma, "docs")
+
+
+def test_headers_for_token():
+    cfg = ConnectionConfig(auth_mode="token", token="abc")
+    assert chroma_client.headers_for(cfg) == {"Authorization": "Bearer abc"}
+
+
+def test_headers_for_none():
+    assert chroma_client.headers_for(ConnectionConfig()) == {}
+
+
+def test_client_for_config_passes_ssl_and_headers(monkeypatch):
+    captured = {}
+
+    def fake_make_client(**kwargs):
+        captured.update(kwargs)
+        return "CLIENT"
+
+    monkeypatch.setattr(chroma_client, "make_client", fake_make_client)
+    cfg = ConnectionConfig(host="h", port=1, ssl=True, auth_mode="token", token="t")
+    assert chroma_client.client_for_config(cfg) == "CLIENT"
+    assert captured["ssl"] is True
+    assert captured["headers"] == {"Authorization": "Bearer t"}
+    assert captured["host"] == "h"
