@@ -8,6 +8,12 @@ afterEach(() => vi.restoreAllMocks());
 
 test("renders the app title", () => {
   vi.spyOn(api, "listCollections").mockResolvedValue([]);
+  vi.spyOn(api, "getConnection").mockResolvedValue({
+    host: "localhost", port: 8000, ssl: false,
+    tenant: "default_tenant", database: "default_database",
+    auth_mode: "none", has_token: false,
+  });
+  vi.spyOn(api, "testConnection").mockResolvedValue({ ok: true });
   const qc = new QueryClient();
   render(
     <QueryClientProvider client={qc}>
