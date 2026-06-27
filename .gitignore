@@ -1,0 +1,40 @@
+# ---- Python (backend) ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.env
+.env.*
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---- Node (frontend) ----
+node_modules/
+frontend/dist/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# SPA build output served by the backend
+backend/src/chunklens/web/
+
+# ---- Chroma local data ----
+.chroma/
+.chroma-e2e/
+chroma-data/
+
+# ---- Test artifacts ----
+test-results/
+playwright-report/
+frontend/playwright/.cache/
+
+# ---- OS junk ----
+.DS_Store
+Thumbs.db
+*.swp
