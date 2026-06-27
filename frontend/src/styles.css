@@ -1,0 +1,8 @@
+:root { font-family: ui-sans-serif, system-ui, sans-serif; color-scheme: light dark; }
+body { margin: 0; }
+.app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+.sidebar { border-right: 1px solid #8884; padding: 12px; }
+.main { padding: 16px; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #8883; padding: 4px 8px; text-align: left; font-size: 13px; }
+button { cursor: pointer; }
