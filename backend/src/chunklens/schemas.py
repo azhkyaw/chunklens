@@ -65,3 +65,9 @@ class ConnectionInfo(BaseModel):
     database: str
     auth_mode: str
     has_token: bool
+
+
+class ConnectionTestResult(BaseModel):
+    ok: bool
+    error: Optional[str] = None
+    heartbeat_ns: Optional[int] = None

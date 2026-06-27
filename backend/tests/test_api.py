@@ -133,3 +133,34 @@ def test_put_none_auth_clears_token(client, conn_env):
         "auth_mode": "none",
     })
     assert connection.get_active().token is None
+
+
+def test_test_endpoint_active_ok(client, conn_env, monkeypatch):
+    from chunklens import chroma_client
+
+    monkeypatch.setattr(chroma_client, "client_for_config", lambda cfg: "C")
+    monkeypatch.setattr(chroma_client, "heartbeat", lambda c: 123)
+    r = client.post("/api/connection/test", json=None)
+    assert r.status_code == 200
+    assert r.json() == {"ok": True, "error": None, "heartbeat_ns": 123}
+
+
+def test_test_endpoint_candidate_error(client, conn_env, monkeypatch):
+    from chunklens import chroma_client
+
+    def boom(cfg):
+        raise RuntimeError("refused")
+
+    monkeypatch.setattr(chroma_client, "client_for_config", boom)
+    r = client.post(
+        "/api/connection/test",
+        json={
+            "host": "down", "port": 8000, "ssl": False,
+            "tenant": "default_tenant", "database": "default_database",
+            "auth_mode": "none",
+        },
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["ok"] is False
+    assert "refused" in body["error"]
