@@ -53,3 +53,28 @@ def get_collection(name: str, client=Depends(get_client)):
         return chroma_service.get_collection_details(client, name)
     except NotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc))
+
+
+@router.patch("/{name}", response_model=CollectionDetails)
+def update_collection(name: str, body: UpdateCollectionRequest, client=Depends(get_client)):
+    try:
+        if body.name is not None and body.name != name:
+            chroma_service.rename_collection(client, name, body.name)
+            name = body.name
+        if body.metadata is not None:
+            return chroma_service.update_collection_metadata(client, name, body.metadata)
+        return chroma_service.get_collection_details(client, name)
+    except NotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    except Conflict as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
+    except InvalidName as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@router.delete("/{name}", status_code=204)
+def delete_collection(name: str, client=Depends(get_client)):
+    try:
+        chroma_service.delete_collection(client, name)
+    except NotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc))

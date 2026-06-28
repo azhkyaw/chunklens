@@ -199,3 +199,38 @@ def test_get_collection_details_endpoint(api):
 def test_get_collection_details_missing_is_404(api):
     r = api.get("/api/collections/missing_col")
     assert r.status_code == 404
+
+
+def test_patch_rename_collection(api):
+    api.post("/api/collections", json={"name": "ren_a"})
+    r = api.patch("/api/collections/ren_a", json={"name": "ren_b"})
+    assert r.status_code == 200
+    assert r.json()["name"] == "ren_b"
+    assert api.get("/api/collections/ren_a").status_code == 404
+    assert api.get("/api/collections/ren_b").status_code == 200
+
+
+def test_patch_rename_collision_is_409(api):
+    api.post("/api/collections", json={"name": "ren_c"})
+    api.post("/api/collections", json={"name": "ren_d"})
+    r = api.patch("/api/collections/ren_c", json={"name": "ren_d"})
+    assert r.status_code == 409
+
+
+def test_patch_collection_metadata(api):
+    api.post("/api/collections", json={"name": "pm_col", "metadata": {"a": "1"}})
+    r = api.patch("/api/collections/pm_col", json={"metadata": {"b": "2"}})
+    assert r.status_code == 200
+    assert r.json()["metadata"] == {"b": "2"}
+
+
+def test_delete_collection(api):
+    api.post("/api/collections", json={"name": "kill_col"})
+    r = api.delete("/api/collections/kill_col")
+    assert r.status_code == 204
+    assert api.get("/api/collections/kill_col").status_code == 404
+
+
+def test_delete_missing_is_404(api):
+    r = api.delete("/api/collections/never_existed")
+    assert r.status_code == 404
