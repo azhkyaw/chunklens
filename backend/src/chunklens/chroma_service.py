@@ -181,3 +181,34 @@ def create_collection(
     except InvalidArgumentError as exc:
         raise InvalidName(str(exc)) from exc
     return get_collection_details(client, name)
+
+
+def _merge_collection_metadata(current: Optional[dict], new_user: Optional[dict]) -> dict:
+    """Collection modify() replaces metadata, so keep reserved keys and swap user keys."""
+    reserved = {k: v for k, v in (current or {}).items() if _is_reserved(k)}
+    return {**reserved, **_user_metadata(new_user)}
+
+
+def rename_collection(client, name: str, new_name: str) -> CollectionDetails:
+    col = _get(client, name)
+    if new_name != name and collection_exists(client, new_name):
+        raise Conflict(f"Collection {new_name!r} already exists")
+    try:
+        col.modify(name=new_name)
+    except InvalidArgumentError as exc:
+        raise InvalidName(str(exc)) from exc
+    return get_collection_details(client, new_name)
+
+
+def update_collection_metadata(client, name: str, metadata: Optional[dict]) -> CollectionDetails:
+    col = _get(client, name)
+    merged = _merge_collection_metadata(col.metadata, metadata)
+    if merged:  # Chroma rejects modify(metadata={}); empty result is a no-op
+        col.modify(metadata=merged)
+    return get_collection_details(client, name)
+
+
+def delete_collection(client, name: str) -> None:
+    if not collection_exists(client, name):
+        raise NotFound(f"Collection {name!r} not found")
+    client.delete_collection(name)

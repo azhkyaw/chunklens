@@ -121,3 +121,39 @@ def test_get_details_missing_raises_notfound():
     client = _fresh_client()
     with pytest.raises(chroma_service.NotFound):
         chroma_service.get_collection_details(client, "nope_col")
+
+
+def test_merge_collection_metadata_preserves_reserved():
+    merged = chroma_service._merge_collection_metadata(
+        {"hnsw:space": "cosine", "desc": "old"}, {"desc": "new", "owner": "me"}
+    )
+    assert merged == {"hnsw:space": "cosine", "desc": "new", "owner": "me"}
+
+
+def test_rename_and_collision():
+    client = _fresh_client()
+    chroma_service.create_collection(client, "from_col")
+    d = chroma_service.rename_collection(client, "from_col", "to_col")
+    assert d.name == "to_col"
+    assert chroma_service.collection_exists(client, "to_col")
+    assert not chroma_service.collection_exists(client, "from_col")
+
+    chroma_service.create_collection(client, "other_col")
+    with pytest.raises(chroma_service.Conflict):
+        chroma_service.rename_collection(client, "to_col", "other_col")
+
+
+def test_update_collection_metadata_replaces_user_keys():
+    client = _fresh_client()
+    chroma_service.create_collection(client, "meta_col", metadata={"a": "1"})
+    d = chroma_service.update_collection_metadata(client, "meta_col", {"b": "2"})
+    assert d.metadata == {"b": "2"}  # 'a' replaced away
+
+
+def test_delete_collection_and_missing():
+    client = _fresh_client()
+    chroma_service.create_collection(client, "del_col")
+    chroma_service.delete_collection(client, "del_col")
+    assert not chroma_service.collection_exists(client, "del_col")
+    with pytest.raises(chroma_service.NotFound):
+        chroma_service.delete_collection(client, "del_col")
