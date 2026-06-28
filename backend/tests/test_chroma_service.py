@@ -66,3 +66,58 @@ def test_client_for_config_passes_ssl_and_headers(monkeypatch):
     assert captured["ssl"] is True
     assert captured["headers"] == {"Authorization": "Bearer t"}
     assert captured["host"] == "h"
+
+
+def _fresh_client():
+    client = chromadb.EphemeralClient()
+    for c in client.list_collections():
+        client.delete_collection(c if isinstance(c, str) else c.name)
+    return client
+
+
+def test_is_reserved():
+    assert chroma_service._is_reserved("hnsw:space") is True
+    assert chroma_service._is_reserved("chroma:foo") is True
+    assert chroma_service._is_reserved("desc") is False
+
+
+def test_create_default_ef_details():
+    client = _fresh_client()
+    d = chroma_service.create_collection(
+        client, "alpha_col", distance_metric="cosine", embedding_function="default"
+    )
+    assert d.name == "alpha_col"
+    assert d.count == 0
+    assert d.dimensionality is None
+    assert d.distance_metric == "cosine"
+    assert d.embedding_function == "default"
+    assert d.metadata == {}
+
+
+def test_create_none_ef_and_dimensionality():
+    client = _fresh_client()
+    chroma_service.create_collection(client, "raw_col", embedding_function="none")
+    col = client.get_collection("raw_col")
+    col.add(ids=["a"], embeddings=[[1.0, 2.0, 3.0]])
+    d = chroma_service.get_collection_details(client, "raw_col")
+    assert d.embedding_function == "none"
+    assert d.dimensionality == 3
+
+
+def test_create_duplicate_raises_conflict():
+    client = _fresh_client()
+    chroma_service.create_collection(client, "dup_col")
+    with pytest.raises(chroma_service.Conflict):
+        chroma_service.create_collection(client, "dup_col")
+
+
+def test_create_invalid_name_raises_invalidname():
+    client = _fresh_client()
+    with pytest.raises(chroma_service.InvalidName):
+        chroma_service.create_collection(client, "x")  # too short (<3 chars)
+
+
+def test_get_details_missing_raises_notfound():
+    client = _fresh_client()
+    with pytest.raises(chroma_service.NotFound):
+        chroma_service.get_collection_details(client, "nope_col")

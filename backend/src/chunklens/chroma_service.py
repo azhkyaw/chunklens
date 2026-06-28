@@ -2,7 +2,16 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from .schemas import CollectionSummary, QueryHit, QueryResult, Record, RecordsPage
+from chromadb.errors import InvalidArgumentError, NotFoundError
+
+from .schemas import (
+    CollectionDetails,
+    CollectionSummary,
+    QueryHit,
+    QueryResult,
+    Record,
+    RecordsPage,
+)
 
 
 def _name_of(c) -> str:
@@ -69,3 +78,106 @@ def query(
         for i, d, m, dist in zip(ids, docs, metas, dists)
     ]
     return QueryResult(hits=hits)
+
+
+class NotFound(Exception):
+    """Collection or record does not exist."""
+
+
+class Conflict(Exception):
+    """A collection with the target name already exists."""
+
+
+class InvalidName(Exception):
+    """Collection name violates Chroma's naming rules."""
+
+
+_RESERVED_PREFIXES = ("hnsw:", "chroma:")
+
+
+def _is_reserved(key: str) -> bool:
+    return any(key.startswith(p) for p in _RESERVED_PREFIXES)
+
+
+def _user_metadata(meta: Optional[dict]) -> dict:
+    return {k: v for k, v in (meta or {}).items() if not _is_reserved(k)}
+
+
+def collection_exists(client, name: str) -> bool:
+    return any(_name_of(c) == name for c in client.list_collections())
+
+
+def _get(client, name: str):
+    try:
+        return client.get_collection(name)
+    except NotFoundError as exc:
+        raise NotFound(f"Collection {name!r} not found") from exc
+
+
+def _peek_dim(col) -> Optional[int]:
+    got = col.get(limit=1, include=["embeddings"])
+    embs = got.get("embeddings")
+    if embs is not None and len(embs) > 0:
+        return len(embs[0])
+    return None
+
+
+def _ef_name(col, cfg: dict) -> str:
+    # Source of truth is the persisted config, not col._embedding_function:
+    # get_collection() re-attaches a DefaultEmbeddingFunction object even when a
+    # collection was created with embedding_function=None, so the in-memory attribute
+    # can't distinguish "none" after a re-fetch. configuration_json records it faithfully.
+    if "embedding_function" in cfg:
+        ef_cfg = cfg["embedding_function"]
+        if ef_cfg is None:
+            return "none"
+        if isinstance(ef_cfg, dict) and ef_cfg.get("name"):
+            return ef_cfg["name"]
+    if getattr(col, "_embedding_function", None) is None:
+        return "none"
+    return type(col._embedding_function).__name__
+
+
+def get_collection_details(client, name: str) -> CollectionDetails:
+    col = _get(client, name)
+    cfg = col.configuration_json or {}
+    metric = (cfg.get("hnsw") or {}).get("space", "l2")
+    return CollectionDetails(
+        name=name,
+        count=col.count(),
+        dimensionality=_peek_dim(col),
+        distance_metric=metric,
+        embedding_function=_ef_name(col, cfg),
+        metadata=_user_metadata(col.metadata),
+    )
+
+
+def create_collection(
+    client,
+    name: str,
+    *,
+    distance_metric: str = "l2",
+    embedding_function: str = "default",
+    metadata: Optional[dict] = None,
+) -> CollectionDetails:
+    if collection_exists(client, name):
+        raise Conflict(f"Collection {name!r} already exists")
+    user_meta = _user_metadata(metadata)
+    kwargs: dict[str, Any] = {}
+    if embedding_function == "none":
+        # Passing configuration= alongside embedding_function=None makes Chroma persist
+        # a '{type: legacy}' EF marker (and re-attach a broken default EF on re-fetch).
+        # Setting the hnsw space via the legacy metadata form instead keeps
+        # embedding_function persisted cleanly as None, while configuration_json still
+        # reflects the chosen space - so get_collection_details reports "none".
+        kwargs["embedding_function"] = None
+        kwargs["metadata"] = {"hnsw:space": distance_metric, **user_meta}
+    else:
+        kwargs["configuration"] = {"hnsw": {"space": distance_metric}}
+        if user_meta:
+            kwargs["metadata"] = user_meta
+    try:
+        client.create_collection(name, **kwargs)
+    except InvalidArgumentError as exc:
+        raise InvalidName(str(exc)) from exc
+    return get_collection_details(client, name)
