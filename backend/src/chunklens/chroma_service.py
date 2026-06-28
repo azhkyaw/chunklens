@@ -7,6 +7,8 @@ from chromadb.errors import InvalidArgumentError, NotFoundError
 from .schemas import (
     CollectionDetails,
     CollectionSummary,
+    MetadataKeyInfo,
+    MetadataKeysResponse,
     QueryHit,
     QueryResult,
     Record,
@@ -234,3 +236,28 @@ def update_record_metadata(client, name: str, record_id: str, metadata: dict) ->
         col.update(ids=[record_id], metadatas=[payload])
     document = (existing["documents"] or [None])[0]
     return Record(id=record_id, document=document, metadata=(dict(metadata) or None))
+
+
+def _scalar_type(v) -> str:
+    if isinstance(v, bool):  # bool is a subclass of int - check first
+        return "bool"
+    if isinstance(v, int):
+        return "int"
+    if isinstance(v, float):
+        return "float"
+    return "string"
+
+
+def sample_metadata_keys(client, name: str, sample: int = 200) -> MetadataKeysResponse:
+    col = _get(client, name)
+    total = col.count()
+    res = col.get(limit=sample, include=["metadatas"])
+    metas = res.get("metadatas") or []
+    agg: dict[str, set] = {}
+    for m in metas:
+        for k, v in (m or {}).items():
+            if _is_reserved(k):
+                continue
+            agg.setdefault(k, set()).add(_scalar_type(v))
+    keys = [MetadataKeyInfo(key=k, types=sorted(t)) for k, t in sorted(agg.items())]
+    return MetadataKeysResponse(keys=keys, sampled=len(metas), total=total)

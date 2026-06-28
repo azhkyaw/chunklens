@@ -187,3 +187,34 @@ def test_update_record_metadata_missing_record():
     chroma_service.create_collection(client, "rec_col2", embedding_function="none")
     with pytest.raises(chroma_service.NotFound):
         chroma_service.update_record_metadata(client, "rec_col2", "ghost", {"x": 1})
+
+
+def test_scalar_type_bool_before_int():
+    assert chroma_service._scalar_type(True) == "bool"
+    assert chroma_service._scalar_type(3) == "int"
+    assert chroma_service._scalar_type(1.5) == "float"
+    assert chroma_service._scalar_type("x") == "string"
+
+
+def test_sample_metadata_keys_aggregates_types_and_hides_reserved():
+    client = _fresh_client()
+    chroma_service.create_collection(client, "keys_col", embedding_function="none")
+    col = client.get_collection("keys_col")
+    col.add(
+        ids=["1", "2"],
+        embeddings=[[1.0, 2.0], [3.0, 4.0]],
+        metadatas=[{"lang": "en", "year": 2020, "ok": True}, {"lang": "fr", "year": 2021}],
+    )
+    resp = chroma_service.sample_metadata_keys(client, "keys_col")
+    by_key = {k.key: k.types for k in resp.keys}
+    assert by_key == {"lang": ["string"], "ok": ["bool"], "year": ["int"]}
+    assert resp.sampled == 2
+    assert resp.total == 2
+    # reserved hnsw:* key (present because EF=none stores hnsw:space) is hidden
+    assert all(not k.key.startswith("hnsw:") for k in resp.keys)
+
+
+def test_sample_metadata_keys_missing_collection_raises_notfound():
+    client = _fresh_client()
+    with pytest.raises(chroma_service.NotFound):
+        chroma_service.sample_metadata_keys(client, "nope_col")

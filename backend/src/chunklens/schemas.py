@@ -111,3 +111,14 @@ class UpdateCollectionRequest(BaseModel):
 
 class UpdateRecordMetadataRequest(BaseModel):
     metadata: ScalarMetadata
+
+
+class MetadataKeyInfo(BaseModel):
+    key: str
+    types: list[str]
+
+
+class MetadataKeysResponse(BaseModel):
+    keys: list[MetadataKeyInfo]
+    sampled: int
+    total: int
