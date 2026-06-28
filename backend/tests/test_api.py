@@ -164,3 +164,38 @@ def test_test_endpoint_candidate_error(client, conn_env, monkeypatch):
     body = r.json()
     assert body["ok"] is False
     assert "refused" in body["error"]
+
+
+def test_create_collection_endpoint(api):
+    r = api.post(
+        "/api/collections",
+        json={"name": "new_col", "distance_metric": "cosine", "embedding_function": "none"},
+    )
+    assert r.status_code == 201
+    body = r.json()
+    assert body["name"] == "new_col"
+    assert body["distance_metric"] == "cosine"
+    assert body["embedding_function"] == "none"
+
+
+def test_create_duplicate_is_409(api):
+    api.post("/api/collections", json={"name": "dup2_col"})
+    r = api.post("/api/collections", json={"name": "dup2_col"})
+    assert r.status_code == 409
+
+
+def test_create_invalid_name_is_400(api):
+    r = api.post("/api/collections", json={"name": "x"})
+    assert r.status_code == 400
+
+
+def test_get_collection_details_endpoint(api):
+    r = api.get("/api/collections/docs")
+    assert r.status_code == 200
+    assert r.json()["name"] == "docs"
+    assert r.json()["count"] == 3
+
+
+def test_get_collection_details_missing_is_404(api):
+    r = api.get("/api/collections/missing_col")
+    assert r.status_code == 404
