@@ -54,3 +54,10 @@ export const useUpdateRecordMetadata = (name: string) =>
     mutationFn: (vars: { id: string; metadata: ScalarMetadata }) =>
       api.updateRecordMetadata(name, vars.id, { metadata: vars.metadata }),
   });
+
+export const useMetadataKeys = (name: string | null) =>
+  useQuery({
+    queryKey: ["metadata-keys", name],
+    queryFn: () => api.getMetadataKeys(name as string),
+    enabled: Boolean(name),
+  });

@@ -71,3 +71,12 @@ export interface UpdateCollectionInput {
 export interface UpdateRecordMetadataInput {
   metadata: ScalarMetadata;
 }
+export interface MetadataKeyInfo {
+  key: string;
+  types: string[];
+}
+export interface MetadataKeysResponse {
+  keys: MetadataKeyInfo[];
+  sampled: number;
+  total: number;
+}

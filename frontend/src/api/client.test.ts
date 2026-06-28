@@ -74,3 +74,13 @@ test("createCollection POSTs and deleteCollection handles 204", async () => {
 
   await expect(api.deleteCollection("c")).resolves.toBeUndefined();
 });
+
+test("getMetadataKeys GETs the endpoint", async () => {
+  const f = vi.fn(async () =>
+    new Response(JSON.stringify({ keys: [{ key: "lang", types: ["string"] }], sampled: 3, total: 3 }), { status: 200 }),
+  );
+  vi.stubGlobal("fetch", f);
+  const resp = await api.getMetadataKeys("docs");
+  expect(resp.keys[0].key).toBe("lang");
+  expect(fetch).toHaveBeenCalledWith("/api/collections/docs/metadata-keys", expect.any(Object));
+});

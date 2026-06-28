@@ -5,6 +5,7 @@ import type {
   ConnectionInput,
   ConnectionTestResult,
   CreateCollectionInput,
+  MetadataKeysResponse,
   QueryRequest,
   QueryResult,
   RecordRow,
@@ -64,4 +65,6 @@ export const api = {
       `/api/collections/${encodeURIComponent(name)}/records/${encodeURIComponent(id)}`,
       { method: "PATCH", body: JSON.stringify(body) },
     ),
+  getMetadataKeys: (name: string) =>
+    jsonFetch<MetadataKeysResponse>(`/api/collections/${encodeURIComponent(name)}/metadata-keys`),
 };
