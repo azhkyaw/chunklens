@@ -212,3 +212,25 @@ def delete_collection(client, name: str) -> None:
     if not collection_exists(client, name):
         raise NotFound(f"Collection {name!r} not found")
     client.delete_collection(name)
+
+
+def _replace_payload(old: dict, new: dict) -> dict:
+    """Emulate replace on Chroma's merge-update: set new keys, null removed keys."""
+    payload = dict(new)
+    for key in old:
+        if key not in new:
+            payload[key] = None
+    return payload
+
+
+def update_record_metadata(client, name: str, record_id: str, metadata: dict) -> Record:
+    col = _get(client, name)
+    existing = col.get(ids=[record_id], include=["documents", "metadatas"])
+    if not existing["ids"]:
+        raise NotFound(f"Record {record_id!r} not found in {name!r}")
+    old = (existing["metadatas"] or [None])[0] or {}
+    payload = _replace_payload(old, dict(metadata))
+    if payload:  # Chroma rejects update(metadatas=[{}])
+        col.update(ids=[record_id], metadatas=[payload])
+    document = (existing["documents"] or [None])[0]
+    return Record(id=record_id, document=document, metadata=(dict(metadata) or None))

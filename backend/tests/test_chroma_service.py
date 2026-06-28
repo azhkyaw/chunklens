@@ -157,3 +157,33 @@ def test_delete_collection_and_missing():
     assert not chroma_service.collection_exists(client, "del_col")
     with pytest.raises(chroma_service.NotFound):
         chroma_service.delete_collection(client, "del_col")
+
+
+def test_replace_payload_nulls_removed_keys():
+    # k2 removed -> emitted as None so Chroma deletes it; k1 updated
+    assert chroma_service._replace_payload({"k1": "a", "k2": 2}, {"k1": "b"}) == {
+        "k1": "b",
+        "k2": None,
+    }
+    assert chroma_service._replace_payload({}, {}) == {}
+
+
+def test_update_record_metadata_replaces_and_removes_keys():
+    client = _fresh_client()
+    chroma_service.create_collection(client, "rec_col", embedding_function="none")
+    col = client.get_collection("rec_col")
+    col.add(ids=["r1"], embeddings=[[1.0, 2.0]], metadatas=[{"k1": "a", "k2": 2}])
+
+    rec = chroma_service.update_record_metadata(client, "rec_col", "r1", {"k1": "b"})
+    assert rec.id == "r1"
+    assert rec.metadata == {"k1": "b"}  # k2 removed
+
+    stored = col.get(ids=["r1"], include=["metadatas"])["metadatas"][0]
+    assert stored == {"k1": "b"}  # confirmed against Chroma
+
+
+def test_update_record_metadata_missing_record():
+    client = _fresh_client()
+    chroma_service.create_collection(client, "rec_col2", embedding_function="none")
+    with pytest.raises(chroma_service.NotFound):
+        chroma_service.update_record_metadata(client, "rec_col2", "ghost", {"x": 1})
