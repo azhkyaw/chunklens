@@ -2,6 +2,10 @@ import { useState } from "react";
 import { useRunQuery, useCollectionDetails, useMetadataKeys } from "../../api/hooks";
 import { QueryForm } from "./QueryForm";
 import { ResultsPanel } from "../retrieval/ResultsPanel";
+import { QueryContextStrip } from "../retrieval/QueryContextStrip";
+import { GuardBanner } from "../retrieval/GuardBanner";
+import { evaluateGuards } from "../retrieval/guards";
+import { interpretQueryError } from "../retrieval/errorInterpret";
 import { newQuerySpec, serializeSpec, specErrors, type QuerySpec } from "./querySpec";
 
 export function SingleQuery({ name }: { name: string }) {
@@ -12,14 +16,18 @@ export function SingleQuery({ name }: { name: string }) {
   const metric = details?.distance_metric ?? "l2";
   const keyNames = (keysData?.keys ?? []).map((k) => k.key);
   const errors = specErrors(spec);
-  const invalid = errors.length > 0;
+  const guards = evaluateGuards({ details, text: spec.text, hasEmbedding: false });
+  const blocked = guards.some((g) => g.level === "block");
 
   return (
     <div>
+      <QueryContextStrip details={details} />
       <QueryForm name={name} spec={spec} onChange={setSpec} />
-      <button onClick={() => run.mutate(serializeSpec(spec))} disabled={!spec.text || invalid || run.isPending}>Run</button>
-      {invalid && <p role="alert">Fix filter errors: {errors.map((e) => e.message).join("; ")}</p>}
-      {run.error && <p role="alert">Query failed - {(run.error as Error).message}</p>}
+      <GuardBanner guards={guards} />
+      <button onClick={() => run.mutate(serializeSpec(spec))}
+              disabled={!spec.text || errors.length > 0 || blocked || run.isPending}>Run</button>
+      {errors.length > 0 && <p role="alert">Fix filter errors: {errors.map((e) => e.message).join("; ")}</p>}
+      {run.error && <p role="alert">Query failed - {interpretQueryError((run.error as Error).message, { details })}</p>}
       {run.data && <ResultsPanel hits={run.data.hits} metric={metric} keys={keyNames} />}
     </div>
   );

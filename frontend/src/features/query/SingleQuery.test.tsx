@@ -36,3 +36,23 @@ test("sends the built where filter with the query", async () => {
   await waitFor(() => expect(run).toHaveBeenCalled());
   expect(run.mock.calls[0][1].where).toEqual({ lang: { $eq: "en" } });
 });
+
+test("blocks Run and shows a banner for text on a none-EF collection", async () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue({ name: "docs", count: 0, dimensionality: 3, distance_metric: "l2", embedding_function: "none", metadata: {} });
+  render(wrap(<SingleQuery name="docs" />));
+  await waitFor(() => expect(screen.getByText(/EF:/)).toBeInTheDocument());
+  await userEvent.type(screen.getByLabelText(/query text/i), "hello");
+  expect(screen.getByRole("button", { name: /^run$/i })).toBeDisabled();
+  expect(screen.getByRole("alert")).toHaveTextContent(/no embedding function/i);
+});
+
+test("interprets a dimension-mismatch query error", async () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue({ name: "docs", count: 0, dimensionality: 384, distance_metric: "l2", embedding_function: "default", metadata: {} });
+  vi.spyOn(api, "query").mockRejectedValue(new Error("embedding with dimension 384, got 2"));
+  render(wrap(<SingleQuery name="docs" />));
+  await userEvent.type(screen.getByLabelText(/query text/i), "hello");
+  await userEvent.click(screen.getByRole("button", { name: /^run$/i }));
+  expect(await screen.findByText(/dimensionality/i)).toBeInTheDocument();
+});
