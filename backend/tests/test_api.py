@@ -251,3 +251,18 @@ def test_patch_record_metadata_missing_record_is_404(api):
 def test_patch_record_metadata_nonscalar_is_422(api):
     r = api.patch("/api/collections/docs/records/a", json={"metadata": {"bad": [1, 2]}})
     assert r.status_code == 422
+
+
+def test_metadata_keys_endpoint(api):
+    r = api.get("/api/collections/docs/metadata-keys")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["total"] == 3
+    assert body["sampled"] == 3
+    keys = {k["key"]: k["types"] for k in body["keys"]}
+    assert keys == {"lang": ["string"]}
+
+
+def test_metadata_keys_missing_collection_is_404(api):
+    r = api.get("/api/collections/missing_col/metadata-keys")
+    assert r.status_code == 404

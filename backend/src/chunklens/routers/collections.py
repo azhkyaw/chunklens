@@ -9,6 +9,7 @@ from ..schemas import (
     CollectionDetails,
     CollectionSummary,
     CreateCollectionRequest,
+    MetadataKeysResponse,
     Record,
     RecordsPage,
     UpdateCollectionRequest,
@@ -86,5 +87,13 @@ def update_record_metadata(
 ):
     try:
         return chroma_service.update_record_metadata(client, name, record_id, body.metadata)
+    except NotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
+@router.get("/{name}/metadata-keys", response_model=MetadataKeysResponse)
+def metadata_keys(name: str, sample: int = 200, client=Depends(get_client)):
+    try:
+        return chroma_service.sample_metadata_keys(client, name, sample=sample)
     except NotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc))
