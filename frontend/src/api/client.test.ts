@@ -55,3 +55,22 @@ test("saveConnection PUTs the body", async () => {
     expect.objectContaining({ method: "PUT" }),
   );
 });
+
+test("createCollection POSTs and deleteCollection handles 204", async () => {
+  const f = vi.fn(async (_url: string, init?: RequestInit) =>
+    init?.method === "DELETE"
+      ? new Response(null, { status: 204 })
+      : new Response(JSON.stringify({ name: "c", count: 0 }), { status: 201 }),
+  );
+  vi.stubGlobal("fetch", f);
+
+  await api.createCollection({
+    name: "c", distance_metric: "l2", embedding_function: "default",
+  });
+  expect(fetch).toHaveBeenCalledWith(
+    "/api/collections",
+    expect.objectContaining({ method: "POST" }),
+  );
+
+  await expect(api.deleteCollection("c")).resolves.toBeUndefined();
+});

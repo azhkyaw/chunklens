@@ -1,6 +1,12 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "./client";
-import type { ConnectionInput, QueryRequest } from "./types";
+import type {
+  ConnectionInput,
+  CreateCollectionInput,
+  QueryRequest,
+  ScalarMetadata,
+  UpdateCollectionInput,
+} from "./types";
 
 export const useCollections = () =>
   useQuery({ queryKey: ["collections"], queryFn: api.listCollections });
@@ -26,3 +32,25 @@ export const useSaveConnection = () =>
 
 export const useTestConnection = () =>
   useMutation({ mutationFn: (body?: ConnectionInput) => api.testConnection(body) });
+
+export const useCollectionDetails = (name: string | null) =>
+  useQuery({
+    queryKey: ["collection", name],
+    queryFn: () => api.getCollectionDetails(name as string),
+    enabled: Boolean(name),
+  });
+
+export const useCreateCollection = () =>
+  useMutation({ mutationFn: (body: CreateCollectionInput) => api.createCollection(body) });
+
+export const useUpdateCollection = (name: string) =>
+  useMutation({ mutationFn: (body: UpdateCollectionInput) => api.updateCollection(name, body) });
+
+export const useDeleteCollection = () =>
+  useMutation({ mutationFn: (name: string) => api.deleteCollection(name) });
+
+export const useUpdateRecordMetadata = (name: string) =>
+  useMutation({
+    mutationFn: (vars: { id: string; metadata: ScalarMetadata }) =>
+      api.updateRecordMetadata(name, vars.id, { metadata: vars.metadata }),
+  });

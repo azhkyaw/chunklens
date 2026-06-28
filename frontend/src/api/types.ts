@@ -47,3 +47,27 @@ export interface ConnectionTestResult {
   error?: string | null;
   heartbeat_ns?: number | null;
 }
+export type DistanceMetric = "l2" | "cosine" | "ip";
+export type ScalarMetadata = Record<string, string | number | boolean>;
+
+export interface CreateCollectionInput {
+  name: string;
+  distance_metric: DistanceMetric;
+  embedding_function: "default" | "none";
+  metadata?: ScalarMetadata | null;
+}
+export interface CollectionDetails {
+  name: string;
+  count: number;
+  dimensionality: number | null;
+  distance_metric: string;
+  embedding_function: string;
+  metadata: Record<string, unknown>;
+}
+export interface UpdateCollectionInput {
+  name?: string;
+  metadata?: ScalarMetadata | null;
+}
+export interface UpdateRecordMetadataInput {
+  metadata: ScalarMetadata;
+}

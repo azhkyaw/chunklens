@@ -1,11 +1,16 @@
 import type {
+  CollectionDetails,
   CollectionSummary,
   ConnectionInfo,
   ConnectionInput,
   ConnectionTestResult,
+  CreateCollectionInput,
   QueryRequest,
   QueryResult,
+  RecordRow,
   RecordsPage,
+  UpdateCollectionInput,
+  UpdateRecordMetadataInput,
 } from "./types";
 
 async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
@@ -14,6 +19,7 @@ async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
     ...init,
   });
   if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
+  if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
 }
 
@@ -39,4 +45,23 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body ?? null),
     }),
+  createCollection: (body: CreateCollectionInput) =>
+    jsonFetch<CollectionDetails>("/api/collections", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  getCollectionDetails: (name: string) =>
+    jsonFetch<CollectionDetails>(`/api/collections/${encodeURIComponent(name)}`),
+  updateCollection: (name: string, body: UpdateCollectionInput) =>
+    jsonFetch<CollectionDetails>(`/api/collections/${encodeURIComponent(name)}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  deleteCollection: (name: string) =>
+    jsonFetch<void>(`/api/collections/${encodeURIComponent(name)}`, { method: "DELETE" }),
+  updateRecordMetadata: (name: string, id: string, body: UpdateRecordMetadataInput) =>
+    jsonFetch<RecordRow>(
+      `/api/collections/${encodeURIComponent(name)}/records/${encodeURIComponent(id)}`,
+      { method: "PATCH", body: JSON.stringify(body) },
+    ),
 };
