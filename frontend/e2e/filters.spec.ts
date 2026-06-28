@@ -15,6 +15,6 @@ test("build a metadata filter visually and run the query", async ({ page }) => {
   await expect(page.getByLabel(/Metadata filter .* JSON/i)).toContainText('{"lang":{"$eq":"en"}}');
 
   await page.getByRole("button", { name: /^run$/i }).click();
-  // english docs a/c rank; result list shows an id line
-  await expect(page.getByText(/^a -/)).toBeVisible();
+  // english docs a/c match the lang=en filter -> 2 scored hits
+  await expect(page.getByText(/2 hits ·/)).toBeVisible();
 });

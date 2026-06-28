@@ -10,7 +10,7 @@ test("scores a query, reveals provenance, then compares two queries", async ({ p
   await expect(page.getByText(/\d+ hits ·/)).toBeVisible();     // metric-aware results rendered
   const results = page.locator("ol").last();                    // the results list
   await results.getByRole("button").first().click();            // expand the top hit
-  await expect(page.getByText(/no metadata/i)).toBeVisible();    // demo is seeded documents-only
+  await expect(results.getByText("lang")).toBeVisible();        // demo records carry a `lang` metadata key
 
   // Compare mode: run both, see both panels
   await page.getByRole("tab", { name: /compare/i }).click();
