@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Any, Literal, Optional
+from typing import Annotated, Any, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import AfterValidator, BaseModel, Field
 
 
 class HealthResponse(BaseModel):
@@ -71,3 +71,43 @@ class ConnectionTestResult(BaseModel):
     ok: bool
     error: Optional[str] = None
     heartbeat_ns: Optional[int] = None
+
+
+def _scalars_only(v: Optional[dict]) -> Optional[dict]:
+    if v is None:
+        return v
+    for key, val in v.items():
+        # bool is a subclass of int; both are allowed scalars
+        if not isinstance(val, (str, int, float, bool)):
+            raise ValueError(
+                f"metadata[{key!r}] must be a scalar (str/int/float/bool)"
+            )
+    return v
+
+
+ScalarMetadata = Annotated[dict[str, Any], AfterValidator(_scalars_only)]
+
+
+class CreateCollectionRequest(BaseModel):
+    name: str
+    distance_metric: Literal["l2", "cosine", "ip"] = "l2"
+    embedding_function: Literal["default", "none"] = "default"
+    metadata: Optional[ScalarMetadata] = None
+
+
+class CollectionDetails(BaseModel):
+    name: str
+    count: int
+    dimensionality: Optional[int] = None
+    distance_metric: str
+    embedding_function: str
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class UpdateCollectionRequest(BaseModel):
+    name: Optional[str] = None
+    metadata: Optional[ScalarMetadata] = None
+
+
+class UpdateRecordMetadataRequest(BaseModel):
+    metadata: ScalarMetadata
