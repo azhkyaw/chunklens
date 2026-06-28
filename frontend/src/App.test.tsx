@@ -6,7 +6,7 @@ import { api } from "./api/client";
 
 afterEach(() => vi.restoreAllMocks());
 
-test("renders the app title", () => {
+test("renders the app title and a New collection toggle", () => {
   vi.spyOn(api, "listCollections").mockResolvedValue([]);
   vi.spyOn(api, "getConnection").mockResolvedValue({
     host: "localhost", port: 8000, ssl: false,
@@ -21,4 +21,5 @@ test("renders the app title", () => {
     </QueryClientProvider>,
   );
   expect(screen.getByText("ChunkLens")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /new collection/i })).toBeInTheDocument();
 });
