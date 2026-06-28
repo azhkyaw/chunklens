@@ -234,3 +234,20 @@ def test_delete_collection(api):
 def test_delete_missing_is_404(api):
     r = api.delete("/api/collections/never_existed")
     assert r.status_code == 404
+
+
+def test_patch_record_metadata(api):
+    r = api.patch("/api/collections/docs/records/a", json={"metadata": {"lang": "de"}})
+    assert r.status_code == 200
+    assert r.json()["id"] == "a"
+    assert r.json()["metadata"] == {"lang": "de"}
+
+
+def test_patch_record_metadata_missing_record_is_404(api):
+    r = api.patch("/api/collections/docs/records/zzz", json={"metadata": {"x": 1}})
+    assert r.status_code == 404
+
+
+def test_patch_record_metadata_nonscalar_is_422(api):
+    r = api.patch("/api/collections/docs/records/a", json={"metadata": {"bad": [1, 2]}})
+    assert r.status_code == 422

@@ -78,3 +78,13 @@ def delete_collection(name: str, client=Depends(get_client)):
         chroma_service.delete_collection(client, name)
     except NotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc))
+
+
+@router.patch("/{name}/records/{record_id}", response_model=Record)
+def update_record_metadata(
+    name: str, record_id: str, body: UpdateRecordMetadataRequest, client=Depends(get_client)
+):
+    try:
+        return chroma_service.update_record_metadata(client, name, record_id, body.metadata)
+    except NotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
