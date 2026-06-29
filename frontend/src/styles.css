@@ -64,8 +64,8 @@
   --danger-border: #fecaca;
 
   /* Score ramp - the signature. Fill rides low→high as relative score rises. */
-  --ramp-low: #aec4c7;
-  --ramp-high: #0e7c86;
+  --ramp-low: #c4c4c8;
+  --ramp-high: #14b8a6;
 
   --focus: #0d9488;
   --shadow-1: 0 1px 2px rgba(9, 9, 11, 0.05);
@@ -125,8 +125,8 @@
     --danger-bg: #2a1416;
     --danger-border: #4a2226;
 
-    --ramp-low: #33474d;
-    --ramp-high: #2bb7c4;
+    --ramp-low: #3f3f46;
+    --ramp-high: #2dd4bf;
 
     --focus: #14b8a6;
     --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -1164,7 +1164,7 @@ p.guard[data-level="warn"] {
   height: 8px;
   background: var(--surface-inset);
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--r-sm);
   overflow: hidden;
   vertical-align: middle;
 }
