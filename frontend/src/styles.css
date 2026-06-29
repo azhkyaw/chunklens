@@ -1,9 +1,28 @@
 /* ============================================================================
-   ChunkLens - "Lens" design system
-   A cool, calibrated instrument for reading vector retrieval.
-   Identity: monospace as the brand voice · petrol-teal signal · the score
-   readout as the hero. Fully offline (system font stacks, no webfonts).
+   ChunkLens - "Graphite & Teal" design system
+   A clean developer-SaaS surface for reading vector retrieval.
+   Identity: Geist (self-hosted, offline) · graphite neutrals · teal accent ·
+   the score-keyed bar as the signature. Light + dark follow the OS.
    ============================================================================ */
+
+/* ----------------------------------------------------------------------------
+   0. Fonts - self-hosted Geist (SIL OFL, see assets/fonts/OFL.txt). Bundled by
+   Vite into web/assets so the app stays fully offline - no CDN/webfont fetch.
+   ---------------------------------------------------------------------------- */
+@font-face {
+  font-family: "Geist Sans";
+  src: url("./assets/fonts/Geist-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geist Mono";
+  src: url("./assets/fonts/GeistMono-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 /* ----------------------------------------------------------------------------
    1. Design tokens - light (default) + dark (follows the OS)
@@ -51,10 +70,10 @@
   --shadow-2: 0 6px 24px rgba(16, 36, 43, 0.12);
 
   /* Type */
-  --font-ui: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system,
-    "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, "Cascadia Code", "Cascadia Mono", "SF Mono",
-    "JetBrains Mono", Menlo, Consolas, monospace;
+  --font-ui: "Geist Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial,
+    sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", "JetBrains Mono", Menlo,
+    Consolas, monospace;
   --t-eyebrow: 11px;
   --t-xs: 11.5px;
   --t-sm: 12.5px;
@@ -197,7 +216,7 @@ h4 {
 
 .eyebrow,
 h3 {
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--t-eyebrow);
   font-weight: 600;
   letter-spacing: 0.12em;
@@ -399,7 +418,7 @@ code {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.14em;
@@ -468,7 +487,7 @@ code {
   gap: var(--sp-1);
 }
 .collection-head h2 {
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-weight: 600;
 }
 
