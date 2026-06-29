@@ -42,6 +42,10 @@ export function App() {
               onSaved={() => {
                 refreshCollections();
                 qc.invalidateQueries({ queryKey: ["connection"] });
+                setSelected(null);
+                qc.removeQueries({ queryKey: ["collection"] });
+                qc.removeQueries({ queryKey: ["records"] });
+                qc.removeQueries({ queryKey: ["metadata-keys"] });
                 setShowConn(false);
               }}
             />
