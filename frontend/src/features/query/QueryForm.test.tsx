@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, expect, test, vi } from "vitest";
 import { QueryForm } from "./QueryForm";
@@ -72,11 +72,10 @@ test("auto-detects a provider collection and attaches an embedder", async () => 
   vi.spyOn(api, "listEmbedders").mockResolvedValue([OPENAI]);
   const onChange = vi.fn();
   render(wrap(<QueryForm name="c" spec={newQuerySpec()} details={openaiDetails} onChange={onChange} />));
-  // the OpenAI provider chip + a key entry (needs_key, not set) appear
-  expect(await screen.findByText(/embed with openai/i)).toBeInTheDocument();
-  expect(screen.getByLabelText(/api key/i)).toBeInTheDocument();
-  // auto-attach fires onChange with the detected provider
-  expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ embedder: { provider: "openai", model: "" } }));
+  // the EmbedderPicker select is shown for a non-default-EF collection
+  expect(await screen.findByLabelText(/embed query with/i)).toBeInTheDocument();
+  // auto-attach fires onChange with the detected provider (embedders hook is async, so wait)
+  await waitFor(() => expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ embedder: { provider: "openai", model: "" } })));
 });
 
 test("no embedder UI for a default-EF collection", async () => {

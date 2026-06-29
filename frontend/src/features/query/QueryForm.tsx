@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useMetadataKeys, useEmbedders, useSetEmbedderKey } from "../../api/hooks";
+import { useEffect } from "react";
+import { useMetadataKeys, useEmbedders } from "../../api/hooks";
 import { FilterBuilder } from "../filters/FilterBuilder";
+import { showsEmbedderPicker } from "../retrieval/guards";
+import { EmbedderPicker } from "./EmbedderPicker";
 import { vectorError, type QuerySpec } from "./querySpec";
 import type { CollectionDetails } from "../../api/types";
 
@@ -13,16 +14,22 @@ export function QueryForm({
   const keys = keysData?.keys ?? [];
   const verr = vectorError(spec, details);
 
-  // A collection whose EF is one of the surfaced providers -> embed query text for it.
   const provider = details ? (embedders ?? []).find((e) => e.id === details.embedding_function) : undefined;
+  const showPicker = spec.mode === "text" && showsEmbedderPicker(details);
 
-  // Auto-attach the detected provider once (until a different one is set).
+  // Pre-fill the picker once: saved hint -> auto-detected provider. Skips if the user
+  // has already chosen an embedder this session (spec.embedder set). This sets state
+  // only; persistence happens on explicit user interaction inside EmbedderPicker.
   useEffect(() => {
-    if (spec.mode === "text" && provider && spec.embedder?.provider !== provider.id) {
-      onChange({ ...spec, embedder: { provider: provider.id, model: spec.embedder?.model ?? "" } });
+    if (spec.mode !== "text" || spec.embedder) return;
+    const hint = details?.embedder_hint;
+    if (hint) {
+      onChange({ ...spec, embedder: { provider: hint.provider, model: hint.model ?? "" } });
+      return;
     }
+    if (provider) onChange({ ...spec, embedder: { provider: provider.id, model: "" } });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [provider?.id, spec.mode]);
+  }, [details?.embedder_hint?.provider, provider?.id, spec.mode]);
 
   return (
     <div className="query-form">
@@ -44,8 +51,8 @@ export function QueryForm({
         <label className="field" style={{ width: 96 }}>n_results <input type="number" min={1} value={spec.nResults}
           onChange={(e) => onChange({ ...spec, nResults: Math.max(1, Number(e.target.value) || 1) })} /></label>
       </div>
-      {spec.mode === "text" && provider && (
-        <EmbedderRow provider={provider} spec={spec} onChange={onChange} />
+      {showPicker && (
+        <EmbedderPicker name={name} details={details} embedders={embedders ?? []} spec={spec} onChange={onChange} />
       )}
       {spec.mode === "vector" && details?.dimensionality != null && (
         <p className="faint">expects {details.dimensionality}-dim</p>
@@ -56,41 +63,6 @@ export function QueryForm({
         onChange={(t) => onChange({ ...spec, whereTree: t })} />
       <FilterBuilder title="Document filter (where_document)" lang="where_document" tree={spec.docTree} keys={keys}
         onChange={(t) => onChange({ ...spec, docTree: t })} />
-    </div>
-  );
-}
-
-function EmbedderRow({
-  provider, spec, onChange,
-}: {
-  provider: import("../../api/types").EmbedderInfo;
-  spec: QuerySpec;
-  onChange: (s: QuerySpec) => void;
-}) {
-  const qc = useQueryClient();
-  const setKey = useSetEmbedderKey();
-  const [keyInput, setKeyInput] = useState("");
-  const needsKey = provider.needs_key && !provider.key_set && !provider.env_key;
-
-  return (
-    <div className="embedder-row">
-      <p className="faint">Embed with {provider.label}{provider.env_key ? " · key from environment" : ""}</p>
-      <div className="form-row">
-        <label className="field" style={{ flex: 1 }}>Model
-          <input value={spec.embedder?.model ?? ""} placeholder="(provider default)"
-                 onChange={(e) => onChange({ ...spec, embedder: { provider: provider.id, model: e.target.value } })} /></label>
-        {needsKey && (
-          <label className="field" style={{ flex: 1 }}>API key
-            <input type="password" value={keyInput} onChange={(e) => setKeyInput(e.target.value)} /></label>
-        )}
-        {needsKey && (
-          <button type="button" className="btn-secondary" disabled={!keyInput || setKey.isPending}
-            onClick={() => setKey.mutate({ provider: provider.id, token: keyInput },
-              { onSuccess: () => { setKeyInput(""); qc.invalidateQueries({ queryKey: ["embedders"] }); } })}>
-            Set key
-          </button>
-        )}
-      </div>
     </div>
   );
 }

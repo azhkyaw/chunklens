@@ -22,13 +22,13 @@ export function SingleQuery({ name }: { name: string }) {
   useEffect(() => {
     if (details && embedders && appliedFor.current !== name) {
       appliedFor.current = name;
-      setSpec((s) => ({ ...s, mode: defaultQueryMode(details, embedders.map((e) => e.id)) }));
+      setSpec((s) => ({ ...s, mode: defaultQueryMode(details, embedders.map((e) => e.id), Boolean(details.embedder_hint)) }));
     }
   }, [details, embedders, name]);
 
   const errors = specErrors(spec);
   const verr = vectorError(spec, details);
-  const guards = evaluateGuards({ details, mode: spec.mode, text: spec.text, hasEmbedding: spec.mode === "vector" && verr === null, providerDetected: provider !== undefined });
+  const guards = evaluateGuards({ details, mode: spec.mode, text: spec.text, hasEmbedding: spec.mode === "vector" && verr === null, embedderSelected: provider !== undefined || Boolean(spec.embedder?.provider) });
   const blocked = guards.some((g) => g.level === "block");
   const ready = spec.mode === "text" ? spec.text.trim() !== "" : verr === null;
 

@@ -83,7 +83,8 @@ test("a surfaced-provider collection (openai, 1536-dim) opens in Text mode with 
   ]);
   vi.spyOn(api, "getCollectionDetails").mockResolvedValue({ name: "oa", count: 1, dimensionality: 1536, distance_metric: "l2", embedding_function: "openai", metadata: {} });
   render(wrap(<SingleQuery name="oa" />));
-  expect(await screen.findByText(/embed with openai/i)).toBeInTheDocument(); // picker rendered → text mode
-  expect(screen.getByLabelText(/query text/i)).toBeInTheDocument();          // text input, not the vector paste box
-  expect(screen.queryByText(/won't match/i)).not.toBeInTheDocument();        // misleading dim-mismatch warn suppressed
+  // The picker pre-fills via an effect, so retry the value assertion.
+  await waitFor(() => expect(screen.getByLabelText(/embed query with/i)).toHaveValue("openai"));
+  expect(screen.getByLabelText(/query text/i)).toBeInTheDocument();                 // text input, not vector paste
+  expect(screen.queryByText(/won't match/i)).not.toBeInTheDocument();               // dim warn suppressed
 });

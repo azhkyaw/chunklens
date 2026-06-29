@@ -22,7 +22,7 @@ export function CompareQuery({ name }: { name: string }) {
   useEffect(() => {
     if (details && embedders && appliedFor.current !== name) {
       appliedFor.current = name;
-      const m = defaultQueryMode(details, embedders.map((e) => e.id));
+      const m = defaultQueryMode(details, embedders.map((e) => e.id), Boolean(details.embedder_hint));
       setSpecA((s) => ({ ...s, mode: m }));
       setSpecB((s) => ({ ...s, mode: m }));
     }
@@ -30,8 +30,8 @@ export function CompareQuery({ name }: { name: string }) {
 
   const verrA = vectorError(specA, details);
   const verrB = vectorError(specB, details);
-  const guardsA = evaluateGuards({ details, mode: specA.mode, text: specA.text, hasEmbedding: specA.mode === "vector" && verrA === null, providerDetected: provider !== undefined });
-  const guardsB = evaluateGuards({ details, mode: specB.mode, text: specB.text, hasEmbedding: specB.mode === "vector" && verrB === null, providerDetected: provider !== undefined });
+  const guardsA = evaluateGuards({ details, mode: specA.mode, text: specA.text, hasEmbedding: specA.mode === "vector" && verrA === null, embedderSelected: provider !== undefined || Boolean(specA.embedder?.provider) });
+  const guardsB = evaluateGuards({ details, mode: specB.mode, text: specB.text, hasEmbedding: specB.mode === "vector" && verrB === null, embedderSelected: provider !== undefined || Boolean(specB.embedder?.provider) });
   const blocked = [...guardsA, ...guardsB].some((g) => g.level === "block");
   const invalid = specErrors(specA).length > 0 || specErrors(specB).length > 0;
   const pending = runA.isPending || runB.isPending;
