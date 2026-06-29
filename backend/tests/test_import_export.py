@@ -90,3 +90,54 @@ def test_export_default_ef_omits_embeddings_when_not_requested():
     assert f.collection.embedding_function == "default"
     assert f.records[0].embedding is None
     assert f.records[0].document == "x"
+
+
+def _sample_file(name="src_col"):
+    from chunklens.schemas import ExportFile
+    return ExportFile(
+        chunklens_export=1,
+        collection={"name": name, "distance_metric": "l2", "embedding_function": "none", "metadata": {"owner": "me"}},
+        records=[
+            {"id": "a", "document": "alpha", "metadata": {"lang": "en"}, "embedding": [1.0, 0.0]},
+            {"id": "b", "document": "beta", "metadata": {"lang": "fr"}, "embedding": [0.0, 1.0]},
+        ],
+    )
+
+
+def test_import_creates_collection_with_records():
+    client = _fresh_client()
+    d = chroma_service.import_collection(client, _sample_file(), name_override="imported_col")
+    assert d.name == "imported_col"
+    assert d.count == 2
+    assert d.embedding_function == "none"
+    assert d.metadata == {"owner": "me"}
+
+
+def test_import_round_trips():
+    client = _fresh_client()
+    chroma_service.import_collection(client, _sample_file("orig_col"), name_override="orig_col")
+    exported = chroma_service.export_collection(client, "orig_col", include_embeddings=True)
+    chroma_service.import_collection(client, exported, name_override="copy_col")
+    a = chroma_service.export_collection(client, "orig_col", include_embeddings=True)
+    b = chroma_service.export_collection(client, "copy_col", include_embeddings=True)
+    key = lambda f: sorted([(r.id, r.document, tuple((r.metadata or {}).items()), tuple(r.embedding or [])) for r in f.records])
+    assert key(a) == key(b)
+
+
+def test_import_conflict_raises():
+    client = _fresh_client()
+    chroma_service.import_collection(client, _sample_file(), name_override="dup_col")
+    with pytest.raises(chroma_service.Conflict):
+        chroma_service.import_collection(client, _sample_file(), name_override="dup_col")
+
+
+def test_import_rolls_back_on_add_failure():
+    client = _fresh_client()
+    from chunklens.schemas import ExportFile
+    bad = ExportFile(
+        collection={"name": "rb_col", "embedding_function": "none"},
+        records=[{"id": "a", "document": "no embedding here"}],  # none-EF + no embedding -> add fails
+    )
+    with pytest.raises(ValueError):
+        chroma_service.import_collection(client, bad, name_override="rb_col")
+    assert not chroma_service.collection_exists(client, "rb_col")  # cleaned up

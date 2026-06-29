@@ -333,3 +333,28 @@ def export_collection(client, name: str, *, include_embeddings: bool) -> ExportF
         ),
         records=records,
     )
+
+
+_SUPPORTED_EXPORT_VERSION = 1
+
+
+def import_collection(client, data: ExportFile, *, name_override: Optional[str] = None) -> CollectionDetails:
+    if data.chunklens_export != _SUPPORTED_EXPORT_VERSION:
+        raise ValueError(f"Unsupported export version {data.chunklens_export}")
+    name = name_override or data.collection.name
+    create_collection(  # raises Conflict / InvalidName BEFORE anything is added
+        client,
+        name,
+        distance_metric=data.collection.distance_metric,
+        embedding_function=data.collection.embedding_function,
+        metadata=data.collection.metadata or None,
+    )
+    try:
+        add_records(client, name, data.records)
+    except Exception:
+        try:
+            client.delete_collection(name)  # roll back our just-created collection
+        except Exception:
+            pass
+        raise
+    return get_collection_details(client, name)
