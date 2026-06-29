@@ -7,11 +7,14 @@ import { ConnectionForm } from "./features/connection/ConnectionForm";
 import { ConnectionStatus } from "./features/connection/ConnectionStatus";
 import { QueryPanel } from "./features/query/QueryPanel";
 import { RecordsTable } from "./features/records/RecordsTable";
+import { ExportButton } from "./features/io/ExportButton";
+import { ImportPanel } from "./features/io/ImportPanel";
 
 export function App() {
   const [selected, setSelected] = useState<string | null>(null);
   const [showConn, setShowConn] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const qc = useQueryClient();
 
   function refreshCollections() {
@@ -49,10 +52,22 @@ export function App() {
       <aside className="sidebar">
         <div className="rail-head">
           <p className="eyebrow">Collections</p>
-          <button onClick={() => setShowCreate((s) => !s)} aria-expanded={showCreate}>
-            New collection
-          </button>
+          <div className="rail-head-actions">
+            <button onClick={() => setShowImport((s) => !s)} aria-expanded={showImport}>Import</button>
+            <button onClick={() => setShowCreate((s) => !s)} aria-expanded={showCreate}>New collection</button>
+          </div>
         </div>
+        {showImport && (
+          <div className="panel panel-tight">
+            <ImportPanel
+              onImported={(name) => {
+                refreshCollections();
+                setSelected(name);
+                setShowImport(false);
+              }}
+            />
+          </div>
+        )}
         {showCreate && (
           <div className="panel panel-tight">
             <CollectionCreate
@@ -73,6 +88,7 @@ export function App() {
             <div className="collection-head">
               <p className="eyebrow">Collection</p>
               <h2>{selected}</h2>
+              <ExportButton name={selected} />
             </div>
             <CollectionDetails
               name={selected}

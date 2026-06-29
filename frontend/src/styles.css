@@ -1222,3 +1222,7 @@ p.guard[data-level="warn"] {
   gap: var(--sp-3);
   font-size: var(--t-xs);
 }
+.rail-head-actions {
+  display: flex;
+  gap: var(--sp-2);
+}
