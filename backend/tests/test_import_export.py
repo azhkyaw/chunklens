@@ -141,3 +141,50 @@ def test_import_rolls_back_on_add_failure():
     with pytest.raises(ValueError):
         chroma_service.import_collection(client, bad, name_override="rb_col")
     assert not chroma_service.collection_exists(client, "rb_col")  # cleaned up
+
+
+def test_export_endpoint(api):
+    r = api.get("/api/collections/docs/export?include_embeddings=true")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["collection"]["name"] == "docs"
+    assert len(body["records"]) == 3
+    assert body["records"][0]["embedding"] is not None
+
+
+def test_export_missing_is_404(api):
+    assert api.get("/api/collections/nope/export").status_code == 404
+
+
+def test_import_endpoint_creates_collection(api):
+    payload = {
+        "chunklens_export": 1,
+        "collection": {"name": "ignored", "distance_metric": "l2", "embedding_function": "none", "metadata": {}},
+        "records": [{"id": "x1", "document": "hi", "metadata": {"lang": "en"}, "embedding": [1.0, 2.0]}],
+    }
+    r = api.post("/api/collections/import?name=imp_col", json=payload)
+    assert r.status_code == 201
+    assert r.json()["name"] == "imp_col"
+    assert api.get("/api/collections/imp_col").status_code == 200
+
+
+def test_import_conflict_is_409(api):
+    payload = {"chunklens_export": 1, "collection": {"name": "docs", "embedding_function": "none"}, "records": []}
+    r = api.post("/api/collections/import?name=docs", json=payload)
+    assert r.status_code == 409
+
+
+def test_import_none_ef_without_embedding_is_400(api):
+    payload = {
+        "chunklens_export": 1,
+        "collection": {"name": "bad_col", "embedding_function": "none"},
+        "records": [{"id": "a", "document": "no vector"}],
+    }
+    r = api.post("/api/collections/import?name=bad_col", json=payload)
+    assert r.status_code == 400
+
+
+def test_import_bad_version_is_400(api):
+    payload = {"chunklens_export": 99, "collection": {"name": "v_col", "embedding_function": "none"}, "records": []}
+    r = api.post("/api/collections/import?name=v_col", json=payload)
+    assert r.status_code == 400

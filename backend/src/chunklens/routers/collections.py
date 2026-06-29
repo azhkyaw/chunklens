@@ -9,6 +9,7 @@ from ..schemas import (
     CollectionDetails,
     CollectionSummary,
     CreateCollectionRequest,
+    ExportFile,
     MetadataKeysResponse,
     Record,
     RecordsPage,
@@ -32,6 +33,14 @@ def get_records(name: str, limit: int = 50, offset: int = 0, client=Depends(get_
         raise HTTPException(status_code=404, detail=str(exc))
 
 
+@router.get("/{name}/export", response_model=ExportFile)
+def export_collection(name: str, include_embeddings: bool = False, client=Depends(get_client)):
+    try:
+        return chroma_service.export_collection(client, name, include_embeddings=include_embeddings)
+    except NotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
 @router.post("", response_model=CollectionDetails, status_code=201)
 def create_collection(body: CreateCollectionRequest, client=Depends(get_client)):
     try:
@@ -45,6 +54,16 @@ def create_collection(body: CreateCollectionRequest, client=Depends(get_client))
     except Conflict as exc:
         raise HTTPException(status_code=409, detail=str(exc))
     except InvalidName as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@router.post("/import", response_model=CollectionDetails, status_code=201)
+def import_collection(body: ExportFile, name: str | None = None, client=Depends(get_client)):
+    try:
+        return chroma_service.import_collection(client, body, name_override=name)
+    except Conflict as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
+    except (InvalidName, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
 
