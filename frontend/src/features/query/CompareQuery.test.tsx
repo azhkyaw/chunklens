@@ -10,7 +10,7 @@ function wrap(ui: React.ReactNode) {
   const qc = new QueryClient();
   return <QueryClientProvider client={qc}>{ui}</QueryClientProvider>;
 }
-const DETAILS = { name: "docs", count: 2, dimensionality: 2, distance_metric: "cosine", embedding_function: "default", metadata: {} };
+const DETAILS = { name: "docs", count: 2, dimensionality: 384, distance_metric: "cosine", embedding_function: "default", metadata: {} };
 
 test("runs both queries and renders a compare with only-A / only-B", async () => {
   vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });

@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRunQuery, useCollectionDetails } from "../../api/hooks";
 import { QueryForm } from "./QueryForm";
 import { CompareView } from "../retrieval/CompareView";
 import { QueryContextStrip } from "../retrieval/QueryContextStrip";
 import { GuardBanner } from "../retrieval/GuardBanner";
-import { evaluateGuards } from "../retrieval/guards";
+import { evaluateGuards, defaultQueryMode } from "../retrieval/guards";
 import { interpretQueryError } from "../retrieval/errorInterpret";
-import { newQuerySpec, serializeSpec, specErrors, type QuerySpec } from "./querySpec";
+import { newQuerySpec, serializeSpec, specErrors, vectorError, type QuerySpec } from "./querySpec";
 
 export function CompareQuery({ name }: { name: string }) {
   const [specA, setSpecA] = useState<QuerySpec>(() => newQuerySpec());
@@ -15,11 +15,26 @@ export function CompareQuery({ name }: { name: string }) {
   const runB = useRunQuery(name);
   const { data: details } = useCollectionDetails(name);
   const metric = details?.distance_metric ?? "l2";
-  const guardsA = evaluateGuards({ details, text: specA.text, hasEmbedding: false });
-  const guardsB = evaluateGuards({ details, text: specB.text, hasEmbedding: false });
+
+  const appliedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (details && appliedFor.current !== name) {
+      appliedFor.current = name;
+      const m = defaultQueryMode(details);
+      setSpecA((s) => ({ ...s, mode: m }));
+      setSpecB((s) => ({ ...s, mode: m }));
+    }
+  }, [details, name]);
+
+  const verrA = vectorError(specA, details);
+  const verrB = vectorError(specB, details);
+  const guardsA = evaluateGuards({ details, mode: specA.mode, text: specA.text, hasEmbedding: specA.mode === "vector" && verrA === null });
+  const guardsB = evaluateGuards({ details, mode: specB.mode, text: specB.text, hasEmbedding: specB.mode === "vector" && verrB === null });
   const blocked = [...guardsA, ...guardsB].some((g) => g.level === "block");
   const invalid = specErrors(specA).length > 0 || specErrors(specB).length > 0;
   const pending = runA.isPending || runB.isPending;
+  const readyA = specA.mode === "text" ? specA.text.trim() !== "" : verrA === null;
+  const readyB = specB.mode === "text" ? specB.text.trim() !== "" : verrB === null;
 
   function runBoth() {
     runA.mutate(serializeSpec(specA));
@@ -30,11 +45,11 @@ export function CompareQuery({ name }: { name: string }) {
     <div className="console-body">
       <QueryContextStrip details={details} />
       <div className="compare-forms">
-        <div className="compare-col"><p className="eyebrow">Input A</p><QueryForm name={name} spec={specA} onChange={setSpecA} /><GuardBanner guards={guardsA} /></div>
-        <div className="compare-col"><p className="eyebrow">Input B</p><QueryForm name={name} spec={specB} onChange={setSpecB} /><GuardBanner guards={guardsB} /></div>
+        <div className="compare-col"><p className="eyebrow">Input A</p><QueryForm name={name} spec={specA} details={details} onChange={setSpecA} /><GuardBanner guards={guardsA} /></div>
+        <div className="compare-col"><p className="eyebrow">Input B</p><QueryForm name={name} spec={specB} details={details} onChange={setSpecB} /><GuardBanner guards={guardsB} /></div>
       </div>
       <div className="form-actions">
-        <button className="btn-primary" onClick={runBoth} disabled={!specA.text || !specB.text || invalid || blocked || pending}>Run both</button>
+        <button className="btn-primary" onClick={runBoth} disabled={!readyA || !readyB || invalid || blocked || pending}>Run both</button>
       </div>
       {runA.error && <p role="alert">Query A failed - {interpretQueryError((runA.error as Error).message, { details })}</p>}
       {runB.error && <p role="alert">Query B failed - {interpretQueryError((runB.error as Error).message, { details })}</p>}

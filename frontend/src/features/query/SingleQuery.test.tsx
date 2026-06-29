@@ -10,7 +10,8 @@ function wrap(ui: React.ReactNode) {
   const qc = new QueryClient();
   return <QueryClientProvider client={qc}>{ui}</QueryClientProvider>;
 }
-const DETAILS = { name: "docs", count: 1, dimensionality: 2, distance_metric: "cosine", embedding_function: "default", metadata: {} };
+// dim 384 => default-EF collection stays in Text mode under the smart default
+const DETAILS = { name: "docs", count: 1, dimensionality: 384, distance_metric: "cosine", embedding_function: "default", metadata: {} };
 
 test("runs a query and shows scored ranked hits", async () => {
   vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
@@ -42,6 +43,8 @@ test("blocks Run and shows a banner for text on a none-EF collection", async () 
   vi.spyOn(api, "getCollectionDetails").mockResolvedValue({ name: "docs", count: 0, dimensionality: 3, distance_metric: "l2", embedding_function: "none", metadata: {} });
   render(wrap(<SingleQuery name="docs" />));
   await waitFor(() => expect(screen.getByText(/EF:/)).toBeInTheDocument());
+  // none-EF defaults to Vector; switch to Text to exercise the text-query block
+  await userEvent.click(screen.getByRole("tab", { name: /^text$/i }));
   await userEvent.type(screen.getByLabelText(/query text/i), "hello");
   expect(screen.getByRole("button", { name: /^run$/i })).toBeDisabled();
   expect(screen.getByRole("alert")).toHaveTextContent(/no embedding function/i);
@@ -55,4 +58,15 @@ test("interprets a dimension-mismatch query error", async () => {
   await userEvent.type(screen.getByLabelText(/query text/i), "hello");
   await userEvent.click(screen.getByRole("button", { name: /^run$/i }));
   expect(await screen.findByText(/dimensionality/i)).toBeInTheDocument();
+});
+
+test("a none-EF collection defaults to Vector mode and runs with query_embedding", async () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue({ name: "docs", count: 1, dimensionality: 3, distance_metric: "l2", embedding_function: "none", metadata: {} });
+  const q = vi.spyOn(api, "query").mockResolvedValue({ hits: [] });
+  render(wrap(<SingleQuery name="docs" />));
+  const ta = await screen.findByLabelText(/query vector/i); // smart default -> Vector
+  await userEvent.type(ta, "1, 2, 3");                       // bare CSV (avoid userEvent's [ ] special chars)
+  await userEvent.click(screen.getByRole("button", { name: /^run$/i }));
+  await waitFor(() => expect(q).toHaveBeenCalledWith("docs", expect.objectContaining({ query_embedding: [1, 2, 3] })));
 });
