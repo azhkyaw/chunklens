@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { CollectionsList } from "./features/collections/CollectionsList";
 import { CollectionCreate } from "./features/collections/CollectionCreate";
@@ -15,6 +15,8 @@ export function App() {
   const [showConn, setShowConn] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [view, setView] = useState<"records" | "query">("records");
+  useEffect(() => setView("records"), [selected]);
   const qc = useQueryClient();
 
   function refreshCollections() {
@@ -107,8 +109,13 @@ export function App() {
                 setSelected(null);
               }}
             />
-            <RecordsTable name={selected} />
-            <QueryPanel name={selected} />
+            <div className="view-switch" role="tablist" aria-label="Collection view">
+              <button type="button" role="tab" aria-selected={view === "records"}
+                      className="view-tab" onClick={() => setView("records")}>Records</button>
+              <button type="button" role="tab" aria-selected={view === "query"}
+                      className="view-tab" onClick={() => setView("query")}>Query</button>
+            </div>
+            {view === "records" ? <RecordsTable name={selected} /> : <QueryPanel name={selected} />}
           </>
         ) : (
           <div className="empty-bench">

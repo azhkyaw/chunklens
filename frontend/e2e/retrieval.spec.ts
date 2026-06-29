@@ -5,6 +5,7 @@ test("scores a query, reveals provenance, then compares two queries", async ({ p
   await page.getByRole("button", { name: /^demo\b/ }).click();
 
   // Single query: run, see scored results, expand the top hit
+  await page.getByRole("tab", { name: /^query$/i }).click();
   await page.getByLabel(/query text/i).fill("the quick brown fox");
   await page.getByRole("button", { name: /^run$/i }).click();
   await expect(page.getByText(/\d+ hits ·/)).toBeVisible();     // metric-aware results rendered

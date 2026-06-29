@@ -6,6 +6,7 @@ test("build a metadata filter visually and run the query", async ({ page }) => {
   await page.getByRole("button", { name: /^demo\b/ }).click();
   await expect(page.getByRole("heading", { name: "demo" })).toBeVisible();
 
+  await page.getByRole("tab", { name: /^query$/i }).click();
   await page.getByLabel(/query text/i).fill("alpha");
   // Metadata filter builder is the first "add condition"
   await page.getByRole("button", { name: /add condition/i }).first().click();

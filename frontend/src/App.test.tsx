@@ -44,6 +44,30 @@ test("renders the app title and a New collection toggle", () => {
   expect(screen.getByRole("button", { name: /new collection/i })).toBeInTheDocument();
 });
 
+test("a selected collection lands on Records and can switch to Query", async () => {
+  vi.spyOn(api, "listCollections").mockResolvedValue([{ name: "demo", count: 3 }]);
+  vi.spyOn(api, "getConnection").mockResolvedValue(CONN);
+  vi.spyOn(api, "testConnection").mockResolvedValue({ ok: true });
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
+  vi.spyOn(api, "getRecords").mockResolvedValue({
+    items: [{ id: "a", document: "alpha doc", metadata: { lang: "en" } }],
+    limit: 25, offset: 0, total: 1,
+  });
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+
+  renderApp();
+  await userEvent.click(await screen.findByRole("button", { name: /^demo\b/ }));
+
+  // default view = Records: the table is shown, the Records tab is selected
+  expect(await screen.findByRole("table")).toBeInTheDocument();
+  expect(screen.getByRole("tab", { name: /^records$/i })).toHaveAttribute("aria-selected", "true");
+
+  // switch to Query: the console heading shows, the table is gone
+  await userEvent.click(screen.getByRole("tab", { name: /^query$/i }));
+  expect(screen.getByRole("heading", { name: "Query" })).toBeInTheDocument();
+  expect(screen.queryByRole("table")).not.toBeInTheDocument();
+});
+
 test("switching the connection clears the selected collection from the view", async () => {
   vi.spyOn(api, "listCollections").mockResolvedValue([{ name: "demo", count: 3 }]);
   vi.spyOn(api, "getConnection").mockResolvedValue(CONN);

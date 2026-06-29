@@ -931,6 +931,33 @@ p[role="alert"] {
   font-weight: 600;
 }
 
+/* Outer Records|Query view switcher (heavier than the inner Single/Compare .tabs) */
+.view-switch {
+  display: inline-flex;
+  gap: 2px;
+  background: var(--surface-inset);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 3px;
+  margin: var(--sp-2) 0;
+}
+.view-tab {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  padding: 6px 18px;
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+.view-tab:hover:not([aria-selected="true"]) { color: var(--ink); }
+.view-tab[aria-selected="true"] {
+  background: var(--surface);
+  border-color: var(--line-strong);
+  color: var(--ink);
+  box-shadow: var(--shadow-1);
+}
+
 .query-form {
   display: flex;
   flex-direction: column;
