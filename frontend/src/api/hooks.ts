@@ -1,8 +1,9 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./client";
 import type {
   ConnectionInput,
   CreateCollectionInput,
+  EmbedderSpec,
   ExportFile,
   QueryRequest,
   ScalarMetadata,
@@ -77,3 +78,19 @@ export const useSetEmbedderKey = () =>
     mutationFn: (vars: { provider: string; token: string }) =>
       api.setEmbedderKey(vars.provider, vars.token),
   });
+
+export const useSetCollectionEmbedder = (name: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (spec: EmbedderSpec) => api.setCollectionEmbedder(name, spec),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["collection", name] }),
+  });
+};
+
+export const useClearCollectionEmbedder = (name: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.clearCollectionEmbedder(name),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["collection", name] }),
+  });
+};

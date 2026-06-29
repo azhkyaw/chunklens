@@ -6,6 +6,7 @@ import type {
   ConnectionTestResult,
   CreateCollectionInput,
   EmbedderInfo,
+  EmbedderSpec,
   ExportFile,
   MetadataKeysResponse,
   QueryRequest,
@@ -84,4 +85,11 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ token }),
     }),
+  setCollectionEmbedder: (name: string, spec: EmbedderSpec) =>
+    jsonFetch<void>(`/api/collections/${encodeURIComponent(name)}/embedder`, {
+      method: "PUT",
+      body: JSON.stringify(spec),
+    }),
+  clearCollectionEmbedder: (name: string) =>
+    jsonFetch<void>(`/api/collections/${encodeURIComponent(name)}/embedder`, { method: "DELETE" }),
 };
