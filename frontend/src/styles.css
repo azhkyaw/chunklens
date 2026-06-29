@@ -32,42 +32,44 @@
 :root {
   color-scheme: light dark;
 
-  /* Surfaces - a cool instrument "chassis" with white panels and recessed insets */
-  --bg: #eef1f2;
+  /* Surfaces - flat white panels on a near-white canvas, hairline-separated */
+  --bg: #ffffff;
   --surface: #ffffff;
-  --surface-2: #f5f8f9;
-  --surface-inset: #e7eced; /* recessed: code, JSON, score tracks, spec plate */
+  --surface-2: #fafafa;
+  --surface-inset: #f4f4f5; /* recessed: code, JSON, score tracks, spec plate */
 
-  /* Ink - deep petrol-slate, never pure black */
-  --ink: #16242b;
-  --ink-muted: #566a71;
-  --ink-faint: #86949b;
-  --line: #d7dee0;
-  --line-strong: #c1cccf;
+  /* Ink - graphite neutrals (zinc scale) */
+  --ink: #09090b;
+  --ink-muted: #71717a;
+  --ink-faint: #a1a1aa;
+  --line: #e4e4e7;
+  --line-strong: #d4d4d8;
 
-  /* Accent - petrol-teal, drawn from anti-reflective lens coatings */
-  --accent: #0e7c86;
-  --accent-hover: #0a626a;
+  /* Accent - teal */
+  --accent: #0d9488;
+  --accent-hover: #0f766e;
   --accent-ink: #ffffff;
-  --accent-weak: #d7eced;
-  --accent-weak-border: #a6d4d8;
+  --accent-weak: #ccfbf1;
+  --accent-weak-border: #99f6e4;
+  --accent-btn: #0f766e; /* darker teal so white label clears AA (4.5) on the button */
+  --accent-btn-hover: #115e59;
 
   /* Semantics - kept deliberately OUT of the accent family */
-  --warn-ink: #8a5a06;
-  --warn-bg: #fbf0d9;
-  --warn-border: #ead2a0;
-  --danger: #b23a48;
-  --danger-hover: #97303d;
-  --danger-bg: #fbe3e6;
-  --danger-border: #e9c0c6;
+  --warn-ink: #92610a;
+  --warn-bg: #fef6e7;
+  --warn-border: #f0d9a8;
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+  --danger-bg: #fef2f2;
+  --danger-border: #fecaca;
 
   /* Score ramp - the signature. Fill rides low→high as relative score rises. */
   --ramp-low: #aec4c7;
   --ramp-high: #0e7c86;
 
-  --focus: #0e7c86;
-  --shadow-1: 0 1px 2px rgba(16, 36, 43, 0.06), 0 2px 8px rgba(16, 36, 43, 0.07);
-  --shadow-2: 0 6px 24px rgba(16, 36, 43, 0.12);
+  --focus: #0d9488;
+  --shadow-1: 0 1px 2px rgba(9, 9, 11, 0.05);
+  --shadow-2: 0 10px 30px rgba(9, 9, 11, 0.12);
 
   /* Type */
   --font-ui: "Geist Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial,
@@ -91,42 +93,44 @@
   --sp-6: 32px;
   --r-sm: 4px;
   --r-md: 6px;
-  --r-lg: 10px;
+  --r-lg: 8px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0e1416;
-    --surface: #151d20;
-    --surface-2: #1a2428;
-    --surface-inset: #0a1012;
+    --bg: #0a0a0b;
+    --surface: #0e0e10;
+    --surface-2: #161618;
+    --surface-inset: #1c1c20;
 
-    --ink: #e6edef;
-    --ink-muted: #93a2a8;
-    --ink-faint: #6c7c82;
-    --line: #28343a;
-    --line-strong: #38474e;
+    --ink: #fafafa;
+    --ink-muted: #a1a1aa;
+    --ink-faint: #71717a;
+    --line: #27272a;
+    --line-strong: #3f3f46;
 
-    --accent: #2bb7c4; /* luminous teal - reads like a lit readout */
-    --accent-hover: #46c8d3;
-    --accent-ink: #07191c;
-    --accent-weak: #143038;
-    --accent-weak-border: #1e4750;
+    --accent: #14b8a6;
+    --accent-hover: #2dd4bf;
+    --accent-ink: #042f2e;
+    --accent-weak: #134e4a;
+    --accent-weak-border: #115e59;
+    --accent-btn: #14b8a6; /* dark accent already clears AA on --accent-ink */
+    --accent-btn-hover: #2dd4bf;
 
     --warn-ink: #e8c583;
-    --warn-bg: #2b2417;
+    --warn-bg: #2a2114;
     --warn-border: #4a3d20;
-    --danger: #e2868f;
-    --danger-hover: #eca0a8;
-    --danger-bg: #2a1619;
-    --danger-border: #4a2429;
+    --danger: #f87171;
+    --danger-hover: #fca5a5;
+    --danger-bg: #2a1416;
+    --danger-border: #4a2226;
 
     --ramp-low: #33474d;
     --ramp-high: #2bb7c4;
 
-    --focus: #2bb7c4;
-    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 10px rgba(0, 0, 0, 0.35);
-    --shadow-2: 0 8px 28px rgba(0, 0, 0, 0.5);
+    --focus: #14b8a6;
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-2: 0 12px 32px rgba(0, 0, 0, 0.55);
   }
 }
 
@@ -262,14 +266,14 @@ button:disabled {
 }
 
 .btn-primary {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-btn);
+  border-color: var(--accent-btn);
   color: var(--accent-ink);
   font-weight: 600;
 }
 .btn-primary:hover:not(:disabled) {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
+  background: var(--accent-btn-hover);
+  border-color: var(--accent-btn-hover);
   color: var(--accent-ink);
 }
 .btn-danger {
@@ -462,7 +466,7 @@ code {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
-  box-shadow: var(--shadow-2);
+  box-shadow: var(--shadow-1);
   padding: var(--sp-4);
 }
 .panel-tight {
@@ -1258,6 +1262,7 @@ p.guard[data-level="warn"] {
   width: min(560px, 96vw);
   max-height: 90vh;
   overflow: auto;
+  box-shadow: var(--shadow-2); /* a true overlay floats; inline .panel stays flat */
 }
 
 /* ----------------------------------------------------------------------------
