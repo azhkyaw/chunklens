@@ -25,13 +25,13 @@ export function MetadataEditor({
   label?: string;
 }) {
   return (
-    <label style={{ display: "block" }}>
+    <label className="field">
       {label}
       <textarea
+        className="metadata-editor"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={4}
-        style={{ width: "100%", fontFamily: "monospace" }}
       />
     </label>
   );

@@ -4,9 +4,9 @@ const URL_RE = /^https?:\/\/\S+$/i;
 
 export function MetadataTable({ metadata }: { metadata: Record<string, unknown> | null }) {
   const entries = Object.entries(metadata ?? {});
-  if (entries.length === 0) return <p>no metadata</p>;
+  if (entries.length === 0) return <p className="muted">No metadata on this chunk.</p>;
   return (
-    <table>
+    <table className="meta-table">
       <tbody>
         {entries.map(([k, v]) => (
           <tr key={k} data-provenance={isProvenanceKey(k) ? "true" : undefined}>

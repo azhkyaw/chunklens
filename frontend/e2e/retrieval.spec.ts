@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test("scores a query, reveals provenance, then compares two queries", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /^demo \(/ }).click();
+  await page.getByRole("button", { name: /^demo\b/ }).click();
 
   // Single query: run, see scored results, expand the top hit
   await page.getByLabel(/query text/i).fill("the quick brown fox");

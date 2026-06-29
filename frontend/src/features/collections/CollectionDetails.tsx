@@ -28,7 +28,7 @@ export function CollectionDetails({
     if (data) setMetaText(JSON.stringify(data.metadata ?? {}, null, 2));
   }, [data]);
 
-  if (!data) return <p>Loading details…</p>;
+  if (!data) return <p className="muted">Loading details…</p>;
 
   function saveMeta() {
     setError(null);
@@ -53,37 +53,47 @@ export function CollectionDetails({
   }
 
   return (
-    <section>
-      <dl style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "2px 12px" }}>
-        <dt>Records</dt><dd>{data.count}</dd>
-        <dt>Dimensionality</dt><dd>{data.dimensionality ?? "-"}</dd>
-        <dt>Distance metric</dt><dd>{data.distance_metric}</dd>
-        <dt>Embedding function</dt><dd>{data.embedding_function}</dd>
+    <section className="details">
+      <dl className="spec-plate">
+        <div className="spec"><dt>Records</dt><dd>{data.count}</dd></div>
+        <div className="spec"><dt>Dimensions</dt><dd>{data.dimensionality ?? "-"}</dd></div>
+        <div className="spec"><dt>Metric</dt><dd>{data.distance_metric}</dd></div>
+        <div className="spec"><dt>Embedding fn</dt><dd>{data.embedding_function}</dd></div>
       </dl>
 
-      <div>
-        <label>Rename <input value={newName} onChange={(e) => setNewName(e.target.value)} /></label>
-        <button type="button" onClick={rename} disabled={update.isPending}>Save name</button>
-      </div>
+      <details className="manage">
+        <summary>Manage collection</summary>
+        <div className="manage-body">
+          <div className="form-row">
+            <label className="field" style={{ flex: 1 }}>Rename <input value={newName} onChange={(e) => setNewName(e.target.value)} /></label>
+            <button type="button" onClick={rename} disabled={update.isPending}>Save name</button>
+          </div>
 
-      <MetadataEditor value={metaText} onChange={setMetaText} label="Collection metadata (JSON)" />
-      <button type="button" onClick={saveMeta} disabled={update.isPending}>Save metadata</button>
+          <div>
+            <MetadataEditor value={metaText} onChange={setMetaText} label="Collection metadata (JSON)" />
+            <div className="form-actions">
+              <button type="button" onClick={saveMeta} disabled={update.isPending}>Save metadata</button>
+            </div>
+          </div>
 
-      <div>
-        <label>
-          Type the name to delete{" "}
-          <input value={confirm} onChange={(e) => setConfirm(e.target.value)} />
-        </label>
-        <button
-          type="button"
-          disabled={confirm !== name || del.isPending}
-          onClick={() => del.mutate(name, { onSuccess: onDeleted })}
-        >
-          Delete
-        </button>
-      </div>
+          <div className="danger-zone">
+            <label className="field" style={{ flex: 1 }}>
+              Type the name to delete
+              <input value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+            </label>
+            <button
+              type="button"
+              className="btn-danger"
+              disabled={confirm !== name || del.isPending}
+              onClick={() => del.mutate(name, { onSuccess: onDeleted })}
+            >
+              Delete
+            </button>
+          </div>
 
-      {error && <p role="alert">{error}</p>}
+          {error && <p role="alert">{error}</p>}
+        </div>
+      </details>
     </section>
   );
 }

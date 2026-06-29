@@ -2,8 +2,8 @@ import { expect, test } from "@playwright/test";
 
 test("build a metadata filter visually and run the query", async ({ page }) => {
   await page.goto("/");
-  // CollectionsList button label is "demo (3)" - match the name, not exact text.
-  await page.getByRole("button", { name: /^demo \(/ }).click();
+  // CollectionsList button accessible name is "demo 3" (name + count chip).
+  await page.getByRole("button", { name: /^demo\b/ }).click();
   await expect(page.getByRole("heading", { name: "demo" })).toBeVisible();
 
   await page.getByLabel(/query text/i).fill("alpha");

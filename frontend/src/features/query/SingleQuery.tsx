@@ -20,12 +20,14 @@ export function SingleQuery({ name }: { name: string }) {
   const blocked = guards.some((g) => g.level === "block");
 
   return (
-    <div>
+    <div className="console-body">
       <QueryContextStrip details={details} />
       <QueryForm name={name} spec={spec} onChange={setSpec} />
       <GuardBanner guards={guards} />
-      <button onClick={() => run.mutate(serializeSpec(spec))}
-              disabled={!spec.text || errors.length > 0 || blocked || run.isPending}>Run</button>
+      <div className="form-actions">
+        <button className="btn-primary" onClick={() => run.mutate(serializeSpec(spec))}
+                disabled={!spec.text || errors.length > 0 || blocked || run.isPending}>Run</button>
+      </div>
       {errors.length > 0 && <p role="alert">Fix filter errors: {errors.map((e) => e.message).join("; ")}</p>}
       {run.error && <p role="alert">Query failed - {interpretQueryError((run.error as Error).message, { details })}</p>}
       {run.data && <ResultsPanel hits={run.data.hits} metric={metric} keys={keyNames} />}

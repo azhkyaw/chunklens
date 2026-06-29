@@ -5,8 +5,7 @@ export function GuardBanner({ guards }: { guards: Guard[] }) {
   return (
     <>
       {guards.map((g, i) => (
-        <p key={i} role="alert" data-level={g.level}
-           style={{ background: g.level === "block" ? "#fee2e2" : "#fef3c7", padding: 8, borderRadius: 6 }}>
+        <p key={i} className="guard" role="alert" data-level={g.level}>
           {g.message}
         </p>
       ))}

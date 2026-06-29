@@ -14,7 +14,7 @@ export function RecordsTable({ name }: { name: string }) {
   const [metaText, setMetaText] = useState("");
   const [editError, setEditError] = useState<string | null>(null);
 
-  if (isLoading) return <p>Loading records…</p>;
+  if (isLoading) return <p className="muted">Loading records…</p>;
   if (error) return <p role="alert">Failed to load records.</p>;
   const page = data!;
 
@@ -46,46 +46,51 @@ export function RecordsTable({ name }: { name: string }) {
   }
 
   return (
-    <div>
-      <table>
-        <thead>
-          <tr><th>ID</th><th>Document</th><th>Metadata</th><th /></tr>
-        </thead>
-        <tbody>
-          {page.items.map((r) => (
-            <tr key={r.id}>
-              <td>{r.id}</td>
-              <td>{r.document}</td>
-              <td><code>{JSON.stringify(r.metadata)}</code></td>
-              <td>
-                <button type="button" onClick={() => startEdit(r.id, r.metadata)}>Edit</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <section className="records">
+      <p className="eyebrow">Records</p>
+      <div className="table-scroll">
+        <table className="records-table">
+          <thead>
+            <tr><th>ID</th><th>Document</th><th>Metadata</th><th></th></tr>
+          </thead>
+          <tbody>
+            {page.items.map((r) => (
+              <tr key={r.id}>
+                <td className="cell-id">{r.id}</td>
+                <td className="cell-doc">{r.document}</td>
+                <td className="cell-meta"><code>{JSON.stringify(r.metadata)}</code></td>
+                <td className="cell-actions">
+                  <button type="button" className="btn-sm" onClick={() => startEdit(r.id, r.metadata)}>Edit</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {editId && (
-        <div role="dialog" aria-label="Edit record metadata">
-          <p>Editing <strong>{editId}</strong></p>
+        <div role="dialog" aria-label="Edit record metadata" className="panel record-edit">
+          <p className="muted">Editing <strong className="mono">{editId}</strong></p>
           <MetadataEditor value={metaText} onChange={setMetaText} label="Record metadata (JSON)" />
-          <button type="button" onClick={save} disabled={update.isPending}>Save</button>
-          <button type="button" onClick={() => setEditId(null)}>Cancel</button>
+          <div className="form-actions">
+            <button type="button" className="btn-primary" onClick={save} disabled={update.isPending}>Save</button>
+            <button type="button" onClick={() => setEditId(null)}>Cancel</button>
+          </div>
           {editError && <p role="alert">{editError}</p>}
         </div>
       )}
 
-      <div style={{ marginTop: 8, display: "flex", gap: 8, alignItems: "center" }}>
+      <div className="pager">
         <button disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - PAGE))}>
           Prev
         </button>
-        <span>
+        <span className="pager-status">
           {page.total === 0 ? 0 : offset + 1}–{Math.min(offset + PAGE, page.total)} of {page.total}
         </span>
         <button disabled={offset + PAGE >= page.total} onClick={() => setOffset(offset + PAGE)}>
           Next
         </button>
       </div>
-    </div>
+    </section>
   );
 }

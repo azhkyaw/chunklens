@@ -20,37 +20,60 @@ export function App() {
 
   return (
     <div className="app">
-      <aside className="sidebar">
-        <h1 style={{ fontSize: 18 }}>ChunkLens</h1>
-        <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
-          <ConnectionStatus />
-          <button onClick={() => setShowConn((s) => !s)}>Connection</button>
+      <header className="topbar">
+        <div className="topbar-inner">
+          <h1 className="brand">
+            <span className="brand-mark" aria-hidden="true" />
+            <span>ChunkLens</span>
+          </h1>
+          <div className="topbar-conn">
+            <ConnectionStatus />
+            <button onClick={() => setShowConn((s) => !s)} aria-expanded={showConn}>
+              Connection
+            </button>
+          </div>
         </div>
         {showConn && (
-          <ConnectionForm
-            onSaved={() => {
-              refreshCollections();
-              qc.invalidateQueries({ queryKey: ["connection"] });
-              setShowConn(false);
-            }}
-          />
+          <div className="conn-popover panel">
+            <ConnectionForm
+              onSaved={() => {
+                refreshCollections();
+                qc.invalidateQueries({ queryKey: ["connection"] });
+                setShowConn(false);
+              }}
+            />
+          </div>
         )}
-        <button onClick={() => setShowCreate((s) => !s)}>New collection</button>
+      </header>
+
+      <aside className="sidebar">
+        <div className="rail-head">
+          <p className="eyebrow">Collections</p>
+          <button onClick={() => setShowCreate((s) => !s)} aria-expanded={showCreate}>
+            New collection
+          </button>
+        </div>
         {showCreate && (
-          <CollectionCreate
-            onCreated={(name) => {
-              refreshCollections();
-              setSelected(name);
-              setShowCreate(false);
-            }}
-          />
+          <div className="panel panel-tight">
+            <CollectionCreate
+              onCreated={(name) => {
+                refreshCollections();
+                setSelected(name);
+                setShowCreate(false);
+              }}
+            />
+          </div>
         )}
         <CollectionsList selected={selected} onSelect={setSelected} />
       </aside>
+
       <main className="main">
         {selected ? (
           <>
-            <h2>{selected}</h2>
+            <div className="collection-head">
+              <p className="eyebrow">Collection</p>
+              <h2>{selected}</h2>
+            </div>
             <CollectionDetails
               name={selected}
               onRenamed={(newName) => {
@@ -68,7 +91,11 @@ export function App() {
             <QueryPanel name={selected} />
           </>
         ) : (
-          <p>Select a collection.</p>
+          <div className="empty-bench">
+            <span className="empty-mark" aria-hidden="true" />
+            <p className="empty-title">No collection selected</p>
+            <p className="muted">Pick a collection from the rail to inspect its records and debug retrieval.</p>
+          </div>
         )}
       </main>
     </div>

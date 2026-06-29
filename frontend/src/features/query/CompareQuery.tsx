@@ -27,13 +27,15 @@ export function CompareQuery({ name }: { name: string }) {
   }
 
   return (
-    <div>
+    <div className="console-body">
       <QueryContextStrip details={details} />
-      <div style={{ display: "flex", gap: 16 }}>
-        <div style={{ flex: 1 }}><QueryForm name={name} spec={specA} onChange={setSpecA} /><GuardBanner guards={guardsA} /></div>
-        <div style={{ flex: 1 }}><QueryForm name={name} spec={specB} onChange={setSpecB} /><GuardBanner guards={guardsB} /></div>
+      <div className="compare-forms">
+        <div className="compare-col"><p className="eyebrow">Input A</p><QueryForm name={name} spec={specA} onChange={setSpecA} /><GuardBanner guards={guardsA} /></div>
+        <div className="compare-col"><p className="eyebrow">Input B</p><QueryForm name={name} spec={specB} onChange={setSpecB} /><GuardBanner guards={guardsB} /></div>
       </div>
-      <button onClick={runBoth} disabled={!specA.text || !specB.text || invalid || blocked || pending}>Run both</button>
+      <div className="form-actions">
+        <button className="btn-primary" onClick={runBoth} disabled={!specA.text || !specB.text || invalid || blocked || pending}>Run both</button>
+      </div>
       {runA.error && <p role="alert">Query A failed - {interpretQueryError((runA.error as Error).message, { details })}</p>}
       {runB.error && <p role="alert">Query B failed - {interpretQueryError((runB.error as Error).message, { details })}</p>}
       {runA.data && runB.data && <CompareView a={runA.data} b={runB.data} metric={metric} />}

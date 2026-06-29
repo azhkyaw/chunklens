@@ -11,7 +11,10 @@ test("create a collection, inspect it, then delete it", async ({ page }) => {
 
   // selected automatically -> details panel shows the guard fields
   await expect(page.getByRole("heading", { name })).toBeVisible();
-  await expect(page.getByText(/Embedding function/i)).toBeVisible();
+  await expect(page.getByText(/Embedding fn/i)).toBeVisible();
+
+  // rename/metadata/delete live under the "Manage collection" disclosure
+  await page.getByText(/manage collection/i).click();
 
   // delete via typed confirmation
   await page.getByLabel(/type the name to delete/i).fill(name);

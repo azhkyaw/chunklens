@@ -10,19 +10,18 @@ export function HitRow({
   const [open, setOpen] = useState(false);
   const score = interpretScore(hit.distance, metric);
   return (
-    <li>
-      <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)}
-              style={{ display: "flex", gap: 8, alignItems: "center", width: "100%", textAlign: "left" }}>
-        <span>#{rank}</span>
+    <li className="hit">
+      <button type="button" className="hit-head" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        <span className="hit-rank">#{rank}</span>
         <ScoreBar fraction={fraction} betterIsHigher={score.betterIsHigher} />
-        <span>{score.primary}</span>
-        <span>{hit.id}</span>
+        <span className="hit-score">{score.primary}</span>
+        <span className="hit-id">{hit.id}</span>
         {badge}
-        <span style={{ color: "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{snippet(hit.document)}</span>
+        <span className="hit-snippet">{snippet(hit.document)}</span>
       </button>
       {open && (
-        <div>
-          <p>{hit.document ?? "(no document)"}</p>
+        <div className="hit-body">
+          <p className="hit-doc">{hit.document ?? "(no document)"}</p>
           <MetadataTable metadata={hit.metadata} />
         </div>
       )}

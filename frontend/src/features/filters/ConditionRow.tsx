@@ -36,12 +36,12 @@ export function ConditionRow({
 }) {
   if (node.lang === "where_document") {
     return (
-      <div role="group" aria-label="document condition" style={{ display: "flex", gap: 6 }}>
+      <div role="group" aria-label="document condition" className="condition-row">
         <select aria-label="operator" value={node.operator} onChange={(e) => onChange({ operator: e.target.value as DocOperator })}>
           {DOC_OPS.map((o) => <option key={o.op} value={o.op}>{o.label}</option>)}
         </select>
         <input aria-label="text" value={node.text} onChange={(e) => onChange({ text: e.target.value })} />
-        <button type="button" aria-label="remove" onClick={onRemove}>✕</button>
+        <button type="button" className="btn-sm filter-remove" aria-label="remove" onClick={onRemove}>✕</button>
       </div>
     );
   }
@@ -64,7 +64,7 @@ export function ConditionRow({
   }
 
   return (
-    <div role="group" aria-label="metadata condition" style={{ display: "flex", gap: 6 }}>
+    <div role="group" aria-label="metadata condition" className="condition-row">
       <input aria-label="field" list="meta-keys-list" value={node.field} onChange={(e) => setField(e.target.value)} />
       <datalist id="meta-keys-list">{keys.map((k) => <option key={k.key} value={k.key} />)}</datalist>
       <select aria-label="operator" value={node.operator} onChange={(e) => setOperator(e.target.value as MetaOperator)}>
@@ -80,7 +80,7 @@ export function ConditionRow({
         </select>
       )}
       <ValueEditor node={node} isArray={isArrayOp} onChange={onChange} />
-      <button type="button" aria-label="remove" onClick={onRemove}>✕</button>
+      <button type="button" className="btn-sm filter-remove" aria-label="remove" onClick={onRemove}>✕</button>
     </div>
   );
 }

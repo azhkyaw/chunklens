@@ -32,26 +32,32 @@ export function ConnectionForm({ onSaved }: { onSaved?: () => void }) {
 
   return (
     <form
+      className="form-stack"
       onSubmit={(e) => {
         e.preventDefault();
         save.mutate(buildInput(), { onSuccess: () => onSaved?.() });
       }}
     >
-      <label>Host <input value={host} onChange={(e) => setHost(e.target.value)} /></label>
-      <label>Port <input type="number" value={port} onChange={(e) => setPort(Number(e.target.value))} /></label>
-      <label>SSL <input type="checkbox" checked={ssl} onChange={(e) => setSsl(e.target.checked)} /></label>
-      <label>Tenant <input value={tenant} onChange={(e) => setTenant(e.target.value)} /></label>
-      <label>Database <input value={database} onChange={(e) => setDatabase(e.target.value)} /></label>
-      <label>
-        Auth{" "}
+      <p className="eyebrow">Connection</p>
+      <div className="form-row">
+        <label className="field" style={{ flex: 2 }}>Host <input value={host} onChange={(e) => setHost(e.target.value)} /></label>
+        <label className="field" style={{ flex: 1 }}>Port <input type="number" value={port} onChange={(e) => setPort(Number(e.target.value))} /></label>
+      </div>
+      <label className="field field-inline">SSL <input type="checkbox" checked={ssl} onChange={(e) => setSsl(e.target.checked)} /></label>
+      <div className="form-row">
+        <label className="field" style={{ flex: 1 }}>Tenant <input value={tenant} onChange={(e) => setTenant(e.target.value)} /></label>
+        <label className="field" style={{ flex: 1 }}>Database <input value={database} onChange={(e) => setDatabase(e.target.value)} /></label>
+      </div>
+      <label className="field">
+        Auth
         <select value={authMode} onChange={(e) => setAuthMode(e.target.value as "none" | "token")}>
           <option value="none">None</option>
           <option value="token">Token</option>
         </select>
       </label>
       {authMode === "token" && (
-        <label>
-          Token{" "}
+        <label className="field">
+          Token
           <input
             type="password"
             value={token}
@@ -60,8 +66,10 @@ export function ConnectionForm({ onSaved }: { onSaved?: () => void }) {
           />
         </label>
       )}
-      <button type="button" onClick={() => test.mutate(buildInput())}>Test</button>
-      <button type="submit" disabled={save.isPending}>Save</button>
+      <div className="form-actions">
+        <button type="button" onClick={() => test.mutate(buildInput())}>Test</button>
+        <button type="submit" className="btn-primary" disabled={save.isPending}>Save</button>
+      </div>
       {test.data && (
         <p role="status">{test.data.ok ? "Connection OK" : `Failed: ${test.data.error}`}</p>
       )}

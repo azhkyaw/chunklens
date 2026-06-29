@@ -17,26 +17,28 @@ export function FilterGroup({
   const addGroup = () => onAdd(node.id, newGroup());
 
   return (
-    <div style={{ border: "1px solid #ccc", padding: 8, marginTop: 6 }}>
-      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-        <select aria-label="match" value={node.connective} onChange={(e) => onUpdate(node.id, { connective: e.target.value as Connective })}>
+    <div className="filter-group">
+      <div className="filter-group-head">
+        <select aria-label="match" className="connective" value={node.connective} onChange={(e) => onUpdate(node.id, { connective: e.target.value as Connective })}>
           <option value="$and">Match ALL (AND)</option>
           <option value="$or">Match ANY (OR)</option>
         </select>
-        <span>of:</span>
-        <button type="button" onClick={addCondition}>+ Add condition</button>
-        <button type="button" onClick={addGroup}>+ Add group</button>
-        {!isRoot && <button type="button" aria-label="remove group" onClick={() => onRemove(node.id)}>✕</button>}
+        <span className="faint">of:</span>
+        <button type="button" className="btn-sm" onClick={addCondition}>+ Add condition</button>
+        <button type="button" className="btn-sm" onClick={addGroup}>+ Add group</button>
+        {!isRoot && <button type="button" className="btn-sm filter-remove" aria-label="remove group" onClick={() => onRemove(node.id)}>✕</button>}
       </div>
-      <div style={{ paddingLeft: 16 }}>
-        {node.children.map((child) =>
-          child.kind === "group" ? (
-            <FilterGroup key={child.id} node={child} lang={lang} keys={keys} onUpdate={onUpdate} onRemove={onRemove} onAdd={onAdd} />
-          ) : (
-            <ConditionRow key={child.id} node={child} keys={keys} onChange={(patch) => onUpdate(child.id, patch)} onRemove={() => onRemove(child.id)} />
-          ),
-        )}
-      </div>
+      {node.children.length > 0 && (
+        <div className="filter-children">
+          {node.children.map((child) =>
+            child.kind === "group" ? (
+              <FilterGroup key={child.id} node={child} lang={lang} keys={keys} onUpdate={onUpdate} onRemove={onRemove} onAdd={onAdd} />
+            ) : (
+              <ConditionRow key={child.id} node={child} keys={keys} onChange={(patch) => onUpdate(child.id, patch)} onRemove={() => onRemove(child.id)} />
+            ),
+          )}
+        </div>
+      )}
     </div>
   );
 }

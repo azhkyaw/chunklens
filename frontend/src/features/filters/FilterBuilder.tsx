@@ -18,10 +18,10 @@ export function FilterBuilder({
 
   const json = serialize(tree);
   return (
-    <section style={{ marginTop: 12 }}>
-      <h4 style={{ margin: "4px 0" }}>{title}</h4>
+    <section className="filter-builder">
+      <h4 className="filter-title">{title}</h4>
       <FilterGroup node={tree} lang={lang} keys={keys} isRoot onUpdate={update} onRemove={remove} onAdd={add} />
-      <pre aria-label={`${title} JSON`} style={{ background: "#f6f6f6", padding: 6, marginTop: 6 }}>
+      <pre className="filter-json" aria-label={`${title} JSON`}>
         {json === undefined ? "(no filter)" : JSON.stringify(json)}
       </pre>
     </section>

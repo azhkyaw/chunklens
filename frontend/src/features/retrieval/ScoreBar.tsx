@@ -1,13 +1,18 @@
+import type { CSSProperties } from "react";
+
 export function ScoreBar({ fraction, betterIsHigher }: { fraction: number; betterIsHigher: boolean }) {
   const pct = Math.round(fraction * 100);
   return (
     <span
+      className="scorebar"
       role="meter"
       aria-valuenow={pct}
+      aria-valuemin={0}
+      aria-valuemax={100}
       aria-label={betterIsHigher ? "relative similarity" : "relative closeness"}
-      style={{ display: "inline-block", width: 80, height: 8, background: "#e5e7eb", borderRadius: 4, overflow: "hidden", verticalAlign: "middle" }}
+      style={{ "--frac": pct } as CSSProperties}
     >
-      <span style={{ display: "block", width: `${Math.max(8, pct)}%`, height: "100%", background: "#22c55e" }} />
+      <span className="scorebar-fill" />
     </span>
   );
 }
