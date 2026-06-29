@@ -7,6 +7,7 @@ from chromadb.errors import InvalidArgumentError, NotFoundError
 from .schemas import (
     CollectionDetails,
     CollectionSummary,
+    ExportRecord,
     MetadataKeyInfo,
     MetadataKeysResponse,
     QueryHit,
@@ -261,3 +262,38 @@ def sample_metadata_keys(client, name: str, sample: int = 200) -> MetadataKeysRe
             agg.setdefault(k, set()).add(_scalar_type(v))
     keys = [MetadataKeyInfo(key=k, types=sorted(t)) for k, t in sorted(agg.items())]
     return MetadataKeysResponse(keys=keys, sampled=len(metas), total=total)
+
+
+_ADD_BATCH = 500
+
+
+def add_records(client, name: str, records: list[ExportRecord]) -> int:
+    col = _get(client, name)
+    ef = _ef_name(col, col.configuration_json or {})
+    have = [r.embedding is not None for r in records]
+    if any(have) and not all(have):
+        raise ValueError("Either every record includes an embedding, or none do.")
+    use_embeddings = bool(records) and all(have)
+    if ef == "none" and records and not use_embeddings:
+        raise ValueError(
+            "Collection has no embedding function, so every record must include an embedding."
+        )
+    if use_embeddings:
+        dims = {len(r.embedding) for r in records}
+        if len(dims) > 1:
+            raise ValueError(f"Inconsistent embedding dimensions: {sorted(dims)}")
+    added = 0
+    for i in range(0, len(records), _ADD_BATCH):
+        batch = records[i : i + _ADD_BATCH]
+        metadatas = [r.metadata or None for r in batch]
+        kwargs: dict[str, Any] = {
+            "ids": [r.id for r in batch],
+            "documents": [r.document for r in batch],
+        }
+        if any(m is not None for m in metadatas):
+            kwargs["metadatas"] = metadatas
+        if use_embeddings:
+            kwargs["embeddings"] = [r.embedding for r in batch]
+        col.add(**kwargs)
+        added += len(batch)
+    return added
