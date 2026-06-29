@@ -16,6 +16,7 @@ from ..schemas import (
     MetadataKeysResponse,
     Record,
     RecordsPage,
+    SourceList,
     UpdateCollectionRequest,
     UpdateRecordMetadataRequest,
 )
@@ -32,6 +33,24 @@ def list_collections(client=Depends(get_client)):
 def get_records(name: str, limit: int = 50, offset: int = 0, client=Depends(get_client)):
     try:
         return chroma_service.get_records(client, name, limit=limit, offset=offset)
+    except Exception as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
+@router.get("/{name}/sources", response_model=SourceList)
+def list_sources(name: str, key: str, cap: int = 10000, client=Depends(get_client)):
+    try:
+        return chroma_service.list_sources(client, name, key, cap=cap)
+    except Exception as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
+@router.get("/{name}/source-records", response_model=RecordsPage)
+def get_source_records(
+    name: str, key: str, value: str, limit: int = 50, offset: int = 0, client=Depends(get_client),
+):
+    try:
+        return chroma_service.get_records(client, name, limit=limit, offset=offset, where={key: {"$eq": value}})
     except Exception as exc:
         raise HTTPException(status_code=404, detail=str(exc))
 

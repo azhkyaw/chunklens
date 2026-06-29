@@ -35,10 +35,15 @@ def list_collections(client) -> list[CollectionSummary]:
     return summaries
 
 
-def get_records(client, name: str, limit: int = 50, offset: int = 0) -> RecordsPage:
+def get_records(client, name: str, limit: int = 50, offset: int = 0, where: Optional[dict] = None) -> RecordsPage:
     col = client.get_collection(name)
-    total = col.count()
-    res = col.get(include=["documents", "metadatas"], limit=limit, offset=offset)
+    if where is None:
+        total = col.count()
+    else:
+        # ids-only fetch for the filtered count. (If chromadb rejects include=[],
+        # use include=["metadatas"] - ids are returned regardless of include.)
+        total = len((col.get(where=where, include=[]) or {}).get("ids") or [])
+    res = col.get(include=["documents", "metadatas"], limit=limit, offset=offset, where=where)
     ids = res.get("ids") or []
     docs = res.get("documents") or [None] * len(ids)
     metas = res.get("metadatas") or [None] * len(ids)

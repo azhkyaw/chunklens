@@ -32,3 +32,32 @@ def test_list_sources_cap_limits_scan(chroma):
     sl = chroma_service.list_sources(chroma, "srcs", "source", cap=2)
     assert sl.scanned == 2 and sl.total == 5
     assert sum(s.count for s in sl.sources) == 2
+
+
+def test_get_records_with_where_filters_and_counts(chroma):
+    col = chroma.create_collection("srcs")
+    col.add(
+        ids=["1", "2", "3"],
+        embeddings=[[1.0, 0.0]] * 3,
+        documents=["x", "y", "z"],
+        metadatas=[{"source": "a"}, {"source": "a"}, {"source": "b"}],
+    )
+    page = chroma_service.get_records(chroma, "srcs", where={"source": {"$eq": "a"}})
+    assert page.total == 2
+    assert {i.id for i in page.items} == {"1", "2"}
+
+
+def test_sources_endpoint_lists_documents(api):
+    r = api.get("/api/collections/docs/sources?key=lang")
+    assert r.status_code == 200
+    body = r.json()
+    assert {s["value"]: s["count"] for s in body["sources"]} == {"en": 2, "fr": 1}
+    assert body["total"] == 3 and body["key"] == "lang"
+
+
+def test_source_records_endpoint_filters(api):
+    r = api.get("/api/collections/docs/source-records?key=lang&value=en")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["total"] == 2
+    assert {i["id"] for i in body["items"]} == {"a", "c"}
