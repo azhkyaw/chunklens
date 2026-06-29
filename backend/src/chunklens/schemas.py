@@ -108,6 +108,7 @@ class CollectionDetails(BaseModel):
     distance_metric: str
     embedding_function: str
     metadata: dict[str, Any] = Field(default_factory=dict)
+    embedder_hint: Optional[EmbedderSpec] = None
 
 
 class UpdateCollectionRequest(BaseModel):

@@ -3,12 +3,15 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 
 from .. import chroma_service
+from .. import embedder_hints
+from .. import embedders
 from ..chroma_service import Conflict, InvalidName, NotFound
-from ..deps import get_client
+from ..deps import get_active_config, get_client
 from ..schemas import (
     CollectionDetails,
     CollectionSummary,
     CreateCollectionRequest,
+    EmbedderSpec,
     ExportFile,
     MetadataKeysResponse,
     Record,
@@ -68,18 +71,36 @@ def import_collection(body: ExportFile, name: str | None = None, client=Depends(
 
 
 @router.get("/{name}", response_model=CollectionDetails)
-def get_collection(name: str, client=Depends(get_client)):
+def get_collection(name: str, client=Depends(get_client), cfg=Depends(get_active_config)):
     try:
-        return chroma_service.get_collection_details(client, name)
+        details = chroma_service.get_collection_details(client, name)
     except NotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc))
+    details.embedder_hint = embedder_hints.load_hint(cfg, name)
+    return details
+
+
+@router.put("/{name}/embedder", status_code=204)
+def set_collection_embedder(name: str, body: EmbedderSpec, cfg=Depends(get_active_config)):
+    if body.provider not in {e.id for e in embedders.list_embedders()}:
+        raise HTTPException(status_code=400, detail=f"Unknown embedding provider {body.provider!r}")
+    embedder_hints.save_hint(cfg, name, body)
+
+
+@router.delete("/{name}/embedder", status_code=204)
+def clear_collection_embedder(name: str, cfg=Depends(get_active_config)):
+    embedder_hints.clear_hint(cfg, name)
 
 
 @router.patch("/{name}", response_model=CollectionDetails)
-def update_collection(name: str, body: UpdateCollectionRequest, client=Depends(get_client)):
+def update_collection(
+    name: str, body: UpdateCollectionRequest,
+    client=Depends(get_client), cfg=Depends(get_active_config),
+):
     try:
         if body.name is not None and body.name != name:
             chroma_service.rename_collection(client, name, body.name)
+            embedder_hints.move_hint(cfg, name, body.name)
             name = body.name
         if body.metadata is not None:
             return chroma_service.update_collection_metadata(client, name, body.metadata)
@@ -93,11 +114,12 @@ def update_collection(name: str, body: UpdateCollectionRequest, client=Depends(g
 
 
 @router.delete("/{name}", status_code=204)
-def delete_collection(name: str, client=Depends(get_client)):
+def delete_collection(name: str, client=Depends(get_client), cfg=Depends(get_active_config)):
     try:
         chroma_service.delete_collection(client, name)
     except NotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc))
+    embedder_hints.clear_hint(cfg, name)
 
 
 @router.patch("/{name}/records/{record_id}", response_model=Record)
