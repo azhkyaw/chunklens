@@ -73,7 +73,17 @@ def query(
     if where_document:
         kwargs["where_document"] = where_document
 
-    res = col.query(**kwargs)
+    try:
+        res = col.query(**kwargs)
+    except Exception as exc:
+        if "dimension" in str(exc).lower():
+            got = len(query_embedding) if query_embedding is not None else "?"
+            raise ValueError(
+                f"Query vector ({got}-dim) doesn't match this collection's embedding "
+                f"dimension; the chosen model likely differs from the one that created "
+                f"these vectors. ({exc})"
+            ) from exc
+        raise
     ids = (res.get("ids") or [[]])[0]
     docs = (res.get("documents") or [[None] * len(ids)])[0]
     metas = (res.get("metadatas") or [[None] * len(ids)])[0]

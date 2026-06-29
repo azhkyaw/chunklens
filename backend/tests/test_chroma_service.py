@@ -218,3 +218,8 @@ def test_sample_metadata_keys_missing_collection_raises_notfound():
     client = _fresh_client()
     with pytest.raises(chroma_service.NotFound):
         chroma_service.sample_metadata_keys(client, "nope_col")
+
+
+def test_query_wrong_dim_raises_valueerror(chroma):
+    with pytest.raises(ValueError, match="dimension"):
+        chroma_service.query(chroma, "docs", query_embedding=[1.0, 2.0, 3.0], n_results=1)

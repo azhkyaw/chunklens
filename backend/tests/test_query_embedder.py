@@ -39,3 +39,14 @@ def test_embedder_missing_key_returns_400(api, monkeypatch):
     )
     assert res.status_code == 400
     assert "API key" in res.json()["detail"]
+
+
+def test_embedder_dim_mismatch_returns_400(api):
+    # docs is 2-dim; the fake embedder returns a 3-dim vector -> Chroma rejects -> 400.
+    app.dependency_overrides[get_embedder] = lambda: (lambda provider, model, text: [1.0, 2.0, 3.0])
+    res = api.post(
+        "/api/collections/docs/query",
+        json={"query_text": "x", "embedder": {"provider": "openai"}, "n_results": 1},
+    )
+    assert res.status_code == 400
+    assert "dimension" in res.json()["detail"].lower()
