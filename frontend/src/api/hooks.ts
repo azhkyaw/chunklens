@@ -3,6 +3,7 @@ import { api } from "./client";
 import type {
   ConnectionInput,
   CreateCollectionInput,
+  ExportFile,
   QueryRequest,
   ScalarMetadata,
   UpdateCollectionInput,
@@ -60,4 +61,10 @@ export const useMetadataKeys = (name: string | null) =>
     queryKey: ["metadata-keys", name],
     queryFn: () => api.getMetadataKeys(name as string),
     enabled: Boolean(name),
+  });
+
+export const useImportCollection = () =>
+  useMutation({
+    mutationFn: (vars: { data: ExportFile; name?: string }) =>
+      api.importCollection(vars.data, vars.name),
   });

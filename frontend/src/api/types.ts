@@ -80,3 +80,20 @@ export interface MetadataKeysResponse {
   sampled: number;
   total: number;
 }
+export interface ExportRecord {
+  id: string;
+  document?: string | null;
+  metadata?: Record<string, unknown> | null;
+  embedding?: number[] | null;
+}
+export interface ExportCollection {
+  name: string;
+  distance_metric: DistanceMetric;
+  embedding_function: "default" | "none";
+  metadata: Record<string, unknown>;
+}
+export interface ExportFile {
+  chunklens_export: number;
+  collection: ExportCollection;
+  records: ExportRecord[];
+}

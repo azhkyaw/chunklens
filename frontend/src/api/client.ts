@@ -5,6 +5,7 @@ import type {
   ConnectionInput,
   ConnectionTestResult,
   CreateCollectionInput,
+  ExportFile,
   MetadataKeysResponse,
   QueryRequest,
   QueryResult,
@@ -67,4 +68,13 @@ export const api = {
     ),
   getMetadataKeys: (name: string) =>
     jsonFetch<MetadataKeysResponse>(`/api/collections/${encodeURIComponent(name)}/metadata-keys`),
+  exportCollection: (name: string, includeEmbeddings: boolean) =>
+    jsonFetch<ExportFile>(
+      `/api/collections/${encodeURIComponent(name)}/export?include_embeddings=${includeEmbeddings}`,
+    ),
+  importCollection: (data: ExportFile, name?: string) =>
+    jsonFetch<CollectionDetails>(
+      `/api/collections/import${name ? `?name=${encodeURIComponent(name)}` : ""}`,
+      { method: "POST", body: JSON.stringify(data) },
+    ),
 };
