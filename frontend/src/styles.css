@@ -1212,3 +1212,13 @@ p.guard[data-level="warn"] {
   max-height: 90vh;
   overflow: auto;
 }
+
+/* ----------------------------------------------------------------------------
+   18. Import / export controls
+   ---------------------------------------------------------------------------- */
+.export-control {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--t-xs);
+}
