@@ -124,6 +124,17 @@ class MetadataKeysResponse(BaseModel):
     total: int
 
 
+class EmbedderInfo(BaseModel):
+    id: str
+    label: str
+    needs_key: bool
+    sdk_available: bool
+    install_extra: Optional[str] = None
+    env_var: Optional[str] = None
+    key_set: bool = False
+    env_key: bool = False
+
+
 class ExportRecord(BaseModel):
     id: str
     document: Optional[str] = None
