@@ -20,6 +20,7 @@ export interface QueryResult { hits: QueryHit[]; }
 export interface QueryRequest {
   query_text?: string;
   query_embedding?: number[];
+  embedder?: EmbedderSpec;
   n_results?: number;
   where?: Record<string, unknown>;
   where_document?: Record<string, unknown>;
@@ -79,6 +80,17 @@ export interface MetadataKeysResponse {
   keys: MetadataKeyInfo[];
   sampled: number;
   total: number;
+}
+export interface EmbedderSpec { provider: string; model?: string | null; }
+export interface EmbedderInfo {
+  id: string;
+  label: string;
+  needs_key: boolean;
+  sdk_available: boolean;
+  install_extra: string | null;
+  env_var: string | null;
+  key_set: boolean;
+  env_key: boolean;
 }
 export interface ExportRecord {
   id: string;

@@ -68,3 +68,12 @@ export const useImportCollection = () =>
     mutationFn: (vars: { data: ExportFile; name?: string }) =>
       api.importCollection(vars.data, vars.name),
   });
+
+export const useEmbedders = () =>
+  useQuery({ queryKey: ["embedders"], queryFn: api.listEmbedders });
+
+export const useSetEmbedderKey = () =>
+  useMutation({
+    mutationFn: (vars: { provider: string; token: string }) =>
+      api.setEmbedderKey(vars.provider, vars.token),
+  });

@@ -5,6 +5,7 @@ import type {
   ConnectionInput,
   ConnectionTestResult,
   CreateCollectionInput,
+  EmbedderInfo,
   ExportFile,
   MetadataKeysResponse,
   QueryRequest,
@@ -77,4 +78,10 @@ export const api = {
       `/api/collections/import${name ? `?name=${encodeURIComponent(name)}` : ""}`,
       { method: "POST", body: JSON.stringify(data) },
     ),
+  listEmbedders: () => jsonFetch<EmbedderInfo[]>("/api/embedders"),
+  setEmbedderKey: (provider: string, token: string) =>
+    jsonFetch<void>(`/api/embedders/${encodeURIComponent(provider)}/key`, {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    }),
 };

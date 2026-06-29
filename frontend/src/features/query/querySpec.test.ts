@@ -57,3 +57,12 @@ test("serializeSpec emits query_embedding in vector mode, query_text otherwise",
   expect(serializeSpec(t).query_text).toBe("hello");
   expect(serializeSpec(t).query_embedding).toBeUndefined();
 });
+
+test("serializeSpec includes embedder in text mode when set, omits it otherwise", () => {
+  const withEmb = { ...newQuerySpec(), text: "hi", embedder: { provider: "openai", model: "m" } };
+  expect(serializeSpec(withEmb).embedder).toEqual({ provider: "openai", model: "m" });
+  expect(serializeSpec(newQuerySpec()).embedder).toBeUndefined();
+  // vector mode never carries an embedder
+  const vec = { ...newQuerySpec(), mode: "vector" as const, vector: "[1, 2]", embedder: { provider: "openai" } };
+  expect(serializeSpec(vec).embedder).toBeUndefined();
+});

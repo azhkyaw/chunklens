@@ -1,18 +1,19 @@
 import { newGroup, type GroupNode } from "../filters/filterModel";
 import { serialize, validate, type FilterError } from "../filters/filterSerialize";
-import type { CollectionDetails, QueryRequest } from "../../api/types";
+import type { CollectionDetails, EmbedderSpec, QueryRequest } from "../../api/types";
 
 export interface QuerySpec {
   mode: "text" | "vector";
   text: string;
   vector: string;
+  embedder: EmbedderSpec | null;
   nResults: number;
   whereTree: GroupNode;
   docTree: GroupNode;
 }
 
 export function newQuerySpec(): QuerySpec {
-  return { mode: "text", text: "", vector: "", nResults: 10, whereTree: newGroup(), docTree: newGroup() };
+  return { mode: "text", text: "", vector: "", embedder: null, nResults: 10, whereTree: newGroup(), docTree: newGroup() };
 }
 
 export function parseVector(raw: string): { vector?: number[]; error?: string } {
@@ -47,9 +48,10 @@ export function serializeSpec(spec: QuerySpec): QueryRequest {
     where: serialize(spec.whereTree) as Record<string, unknown> | undefined,
     where_document: serialize(spec.docTree) as Record<string, unknown> | undefined,
   };
-  return spec.mode === "vector"
-    ? { ...base, query_embedding: parseVector(spec.vector).vector }
-    : { ...base, query_text: spec.text };
+  if (spec.mode === "vector") {
+    return { ...base, query_embedding: parseVector(spec.vector).vector };
+  }
+  return { ...base, query_text: spec.text, ...(spec.embedder ? { embedder: spec.embedder } : {}) };
 }
 
 export function specErrors(spec: QuerySpec): FilterError[] {
