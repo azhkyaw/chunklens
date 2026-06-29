@@ -15,6 +15,7 @@ const DETAILS = { name: "docs", count: 1, dimensionality: 384, distance_metric: 
 
 test("runs a query and shows scored ranked hits", async () => {
   vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
   vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
   vi.spyOn(api, "query").mockResolvedValue({ hits: [{ id: "doc_42", document: "alpha", metadata: null, distance: 0.09 }] });
   render(wrap(<SingleQuery name="docs" />));
@@ -26,6 +27,7 @@ test("runs a query and shows scored ranked hits", async () => {
 
 test("sends the built where filter with the query", async () => {
   vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [{ key: "lang", types: ["string"] }], sampled: 3, total: 3 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
   vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
   const run = vi.spyOn(api, "query").mockResolvedValue({ hits: [] });
   render(wrap(<SingleQuery name="docs" />));
@@ -40,6 +42,7 @@ test("sends the built where filter with the query", async () => {
 
 test("blocks Run and shows a banner for text on a none-EF collection", async () => {
   vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
   vi.spyOn(api, "getCollectionDetails").mockResolvedValue({ name: "docs", count: 0, dimensionality: 3, distance_metric: "l2", embedding_function: "none", metadata: {} });
   render(wrap(<SingleQuery name="docs" />));
   await waitFor(() => expect(screen.getByText(/EF:/)).toBeInTheDocument());
@@ -52,6 +55,7 @@ test("blocks Run and shows a banner for text on a none-EF collection", async () 
 
 test("interprets a dimension-mismatch query error", async () => {
   vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
   vi.spyOn(api, "getCollectionDetails").mockResolvedValue({ name: "docs", count: 0, dimensionality: 384, distance_metric: "l2", embedding_function: "default", metadata: {} });
   vi.spyOn(api, "query").mockRejectedValue(new Error("embedding with dimension 384, got 2"));
   render(wrap(<SingleQuery name="docs" />));
@@ -62,6 +66,7 @@ test("interprets a dimension-mismatch query error", async () => {
 
 test("a none-EF collection defaults to Vector mode and runs with query_embedding", async () => {
   vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
   vi.spyOn(api, "getCollectionDetails").mockResolvedValue({ name: "docs", count: 1, dimensionality: 3, distance_metric: "l2", embedding_function: "none", metadata: {} });
   const q = vi.spyOn(api, "query").mockResolvedValue({ hits: [] });
   render(wrap(<SingleQuery name="docs" />));

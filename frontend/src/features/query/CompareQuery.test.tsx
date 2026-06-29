@@ -14,6 +14,7 @@ const DETAILS = { name: "docs", count: 2, dimensionality: 384, distance_metric: 
 
 test("runs both queries and renders a compare with only-A / only-B", async () => {
   vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
   vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
   vi.spyOn(api, "query")
     .mockResolvedValueOnce({ hits: [{ id: "x", document: "x", metadata: null, distance: 0.1 }] })

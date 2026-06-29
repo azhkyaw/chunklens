@@ -54,6 +54,7 @@ test("a selected collection lands on Records and can switch to Query", async () 
     limit: 25, offset: 0, total: 1,
   });
   vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
 
   renderApp();
   await userEvent.click(await screen.findByRole("button", { name: /^demo\b/ }));

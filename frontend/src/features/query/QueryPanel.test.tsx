@@ -14,6 +14,7 @@ const DETAILS = { name: "docs", count: 0, dimensionality: null, distance_metric:
 
 test("renders the single-query console", () => {
   vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
   vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
   render(wrap(<QueryPanel name="docs" />));
   expect(screen.getByLabelText(/query text/i)).toBeInTheDocument();
@@ -21,6 +22,7 @@ test("renders the single-query console", () => {
 
 test("toggling to Compare shows two query inputs", async () => {
   vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
   vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
   render(wrap(<QueryPanel name="docs" />));
   await userEvent.click(screen.getByRole("tab", { name: /compare/i }));

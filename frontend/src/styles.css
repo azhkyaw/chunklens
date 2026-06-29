@@ -1258,3 +1258,7 @@ p.guard[data-level="warn"] {
 .rail-head-actions button {
   flex: 1 1 auto;
 }
+
+/* Embedder (provider) row in the query form */
+.embedder-row { margin: var(--sp-2) 0; padding: var(--sp-2); background: var(--surface-inset); border: 1px solid var(--line); border-radius: var(--r-md); }
+.embedder-row .faint { margin: 0 0 var(--sp-1); }
