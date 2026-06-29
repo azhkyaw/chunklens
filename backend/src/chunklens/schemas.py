@@ -122,3 +122,23 @@ class MetadataKeysResponse(BaseModel):
     keys: list[MetadataKeyInfo]
     sampled: int
     total: int
+
+
+class ExportRecord(BaseModel):
+    id: str
+    document: Optional[str] = None
+    metadata: Optional[ScalarMetadata] = None
+    embedding: Optional[list[float]] = None
+
+
+class ExportCollection(BaseModel):
+    name: str
+    distance_metric: Literal["l2", "cosine", "ip"] = "l2"
+    embedding_function: Literal["default", "none"] = "default"
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class ExportFile(BaseModel):
+    chunklens_export: int = 1
+    collection: ExportCollection
+    records: list[ExportRecord] = Field(default_factory=list)
