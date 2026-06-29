@@ -131,6 +131,18 @@ class MetadataKeysResponse(BaseModel):
     total: int
 
 
+class SourceInfo(BaseModel):
+    value: str
+    count: int
+
+
+class SourceList(BaseModel):
+    key: str
+    sources: list[SourceInfo]
+    scanned: int
+    total: int
+
+
 class EmbedderInfo(BaseModel):
     id: str
     label: str

@@ -16,6 +16,8 @@ from .schemas import (
     QueryResult,
     Record,
     RecordsPage,
+    SourceInfo,
+    SourceList,
 )
 
 
@@ -274,6 +276,35 @@ def sample_metadata_keys(client, name: str, sample: int = 200) -> MetadataKeysRe
             agg.setdefault(k, set()).add(_scalar_type(v))
     keys = [MetadataKeyInfo(key=k, types=sorted(t)) for k, t in sorted(agg.items())]
     return MetadataKeysResponse(keys=keys, sampled=len(metas), total=total)
+
+
+DEFAULT_SOURCE_SCAN_CAP = 10000
+_SOURCE_BATCH = 1000
+
+
+def list_sources(client, name: str, key: str, cap: int = DEFAULT_SOURCE_SCAN_CAP) -> SourceList:
+    col = client.get_collection(name)
+    total = col.count()
+    limit_total = min(total, cap)
+    counts: dict[str, int] = {}
+    scanned = 0
+    while scanned < limit_total:
+        batch = col.get(
+            include=["metadatas"],
+            limit=min(_SOURCE_BATCH, limit_total - scanned),
+            offset=scanned,
+        )
+        metas = batch.get("metadatas") or []
+        if not metas:
+            break
+        for m in metas:
+            raw = (m or {}).get(key)
+            value = "(none)" if raw is None else str(raw)
+            counts[value] = counts.get(value, 0) + 1
+        scanned += len(metas)
+    sources = [SourceInfo(value=v, count=c) for v, c in counts.items()]
+    sources.sort(key=lambda s: (-s.count, s.value))
+    return SourceList(key=key, sources=sources, scanned=scanned, total=total)
 
 
 _ADD_BATCH = 500
