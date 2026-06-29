@@ -5,7 +5,7 @@ import { DocChunks } from "./DocChunks";
 
 export function RecordsByDocument({ name }: { name: string }) {
   const { data: keysData } = useMetadataKeys(name);
-  const stringKeys = (keysData?.keys ?? []).filter((k) => k.types.includes("string")).map((k) => k.key);
+  const stringKeys = (keysData?.keys ?? []).filter((k) => k.types.length === 1 && k.types[0] === "string").map((k) => k.key);
   const autoKey = stringKeys.find((k) => isProvenanceKey(k)) ?? stringKeys[0] ?? "";
   const [picked, setPicked] = useState<string | null>(null);
   const key = picked ?? autoKey;

@@ -41,3 +41,16 @@ test("the (none) bucket is not expandable", async () => {
   render(wrap(<RecordsByDocument name="docs" />));
   expect(await screen.findByRole("button", { name: /\(none\)/ })).toBeDisabled();
 });
+
+test("mixed-type key is excluded; only the purely-string key is chosen as auto key", async () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({
+    keys: [{ key: "mixed", types: ["int", "string"] }, { key: "source", types: ["string"] }],
+    sampled: 5, total: 5,
+  });
+  const srcSpy = vi.spyOn(api, "listSources").mockResolvedValue({
+    key: "source", sources: [{ value: "a.pdf", count: 2 }], scanned: 5, total: 5,
+  });
+  render(wrap(<RecordsByDocument name="docs" />));
+  await waitFor(() => expect(srcSpy).toHaveBeenCalledWith("docs", "source"));
+  expect(srcSpy).not.toHaveBeenCalledWith("docs", "mixed");
+});
