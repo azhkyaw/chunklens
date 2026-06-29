@@ -28,9 +28,15 @@ class RecordsPage(BaseModel):
     total: int
 
 
+class EmbedderSpec(BaseModel):
+    provider: str
+    model: Optional[str] = None
+
+
 class QueryRequest(BaseModel):
     query_text: Optional[str] = None
     query_embedding: Optional[list[float]] = None
+    embedder: Optional[EmbedderSpec] = None
     n_results: int = 10
     where: Optional[dict[str, Any]] = None
     where_document: Optional[dict[str, Any]] = None
