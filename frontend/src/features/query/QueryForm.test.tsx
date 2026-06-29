@@ -41,6 +41,13 @@ test("vector mode shows the expected-dim hint and a wrong-length error", () => {
   expect(screen.getByRole("alert")).toHaveTextContent(/expected 3 numbers, got 2/i);
 });
 
+test("vector mode shows no error for an untouched (empty) vector", () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  const spec = { ...newQuerySpec(), mode: "vector" as const }; // vector defaults to ""
+  render(wrap(<QueryForm name="c" spec={spec} details={details} onChange={() => {}} />));
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+});
+
 test("text mode shows the text input; toggling to Vector calls onChange", async () => {
   vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
   const onChange = vi.fn();

@@ -32,7 +32,7 @@ export function QueryForm({
       {spec.mode === "vector" && details?.dimensionality != null && (
         <p className="faint">expects {details.dimensionality}-dim</p>
       )}
-      {spec.mode === "vector" && verr && <p role="alert">{verr}</p>}
+      {spec.mode === "vector" && verr && spec.vector.trim() !== "" && <p role="alert">{verr}</p>}
       {keysData && <p className="faint query-keys">keys from {keysData.sampled} of {keysData.total} records</p>}
       <FilterBuilder title="Metadata filter (where)" lang="where" tree={spec.whereTree} keys={keys}
         onChange={(t) => onChange({ ...spec, whereTree: t })} />
