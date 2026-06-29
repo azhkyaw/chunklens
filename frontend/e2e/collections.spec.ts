@@ -13,8 +13,8 @@ test("create a collection, inspect it, then delete it", async ({ page }) => {
   await expect(page.getByRole("heading", { name })).toBeVisible();
   await expect(page.getByText(/Embedding fn/i)).toBeVisible();
 
-  // rename/metadata/delete live under the "Manage collection" disclosure
-  await page.getByText(/manage collection/i).click();
+  // rename/metadata/delete live in the "Manage" modal
+  await page.getByRole("button", { name: /^manage$/i }).click();
 
   // delete via typed confirmation
   await page.getByLabel(/type the name to delete/i).fill(name);

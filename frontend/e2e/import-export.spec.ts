@@ -35,8 +35,8 @@ test("export a collection, then import a new one (re-embeds documents)", async (
   await expect(page.getByRole("heading", { name: "e2e_import_col" })).toBeVisible();
   await expect(page.getByRole("button", { name: /^e2e_import_col\b/ })).toBeVisible();
 
-  // Cleanup so the suite stays idempotent: delete via the Manage disclosure
-  await page.getByText(/manage collection/i).click();
+  // Cleanup so the suite stays idempotent: delete via the Manage modal
+  await page.getByRole("button", { name: /^manage$/i }).click();
   await page.getByLabel(/type the name to delete/i).fill("e2e_import_col");
   await page.getByRole("button", { name: /^delete$/i }).click();
   await expect(page.getByRole("button", { name: /^e2e_import_col\b/ })).toHaveCount(0);

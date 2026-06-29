@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CollectionsList } from "./features/collections/CollectionsList";
 import { CollectionCreate } from "./features/collections/CollectionCreate";
 import { CollectionDetails } from "./features/collections/CollectionDetails";
+import { CollectionManage } from "./features/collections/CollectionManage";
 import { ConnectionForm } from "./features/connection/ConnectionForm";
 import { ConnectionStatus } from "./features/connection/ConnectionStatus";
 import { QueryPanel } from "./features/query/QueryPanel";
@@ -94,21 +95,24 @@ export function App() {
             <div className="collection-head">
               <p className="eyebrow">Collection</p>
               <h2>{selected}</h2>
-              <ExportButton name={selected} />
+              <div className="collection-actions">
+                <CollectionManage
+                  name={selected}
+                  onRenamed={(newName) => {
+                    refreshCollections();
+                    qc.removeQueries({ queryKey: ["collection", selected] });
+                    qc.removeQueries({ queryKey: ["records", selected] });
+                    setSelected(newName);
+                  }}
+                  onDeleted={() => {
+                    refreshCollections();
+                    setSelected(null);
+                  }}
+                />
+                <ExportButton name={selected} />
+              </div>
             </div>
-            <CollectionDetails
-              name={selected}
-              onRenamed={(newName) => {
-                refreshCollections();
-                qc.removeQueries({ queryKey: ["collection", selected] });
-                qc.removeQueries({ queryKey: ["records", selected] });
-                setSelected(newName);
-              }}
-              onDeleted={() => {
-                refreshCollections();
-                setSelected(null);
-              }}
-            />
+            <CollectionDetails name={selected} />
             <div className="view-switch" role="tablist" aria-label="Collection view">
               <button type="button" role="tab" aria-selected={view === "records"}
                       className="view-tab" onClick={() => setView("records")}>Records</button>
