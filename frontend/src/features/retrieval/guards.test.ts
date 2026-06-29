@@ -11,6 +11,10 @@ test("blocks text query on a none-EF collection", () => {
   const g = evaluateGuards({ details: det({ embedding_function: "none" }), mode: "text", text: "hello", hasEmbedding: false });
   expect(g.some((x) => x.level === "block")).toBe(true);
 });
+test("does not block in vector mode even with leftover text", () => {
+  const g = evaluateGuards({ details: det({ embedding_function: "none" }), mode: "vector", text: "hello", hasEmbedding: false });
+  expect(g.some((x) => x.level === "block")).toBe(false);
+});
 test("no guard when default EF and unknown dim", () => {
   expect(evaluateGuards({ details: det({ embedding_function: "default" }), mode: "text", text: "hello", hasEmbedding: false })).toEqual([]);
 });

@@ -38,7 +38,7 @@ test("vector mode shows the expected-dim hint and a wrong-length error", () => {
   const spec = { ...newQuerySpec(), mode: "vector" as const, vector: "[1, 2]" };
   render(wrap(<QueryForm name="c" spec={spec} details={details} onChange={() => {}} />));
   expect(screen.getByText(/expects 3-dim/i)).toBeInTheDocument();
-  expect(screen.getByRole("alert")).toHaveTextContent(/expected.*got 2/i);
+  expect(screen.getByRole("alert")).toHaveTextContent(/expected 3 numbers, got 2/i);
 });
 
 test("text mode shows the text input; toggling to Vector calls onChange", async () => {

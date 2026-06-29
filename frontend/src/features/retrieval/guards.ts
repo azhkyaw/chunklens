@@ -21,7 +21,7 @@ export function evaluateGuards(input: GuardInput): Guard[] {
   const guards: Guard[] = [];
   const { details, mode, text, hasEmbedding } = input;
 
-  if (details?.embedding_function === "none" && text.trim() !== "" && !hasEmbedding) {
+  if (mode === "text" && details?.embedding_function === "none" && text.trim() !== "" && !hasEmbedding) {
     guards.push({
       level: "block",
       message:
