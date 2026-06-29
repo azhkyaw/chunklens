@@ -59,3 +59,34 @@ def test_add_records_mixed_embedding_presence_raises():
             ExportRecord(id="r1", embedding=[1.0, 2.0]),
             ExportRecord(id="r2", document="no-emb"),
         ])
+
+
+def test_export_none_ef_forces_embeddings():
+    client = _fresh_client()
+    chroma_service.create_collection(client, "io_exp", distance_metric="cosine", embedding_function="none")
+    client.get_collection("io_exp").add(
+        ids=["a", "b"], embeddings=[[1.0, 0.0], [0.0, 1.0]],
+        documents=["alpha", "beta"], metadatas=[{"lang": "en"}, {"lang": "fr"}],
+    )
+    # include_embeddings=False, but EF=none must still force vectors in
+    f = chroma_service.export_collection(client, "io_exp", include_embeddings=False)
+    assert f.chunklens_export == 1
+    assert f.collection.name == "io_exp"
+    assert f.collection.distance_metric == "cosine"
+    assert f.collection.embedding_function == "none"
+    assert len(f.records) == 2
+    by_id = {r.id: r for r in f.records}
+    assert by_id["a"].document == "alpha"
+    assert by_id["a"].metadata == {"lang": "en"}
+    assert by_id["a"].embedding == [1.0, 0.0]
+
+
+def test_export_default_ef_omits_embeddings_when_not_requested():
+    client = _fresh_client()
+    chroma_service.create_collection(client, "io_def", embedding_function="default")
+    # add with explicit embeddings so no ONNX is needed (stays offline)
+    client.get_collection("io_def").add(ids=["a"], embeddings=[[1.0, 2.0]], documents=["x"])
+    f = chroma_service.export_collection(client, "io_def", include_embeddings=False)
+    assert f.collection.embedding_function == "default"
+    assert f.records[0].embedding is None
+    assert f.records[0].document == "x"

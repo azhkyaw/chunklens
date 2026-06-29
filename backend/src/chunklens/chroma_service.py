@@ -7,6 +7,8 @@ from chromadb.errors import InvalidArgumentError, NotFoundError
 from .schemas import (
     CollectionDetails,
     CollectionSummary,
+    ExportCollection,
+    ExportFile,
     ExportRecord,
     MetadataKeyInfo,
     MetadataKeysResponse,
@@ -297,3 +299,37 @@ def add_records(client, name: str, records: list[ExportRecord]) -> int:
         col.add(**kwargs)
         added += len(batch)
     return added
+
+
+_EXPORT_BATCH = 500
+
+
+def export_collection(client, name: str, *, include_embeddings: bool) -> ExportFile:
+    details = get_collection_details(client, name)  # raises NotFound
+    col = client.get_collection(name)
+    ef = "none" if details.embedding_function == "none" else "default"
+    want_emb = include_embeddings or ef == "none"
+    include = ["documents", "metadatas"] + (["embeddings"] if want_emb else [])
+    total = col.count()
+    records: list[ExportRecord] = []
+    for offset in range(0, max(total, 0), _EXPORT_BATCH) or [0]:
+        res = col.get(include=include, limit=_EXPORT_BATCH, offset=offset)
+        ids = res.get("ids") or []
+        docs = res.get("documents") or [None] * len(ids)
+        metas = res.get("metadatas") or [None] * len(ids)
+        embs = res.get("embeddings") if want_emb else None
+        for j, rid in enumerate(ids):
+            emb = None
+            if want_emb and embs is not None and j < len(embs) and embs[j] is not None:
+                emb = [float(x) for x in embs[j]]
+            records.append(ExportRecord(id=rid, document=docs[j], metadata=metas[j] or None, embedding=emb))
+    return ExportFile(
+        chunklens_export=1,
+        collection=ExportCollection(
+            name=details.name,
+            distance_metric=details.distance_metric,
+            embedding_function=ef,
+            metadata=details.metadata,
+        ),
+        records=records,
+    )
