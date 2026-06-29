@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useRunQuery, useCollectionDetails, useMetadataKeys } from "../../api/hooks";
+import { useRunQuery, useCollectionDetails, useMetadataKeys, useEmbedders } from "../../api/hooks";
 import { QueryForm } from "./QueryForm";
 import { ResultsPanel } from "../retrieval/ResultsPanel";
 import { QueryContextStrip } from "../retrieval/QueryContextStrip";
@@ -13,20 +13,22 @@ export function SingleQuery({ name }: { name: string }) {
   const run = useRunQuery(name);
   const { data: details } = useCollectionDetails(name);
   const { data: keysData } = useMetadataKeys(name);
+  const { data: embedders } = useEmbedders();
   const metric = details?.distance_metric ?? "l2";
   const keyNames = (keysData?.keys ?? []).map((k) => k.key);
+  const provider = details ? (embedders ?? []).find((e) => e.id === details.embedding_function) : undefined;
 
   const appliedFor = useRef<string | null>(null);
   useEffect(() => {
-    if (details && appliedFor.current !== name) {
+    if (details && embedders && appliedFor.current !== name) {
       appliedFor.current = name;
-      setSpec((s) => ({ ...s, mode: defaultQueryMode(details) }));
+      setSpec((s) => ({ ...s, mode: defaultQueryMode(details, embedders.map((e) => e.id)) }));
     }
-  }, [details, name]);
+  }, [details, embedders, name]);
 
   const errors = specErrors(spec);
   const verr = vectorError(spec, details);
-  const guards = evaluateGuards({ details, mode: spec.mode, text: spec.text, hasEmbedding: spec.mode === "vector" && verr === null });
+  const guards = evaluateGuards({ details, mode: spec.mode, text: spec.text, hasEmbedding: spec.mode === "vector" && verr === null, providerDetected: provider !== undefined });
   const blocked = guards.some((g) => g.level === "block");
   const ready = spec.mode === "text" ? spec.text.trim() !== "" : verr === null;
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useRunQuery, useCollectionDetails } from "../../api/hooks";
+import { useRunQuery, useCollectionDetails, useEmbedders } from "../../api/hooks";
 import { QueryForm } from "./QueryForm";
 import { CompareView } from "../retrieval/CompareView";
 import { QueryContextStrip } from "../retrieval/QueryContextStrip";
@@ -14,22 +14,24 @@ export function CompareQuery({ name }: { name: string }) {
   const runA = useRunQuery(name);
   const runB = useRunQuery(name);
   const { data: details } = useCollectionDetails(name);
+  const { data: embedders } = useEmbedders();
   const metric = details?.distance_metric ?? "l2";
+  const provider = details ? (embedders ?? []).find((e) => e.id === details.embedding_function) : undefined;
 
   const appliedFor = useRef<string | null>(null);
   useEffect(() => {
-    if (details && appliedFor.current !== name) {
+    if (details && embedders && appliedFor.current !== name) {
       appliedFor.current = name;
-      const m = defaultQueryMode(details);
+      const m = defaultQueryMode(details, embedders.map((e) => e.id));
       setSpecA((s) => ({ ...s, mode: m }));
       setSpecB((s) => ({ ...s, mode: m }));
     }
-  }, [details, name]);
+  }, [details, embedders, name]);
 
   const verrA = vectorError(specA, details);
   const verrB = vectorError(specB, details);
-  const guardsA = evaluateGuards({ details, mode: specA.mode, text: specA.text, hasEmbedding: specA.mode === "vector" && verrA === null });
-  const guardsB = evaluateGuards({ details, mode: specB.mode, text: specB.text, hasEmbedding: specB.mode === "vector" && verrB === null });
+  const guardsA = evaluateGuards({ details, mode: specA.mode, text: specA.text, hasEmbedding: specA.mode === "vector" && verrA === null, providerDetected: provider !== undefined });
+  const guardsB = evaluateGuards({ details, mode: specB.mode, text: specB.text, hasEmbedding: specB.mode === "vector" && verrB === null, providerDetected: provider !== undefined });
   const blocked = [...guardsA, ...guardsB].some((g) => g.level === "block");
   const invalid = specErrors(specA).length > 0 || specErrors(specB).length > 0;
   const pending = runA.isPending || runB.isPending;

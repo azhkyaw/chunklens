@@ -40,3 +40,17 @@ test("vector mode never blocks or warns", () => {
   const g = evaluateGuards({ details: det({ dimensionality: 1536 }), mode: "vector", text: "", hasEmbedding: true });
   expect(g).toHaveLength(0);
 });
+
+test("defaultQueryMode: a surfaced provider EF opens in text (we embed for it)", () => {
+  expect(defaultQueryMode(det({ embedding_function: "openai", dimensionality: 1536 }), ["openai", "cohere"])).toBe("text");
+});
+test("defaultQueryMode: an unsurfaced non-default EF stays vector", () => {
+  expect(defaultQueryMode(det({ embedding_function: "mystery", dimensionality: 1536 }), ["openai"])).toBe("vector");
+});
+test("defaultQueryMode: none stays vector even when providerIds are given", () => {
+  expect(defaultQueryMode(det({ embedding_function: "none", dimensionality: 1536 }), ["openai"])).toBe("vector");
+});
+test("no dim-mismatch warn when a provider embedder is detected", () => {
+  const g = evaluateGuards({ details: det({ embedding_function: "openai", dimensionality: 1536 }), mode: "text", text: "hi", hasEmbedding: false, providerDetected: true });
+  expect(g.some((x) => x.level === "warn")).toBe(false);
+});

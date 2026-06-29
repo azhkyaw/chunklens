@@ -75,3 +75,15 @@ test("a none-EF collection defaults to Vector mode and runs with query_embedding
   await userEvent.click(screen.getByRole("button", { name: /^run$/i }));
   await waitFor(() => expect(q).toHaveBeenCalledWith("docs", expect.objectContaining({ query_embedding: [1, 2, 3] })));
 });
+
+test("a surfaced-provider collection (openai, 1536-dim) opens in Text mode with picker and no warn", async () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([
+    { id: "openai", label: "OpenAI", needs_key: true, sdk_available: true, install_extra: null, env_var: "CHROMA_OPENAI_API_KEY", key_set: false, env_key: false },
+  ]);
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue({ name: "oa", count: 1, dimensionality: 1536, distance_metric: "l2", embedding_function: "openai", metadata: {} });
+  render(wrap(<SingleQuery name="oa" />));
+  expect(await screen.findByText(/embed with openai/i)).toBeInTheDocument(); // picker rendered → text mode
+  expect(screen.getByLabelText(/query text/i)).toBeInTheDocument();          // text input, not the vector paste box
+  expect(screen.queryByText(/won't match/i)).not.toBeInTheDocument();        // misleading dim-mismatch warn suppressed
+});
