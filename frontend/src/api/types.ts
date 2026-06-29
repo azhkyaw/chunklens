@@ -64,6 +64,7 @@ export interface CollectionDetails {
   distance_metric: string;
   embedding_function: string;
   metadata: Record<string, unknown>;
+  embedder_hint?: EmbedderSpec | null;
 }
 export interface UpdateCollectionInput {
   name?: string;

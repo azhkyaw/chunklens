@@ -8,14 +8,25 @@ export interface GuardInput {
   mode?: "text" | "vector";
   text: string;
   hasEmbedding: boolean;
-  // True when a surfaced provider embedder will embed the query text for this
-  // collection - suppresses the default-EF "won't match" warn (text is embedded
-  // with the provider, at the collection's own dimensionality).
-  providerDetected?: boolean;
+  // True when an embedder (auto-detected OR manually picked) will embed the query
+  // text for this collection - unblocks text on a none-EF collection and suppresses
+  // the default-EF "won't match" warn.
+  embedderSelected?: boolean;
 }
 
-export function defaultQueryMode(details?: CollectionDetails, providerIds?: string[]): "text" | "vector" {
+// Show the manual embedder picker for any non-default collection - i.e. NOT a plain
+// `default` collection (default EF with the 384 default dim, or an empty/unknown dim).
+export function showsEmbedderPicker(details?: CollectionDetails): boolean {
+  if (!details) return false;
+  if (details.embedding_function !== "default") return true;
+  return details.dimensionality != null && details.dimensionality !== DEFAULT_EF_DIM;
+}
+
+export function defaultQueryMode(
+  details?: CollectionDetails, providerIds?: string[], hasHint?: boolean,
+): "text" | "vector" {
   if (!details) return "text";
+  if (hasHint) return "text"; // a saved embedder hint -> embed query text
   if (details.embedding_function === "none") return "vector";
   // A surfaced provider EF: ChunkLens embeds the query text for it -> text mode.
   if (providerIds?.includes(details.embedding_function)) return "text";
@@ -26,28 +37,31 @@ export function defaultQueryMode(details?: CollectionDetails, providerIds?: stri
 
 export function evaluateGuards(input: GuardInput): Guard[] {
   const guards: Guard[] = [];
-  const { details, mode, text, hasEmbedding, providerDetected } = input;
+  const { details, mode, text, hasEmbedding, embedderSelected } = input;
 
-  if (mode === "text" && details?.embedding_function === "none" && text.trim() !== "" && !hasEmbedding) {
+  if (
+    mode === "text" && details?.embedding_function === "none" &&
+    text.trim() !== "" && !hasEmbedding && !embedderSelected
+  ) {
     guards.push({
       level: "block",
       message:
-        "This collection has no embedding function, so text can't be embedded into a vector. " +
-        "Switch to Vector mode and paste a raw query vector.",
+        "This collection has no embedding function, so typed text can't be embedded. " +
+        "Pick an embedder above, or switch to Vector mode and paste a raw query vector.",
     });
   }
 
   if (
     mode === "text" && details && details.embedding_function !== "none" &&
-    !providerDetected &&
+    !embedderSelected &&
     details.dimensionality != null && details.dimensionality !== DEFAULT_EF_DIM
   ) {
     guards.push({
       level: "warn",
       message:
         `This collection is ${details.dimensionality}-dim, but text queries here are embedded with ` +
-        `the default ${DEFAULT_EF_DIM}-dim model - they likely won't match. Switch to Vector and ` +
-        `paste a ${details.dimensionality}-dim vector.`,
+        `the default ${DEFAULT_EF_DIM}-dim model - they likely won't match. Pick an embedder above, ` +
+        `or switch to Vector and paste a ${details.dimensionality}-dim vector.`,
     });
   }
 

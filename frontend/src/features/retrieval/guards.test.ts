@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { defaultQueryMode, evaluateGuards } from "./guards";
+import { defaultQueryMode, evaluateGuards, showsEmbedderPicker } from "./guards";
 import type { CollectionDetails } from "../../api/types";
 
 const det = (over: Partial<CollectionDetails>): CollectionDetails => ({
@@ -50,7 +50,26 @@ test("defaultQueryMode: an unsurfaced non-default EF stays vector", () => {
 test("defaultQueryMode: none stays vector even when providerIds are given", () => {
   expect(defaultQueryMode(det({ embedding_function: "none", dimensionality: 1536 }), ["openai"])).toBe("vector");
 });
-test("no dim-mismatch warn when a provider embedder is detected", () => {
-  const g = evaluateGuards({ details: det({ embedding_function: "openai", dimensionality: 1536 }), mode: "text", text: "hi", hasEmbedding: false, providerDetected: true });
+test("no dim-mismatch warn when an embedder is selected", () => {
+  const g = evaluateGuards({ details: det({ embedding_function: "openai", dimensionality: 1536 }), mode: "text", text: "hi", hasEmbedding: false, embedderSelected: true });
   expect(g.some((x) => x.level === "warn")).toBe(false);
+});
+
+test("showsEmbedderPicker: hidden only for a plain default collection", () => {
+  expect(showsEmbedderPicker(undefined)).toBe(false);
+  expect(showsEmbedderPicker(det({ embedding_function: "default", dimensionality: 384 }))).toBe(false);
+  expect(showsEmbedderPicker(det({ embedding_function: "default", dimensionality: null }))).toBe(false);
+  expect(showsEmbedderPicker(det({ embedding_function: "default", dimensionality: 1536 }))).toBe(true);
+  expect(showsEmbedderPicker(det({ embedding_function: "none", dimensionality: 5 }))).toBe(true);
+  expect(showsEmbedderPicker(det({ embedding_function: "openai", dimensionality: 1536 }))).toBe(true);
+});
+
+test("defaultQueryMode: a saved hint opens in text even for none / non-384", () => {
+  expect(defaultQueryMode(det({ embedding_function: "none", dimensionality: 5 }), [], true)).toBe("text");
+  expect(defaultQueryMode(det({ embedding_function: "default", dimensionality: 1536 }), [], true)).toBe("text");
+});
+
+test("evaluateGuards: a selected embedder unblocks text on a none-EF collection", () => {
+  const g = evaluateGuards({ details: det({ embedding_function: "none" }), mode: "text", text: "hi", hasEmbedding: false, embedderSelected: true });
+  expect(g.some((x) => x.level === "block")).toBe(false);
 });
