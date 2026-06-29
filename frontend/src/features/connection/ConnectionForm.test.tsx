@@ -32,7 +32,7 @@ test("saves config and omits token when blank", async () => {
   );
   await userEvent.clear(screen.getByLabelText(/host/i));
   await userEvent.type(screen.getByLabelText(/host/i), "remote");
-  await userEvent.click(screen.getByRole("button", { name: /save/i }));
+  await userEvent.click(screen.getByRole("button", { name: /^connect$/i }));
   await waitFor(() => expect(save).toHaveBeenCalled());
   expect(save.mock.calls[0][0]).toEqual({
     host: "remote", port: 8000, ssl: false,

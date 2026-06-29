@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRecords, useUpdateRecordMetadata } from "../../api/hooks";
 import { MetadataEditor, parseScalarMetadata } from "../collections/MetadataEditor";
@@ -13,6 +13,16 @@ export function RecordsTable({ name }: { name: string }) {
   const [editId, setEditId] = useState<string | null>(null);
   const [metaText, setMetaText] = useState("");
   const [editError, setEditError] = useState<string | null>(null);
+
+  // Close the edit modal on Escape (only while it is open)
+  useEffect(() => {
+    if (!editId) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setEditId(null);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [editId]);
 
   if (isLoading) return <p className="muted">Loading records…</p>;
   if (error) return <p role="alert">Failed to load records.</p>;
@@ -69,14 +79,19 @@ export function RecordsTable({ name }: { name: string }) {
       </div>
 
       {editId && (
-        <div role="dialog" aria-label="Edit record metadata" className="panel record-edit">
-          <p className="muted">Editing <strong className="mono">{editId}</strong></p>
-          <MetadataEditor value={metaText} onChange={setMetaText} label="Record metadata (JSON)" />
-          <div className="form-actions">
-            <button type="button" className="btn-primary" onClick={save} disabled={update.isPending}>Save</button>
-            <button type="button" onClick={() => setEditId(null)}>Cancel</button>
+        <div
+          className="modal-overlay"
+          onClick={(e) => { if (e.target === e.currentTarget) setEditId(null); }}
+        >
+          <div role="dialog" aria-modal="true" aria-label="Edit record metadata" className="panel record-edit">
+            <p className="muted">Editing <strong className="mono">{editId}</strong></p>
+            <MetadataEditor value={metaText} onChange={setMetaText} label="Record metadata (JSON)" autoFocus />
+            <div className="form-actions">
+              <button type="button" className="btn-primary" onClick={save} disabled={update.isPending}>Save</button>
+              <button type="button" onClick={() => setEditId(null)}>Cancel</button>
+            </div>
+            {editError && <p role="alert">{editError}</p>}
           </div>
-          {editError && <p role="alert">{editError}</p>}
         </div>
       )}
 

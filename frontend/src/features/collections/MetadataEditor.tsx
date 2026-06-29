@@ -19,10 +19,12 @@ export function MetadataEditor({
   value,
   onChange,
   label = "Metadata (JSON)",
+  autoFocus = false,
 }: {
   value: string;
   onChange: (text: string) => void;
   label?: string;
+  autoFocus?: boolean;
 }) {
   return (
     <label className="field">
@@ -32,6 +34,7 @@ export function MetadataEditor({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={4}
+        autoFocus={autoFocus}
       />
     </label>
   );

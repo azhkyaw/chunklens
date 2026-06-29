@@ -1194,3 +1194,21 @@ p.guard[data-level="warn"] {
     flex-direction: column;
   }
 }
+
+/* ----------------------------------------------------------------------------
+   17. Modal overlay (record edit) - centered + unmissable
+   ---------------------------------------------------------------------------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(10, 16, 18, 0.55);
+  display: grid;
+  place-items: center;
+  padding: var(--sp-4);
+}
+.modal-overlay .record-edit {
+  width: min(560px, 96vw);
+  max-height: 90vh;
+  overflow: auto;
+}
