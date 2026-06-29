@@ -44,3 +44,15 @@ test("edits a record's metadata", async () => {
   await userEvent.click(screen.getByRole("button", { name: /^save$/i }));
   await waitFor(() => expect(upd).toHaveBeenCalledWith("docs", "a", { metadata: { lang: "de" } }));
 });
+
+test("switches to the By document view", async () => {
+  vi.spyOn(api, "getRecords").mockResolvedValue({
+    items: [{ id: "a", document: "alpha", metadata: {} }], limit: 25, offset: 0, total: 1,
+  });
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [{ key: "source", types: ["string"] }], sampled: 1, total: 1 });
+  vi.spyOn(api, "listSources").mockResolvedValue({ key: "source", sources: [{ value: "a.pdf", count: 1 }], scanned: 1, total: 1 });
+  render(wrap(<RecordsTable name="docs" />));
+  await waitFor(() => screen.getByText("alpha"));
+  await userEvent.click(screen.getByRole("tab", { name: /by document/i }));
+  expect(await screen.findByText("a.pdf")).toBeInTheDocument();
+});
