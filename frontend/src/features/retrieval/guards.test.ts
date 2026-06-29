@@ -1,20 +1,38 @@
 import { expect, test } from "vitest";
-import { evaluateGuards } from "./guards";
+import { defaultQueryMode, evaluateGuards } from "./guards";
 import type { CollectionDetails } from "../../api/types";
 
-const details = (ef: string): CollectionDetails =>
-  ({ name: "c", count: 0, dimensionality: null, distance_metric: "l2", embedding_function: ef, metadata: {} });
+const det = (over: Partial<CollectionDetails>): CollectionDetails => ({
+  name: "c", count: 0, dimensionality: null,
+  distance_metric: "l2", embedding_function: "default", metadata: {}, ...over,
+});
 
 test("blocks text query on a none-EF collection", () => {
-  const g = evaluateGuards({ details: details("none"), text: "hello", hasEmbedding: false });
-  expect(g).toHaveLength(1);
-  expect(g[0].level).toBe("block");
+  const g = evaluateGuards({ details: det({ embedding_function: "none" }), mode: "text", text: "hello", hasEmbedding: false });
+  expect(g.some((x) => x.level === "block")).toBe(true);
 });
-
-test("no guard when EF present", () => {
-  expect(evaluateGuards({ details: details("default"), text: "hello", hasEmbedding: false })).toEqual([]);
+test("no guard when default EF and unknown dim", () => {
+  expect(evaluateGuards({ details: det({ embedding_function: "default" }), mode: "text", text: "hello", hasEmbedding: false })).toEqual([]);
 });
-
 test("no guard when text is empty", () => {
-  expect(evaluateGuards({ details: details("none"), text: "  ", hasEmbedding: false })).toEqual([]);
+  expect(evaluateGuards({ details: det({ embedding_function: "none" }), mode: "text", text: "  ", hasEmbedding: false })).toEqual([]);
+});
+test("defaultQueryMode picks vector when the default embedder can't match", () => {
+  expect(defaultQueryMode(undefined)).toBe("text");
+  expect(defaultQueryMode(det({ embedding_function: "none", dimensionality: 5 }))).toBe("vector");
+  expect(defaultQueryMode(det({ dimensionality: 1536 }))).toBe("vector");
+  expect(defaultQueryMode(det({ dimensionality: 384 }))).toBe("text");
+  expect(defaultQueryMode(det({ dimensionality: null }))).toBe("text");
+});
+test("non-none collection with dim != 384 warns in text mode", () => {
+  const g = evaluateGuards({ details: det({ dimensionality: 1536 }), mode: "text", text: "hi", hasEmbedding: false });
+  expect(g.some((x) => x.level === "warn")).toBe(true);
+});
+test("dim == 384 does not warn", () => {
+  const g = evaluateGuards({ details: det({ dimensionality: 384 }), mode: "text", text: "hi", hasEmbedding: false });
+  expect(g).toHaveLength(0);
+});
+test("vector mode never blocks or warns", () => {
+  const g = evaluateGuards({ details: det({ dimensionality: 1536 }), mode: "vector", text: "", hasEmbedding: true });
+  expect(g).toHaveLength(0);
 });
