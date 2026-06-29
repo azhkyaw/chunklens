@@ -452,11 +452,12 @@ code {
   padding: var(--sp-3);
 }
 
-/* Sidebar rail header */
+/* Sidebar rail header - eyebrow on top, action buttons in a row beneath
+   (the 248px rail is too narrow to fit the eyebrow + both buttons on one line) */
 .rail-head {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
   gap: var(--sp-2);
 }
 
@@ -1224,5 +1225,9 @@ p.guard[data-level="warn"] {
 }
 .rail-head-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--sp-2);
+}
+.rail-head-actions button {
+  flex: 1 1 auto;
 }
