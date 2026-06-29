@@ -94,3 +94,19 @@ export const useClearCollectionEmbedder = (name: string) => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["collection", name] }),
   });
 };
+
+export const useSources = (name: string, key: string | null) =>
+  useQuery({
+    queryKey: ["sources", name, key],
+    queryFn: () => api.listSources(name, key as string),
+    enabled: Boolean(name && key),
+  });
+
+export const useSourceRecords = (
+  name: string, key: string, value: string, limit: number, offset: number,
+) =>
+  useQuery({
+    queryKey: ["source-records", name, key, value, limit, offset],
+    queryFn: () => api.getSourceRecords(name, key, value, limit, offset),
+    enabled: Boolean(name && key && value),
+  });

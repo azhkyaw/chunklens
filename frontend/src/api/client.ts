@@ -13,6 +13,7 @@ import type {
   QueryResult,
   RecordRow,
   RecordsPage,
+  SourceList,
   UpdateCollectionInput,
   UpdateRecordMetadataInput,
 } from "./types";
@@ -92,4 +93,13 @@ export const api = {
     }),
   clearCollectionEmbedder: (name: string) =>
     jsonFetch<void>(`/api/collections/${encodeURIComponent(name)}/embedder`, { method: "DELETE" }),
+  listSources: (name: string, key: string, cap?: number) =>
+    jsonFetch<SourceList>(
+      `/api/collections/${encodeURIComponent(name)}/sources?key=${encodeURIComponent(key)}${cap ? `&cap=${cap}` : ""}`,
+    ),
+  getSourceRecords: (name: string, key: string, value: string, limit: number, offset: number) =>
+    jsonFetch<RecordsPage>(
+      `/api/collections/${encodeURIComponent(name)}/source-records?key=${encodeURIComponent(key)}` +
+        `&value=${encodeURIComponent(value)}&limit=${limit}&offset=${offset}`,
+    ),
 };

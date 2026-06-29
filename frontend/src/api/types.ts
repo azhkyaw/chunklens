@@ -110,3 +110,5 @@ export interface ExportFile {
   collection: ExportCollection;
   records: ExportRecord[];
 }
+export interface SourceInfo { value: string; count: number; }
+export interface SourceList { key: string; sources: SourceInfo[]; scanned: number; total: number; }
