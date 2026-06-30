@@ -14,6 +14,8 @@ def test_list_embedders_curated_set_and_flags():
     assert items["sentence_transformer"].install_extra == "local-embedders"
     # env var is READ from chromadb's EF default, not guessed
     assert items["openai"].env_var == "CHROMA_OPENAI_API_KEY"
+    # the provider's DEFAULT model is introspected from the EF signature (offline)
+    assert isinstance(items["openai"].default_model, str) and items["openai"].default_model
 
 
 def test_resolve_key_session_beats_env(monkeypatch):

@@ -152,6 +152,7 @@ class EmbedderInfo(BaseModel):
     env_var: Optional[str] = None
     key_set: bool = False
     env_key: bool = False
+    default_model: Optional[str] = None
 
 
 class ExportRecord(BaseModel):

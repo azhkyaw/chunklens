@@ -92,6 +92,7 @@ export interface EmbedderInfo {
   env_var: string | null;
   key_set: boolean;
   env_key: boolean;
+  default_model?: string | null;
 }
 export interface ExportRecord {
   id: string;

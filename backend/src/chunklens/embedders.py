@@ -70,6 +70,17 @@ def _env_var(provider: str) -> Optional[str]:
     return None
 
 
+def _default_model(provider: str) -> Optional[str]:
+    """The provider's default model, read from the EF's `model_name` signature default.
+    Signature introspection only - never imports the provider SDK, so it stays offline.
+    """
+    p = _params(provider)
+    if "model_name" in p:
+        default = p["model_name"].default
+        return default if isinstance(default, str) else None
+    return None
+
+
 def _needs_key(provider: str) -> bool:
     return "api_key" in _params(provider)
 
@@ -106,6 +117,7 @@ def list_embedders() -> list[EmbedderInfo]:
                 env_var=env,
                 key_set=pid in _session_keys,
                 env_key=bool(env and os.environ.get(env)),
+                default_model=_default_model(pid),
             )
         )
     return out
