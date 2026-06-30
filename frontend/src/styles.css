@@ -1333,6 +1333,11 @@ p.guard[data-level="warn"] {
   content: "";
 }
 .doc-value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-family: var(--font-mono);
   font-size: var(--t-sm);
   color: var(--ink);

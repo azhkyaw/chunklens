@@ -1,12 +1,18 @@
 import { useState } from "react";
 import { useMetadataKeys, useSources } from "../../api/hooks";
-import { isProvenanceKey } from "../retrieval/provenance";
+import { PROVENANCE_KEYS } from "../retrieval/provenance";
 import { DocChunks } from "./DocChunks";
 
 export function RecordsByDocument({ name }: { name: string }) {
   const { data: keysData } = useMetadataKeys(name);
   const stringKeys = (keysData?.keys ?? []).filter((k) => k.types.length === 1 && k.types[0] === "string").map((k) => k.key);
-  const autoKey = stringKeys.find((k) => isProvenanceKey(k)) ?? stringKeys[0] ?? "";
+  // Prefer the highest-priority provenance key (PROVENANCE_KEYS order: source > path > url >
+  // page > doc_id > title) rather than the first match in alphabetical key order - otherwise an
+  // id-ish key like doc_id wins over a human-readable source purely because "d" < "s".
+  const autoKey =
+    PROVENANCE_KEYS.map((pk) => stringKeys.find((k) => k.toLowerCase() === pk)).find(Boolean) ??
+    stringKeys[0] ??
+    "";
   const [picked, setPicked] = useState<string | null>(null);
   const key = picked ?? autoKey;
 

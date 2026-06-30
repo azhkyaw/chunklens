@@ -54,3 +54,23 @@ test("mixed-type key is excluded; only the purely-string key is chosen as auto k
   await waitFor(() => expect(srcSpy).toHaveBeenCalledWith("docs", "source"));
   expect(srcSpy).not.toHaveBeenCalledWith("docs", "mixed");
 });
+
+test("auto-detect prefers a high-priority provenance key (source) over a lower one (doc_id) regardless of key order", async () => {
+  // Mirrors a real RAG collection: keys arrive alphabetically, so doc_id precedes source -
+  // but source must win because it ranks higher in PROVENANCE_KEYS, not because it sorts later.
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({
+    keys: [
+      { key: "allowed_roles", types: ["string"] },
+      { key: "doc_id", types: ["string"] },
+      { key: "section", types: ["string"] },
+      { key: "source", types: ["string"] },
+    ],
+    sampled: 14, total: 14,
+  });
+  const srcSpy = vi.spyOn(api, "listSources").mockResolvedValue({
+    key: "source", sources: [{ value: "employee-handbook.md", count: 14 }], scanned: 14, total: 14,
+  });
+  render(wrap(<RecordsByDocument name="docs" />));
+  await waitFor(() => expect(srcSpy).toHaveBeenCalledWith("docs", "source"));
+  expect(srcSpy).not.toHaveBeenCalledWith("docs", "doc_id");
+});
