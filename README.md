@@ -2,7 +2,7 @@
 
 A local-first inspector and retrieval debugger for ChromaDB.
 
-> Status: pre-release. The app works end to end. Packaging for `pip` and `pipx` is the next step before a tagged `0.1.0`.
+> Status: `0.1.0`. Early but functional. Install it as a single command (see [Install](#install-packaged)) or run from source. Not yet on PyPI, so build the wheel locally for now.
 
 ChunkLens runs entirely on your machine. A small FastAPI backend wraps the official `chromadb` client and serves a React UI. It binds to `127.0.0.1` only and sends no telemetry. The one outbound request it can make is the one you ask for: embedding a query through a provider you choose. Any API key you enter stays in memory for the session and is never written to disk.
 
@@ -20,6 +20,35 @@ Working with a vector database usually means writing throwaway scripts to answer
 - Compare two queries side by side to see how their results differ.
 - Query collections that use a non-default embedding function. ChunkLens detects the provider (OpenAI, Cohere, Voyage, Jina, Ollama, or sentence-transformers) and embeds your query text with it, using a key you provide for that session.
 - Import and export a collection as a single portable JSON file.
+
+## Install (packaged)
+
+ChunkLens installs as a single command with the UI bundled in.
+
+```bash
+pipx install chunklens          # once published to PyPI
+```
+
+It is not on PyPI yet, so build a wheel locally and install that:
+
+```bash
+uv run --project backend python scripts/build_release.py   # builds the UI + wheel into backend/dist/
+pipx install backend/dist/chunklens-0.1.0-py3-none-any.whl
+```
+
+Then run it:
+
+```bash
+chunklens
+```
+
+ChunkLens still needs a running Chroma server (see [Running it](#running-it)). Point it at one from the in-app Connection bar, or with `CHUNKLENS_CHROMA_HOST` / `CHUNKLENS_CHROMA_PORT`.
+
+For local sentence-transformer embeddings, install the extra:
+
+```bash
+pipx install "chunklens[local-embedders]"
+```
 
 ## Requirements
 
@@ -124,7 +153,7 @@ npm run e2e
 
 ## Roadmap
 
-- Packaging for `pip` and `pipx`, so you can install and run ChunkLens without cloning the repo. This is the work behind a tagged `0.1.0`.
+- Publishing to PyPI, so `pipx install chunklens` works without building the wheel yourself. The packaged build now exists at `0.1.0` (see [Install](#install-packaged)).
 - Saved queries and relevance checks, to track whether retrieval quality drifts over time.
 - A visual view of the embedding space.
 - A desktop build.
