@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "chunklens"
-version = "0.0.1"
+dynamic = ["version"]
 description = "The local-first inspector & retrieval debugger for ChromaDB."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -21,6 +21,9 @@ dev = ["pytest>=8", "httpx>=0.27"]
 
 [project.scripts]
 chunklens = "chunklens.server:main"
+
+[tool.hatch.version]
+path = "src/chunklens/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/chunklens"]
