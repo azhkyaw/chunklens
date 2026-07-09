@@ -32,4 +32,9 @@ chunklens = "chunklens.server:main"
 path = "src/chunklens/__init__.py"
 
 [tool.hatch.build.targets.wheel]
+# src/chunklens/web (the built SPA) is gitignored, but an explicit `packages` entry overrides
+# hatchling's VCS exclusion, so the wheel AND sdist already ship web/ (verified). Do NOT add a
+# force-include for web/: it collides with packages ("a second file is being added at the same
+# path: chunklens/web/index.html"). scripts/build_release.py asserts the SPA is inside the wheel
+# as the release-time guard, and requires web/ to be built first.
 packages = ["src/chunklens"]
