@@ -6,6 +6,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import __version__
 from .routers import collections, connection, embedders, query
@@ -23,7 +24,27 @@ def _allowed_hosts() -> list[str]:
     return ["*"]
 
 
-def create_app() -> FastAPI:
+class SPAStaticFiles(StaticFiles):
+    """StaticFiles that serves index.html for unknown non-API paths.
+
+    The SPA owns client-side routes like /c/<collection>/<tab>; a browser
+    refresh or deep link there must get index.html, not a 404. API paths
+    keep their real 404 so clients never mistake index.html for JSON.
+    """
+
+    async def get_response(self, path: str, scope):  # type: ignore[override]
+        try:
+            return await super().get_response(path, scope)
+        except StarletteHTTPException as exc:
+            # get_path() joins with os.sep, which is a backslash on Windows;
+            # normalize before the prefix check so this works on every OS.
+            normalized = path.replace(os.sep, "/")
+            if exc.status_code == 404 and not normalized.startswith("api/"):
+                return await super().get_response("index.html", scope)
+            raise
+
+
+def create_app(web_dir: Path | None = None) -> FastAPI:
     app = FastAPI(title="ChunkLens", version=__version__)
 
     # Rejecting foreign Host headers blocks DNS-rebinding pages from reaching
@@ -40,9 +61,10 @@ def create_app() -> FastAPI:
     app.include_router(embedders.router)
 
     # SPA build (present only after `npm run build`); mounted last so /api wins.
-    web_dir = Path(__file__).parent / "web"
+    # Tests inject web_dir; production autodetects the packaged build.
+    web_dir = web_dir if web_dir is not None else Path(__file__).parent / "web"
     if web_dir.is_dir():
-        app.mount("/", StaticFiles(directory=str(web_dir), html=True), name="web")
+        app.mount("/", SPAStaticFiles(directory=str(web_dir), html=True), name="web")
 
     return app
 
