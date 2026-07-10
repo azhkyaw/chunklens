@@ -16,51 +16,59 @@
    ---------------------------------------------------------------------------- */
 
 /* ----------------------------------------------------------------------------
-   1. Design tokens - light (default) + dark (follows the OS)
-   Only the values change between themes; every rule below reads the tokens,
-   so the whole app re-themes from these two blocks.
+   1. Design tokens - dark (flagship, the :root default) + light (day shift).
+   lib/prefs.ts resolves system/light/dark and stamps data-theme on <html>
+   before first render, so the light block is a plain attribute override.
+   Every value pairing here is AA-gated by src/test/tokens-contrast.test.ts.
    ---------------------------------------------------------------------------- */
 :root {
-  color-scheme: light dark;
+  color-scheme: dark;
 
-  /* Surfaces - flat white panels on a near-white canvas, hairline-separated */
-  --bg: #ffffff;
-  --surface: #ffffff;
-  --surface-2: #fafafa;
-  --surface-inset: #f4f4f5; /* recessed: code, JSON, score tracks, spec plate */
+  /* Surfaces - graphite lab panels, hairline-separated */
+  --bg: #0b0d0e;
+  --surface: #0e1112;
+  --surface-2: #14191b; /* hover tint */
+  --surface-inset: #12181a; /* recessed: inputs, code, JSON, score tracks */
+  --surface-raised: #1a2023; /* selection fill */
 
-  /* Ink - graphite neutrals (zinc scale) */
-  --ink: #09090b;
-  --ink-muted: #71717a;
-  --ink-faint: #a1a1aa;
-  --line: #e4e4e7;
-  --line-strong: #d4d4d8;
+  /* Ink */
+  --ink: #e6ebec;
+  --ink-muted: #8b9a9e;
+  --ink-faint: #66787a;
+  --line: #1e2426;
+  --line-strong: #2a3236;
 
-  /* Accent - teal */
-  --accent: #0d9488;
-  --accent-hover: #0f766e;
-  --accent-ink: #ffffff;
-  --accent-weak: #ccfbf1;
-  --accent-weak-border: #99f6e4;
-  --accent-btn: #0f766e; /* darker teal so white label clears AA (4.5) on the button */
-  --accent-btn-hover: #115e59;
+  /* Amber - the machine channel: brand, actions, selection, focus, warnings */
+  --accent: #ffb224;
+  --accent-hover: #ffc14d;
+  --accent-ink: #0b0d0e;
+  --accent-weak: #241d10;
+  --accent-weak-border: #4a3a18;
+  --accent-btn: #ffb224;
+  --accent-btn-hover: #ffc14d;
 
-  /* Semantics - kept deliberately OUT of the accent family */
-  --warn-ink: #92610a;
-  --warn-bg: #fef6e7;
-  --warn-border: #f0d9a8;
-  --danger: #dc2626;
-  --danger-hover: #b91c1c;
-  --danger-bg: #fef2f2;
-  --danger-border: #fecaca;
+  /* Green - the data channel: scores, health, success */
+  --signal: #3ddc97;
+  --signal-dim: #2b6e5a;
 
-  /* Score ramp - the signature. Fill rides low→high as relative score rises. */
-  --ramp-low: #c4c4c8;
-  --ramp-high: #14b8a6;
+  /* Warnings are the machine talking - amber family, banner + icon treatment */
+  --warn-ink: #e8c583;
+  --warn-bg: #2a2114;
+  --warn-border: #4a3d20;
 
-  --focus: #0d9488;
-  --shadow-1: 0 1px 2px rgba(9, 9, 11, 0.05);
-  --shadow-2: 0 10px 30px rgba(9, 9, 11, 0.12);
+  /* Danger - the only semantic outside the two channels */
+  --danger: #ff6b6b;
+  --danger-hover: #ff8f8f;
+  --danger-bg: #2a1416;
+  --danger-border: #4a2226;
+
+  /* Score ramp - relevance reads as signal strength */
+  --ramp-low: #4a5a54;
+  --ramp-high: #3ddc97;
+
+  --focus: #ffb224;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 12px 32px rgba(0, 0, 0, 0.6);
 
   /* Type */
   --font-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto,
@@ -75,54 +83,59 @@
   --t-lg: 18px;
   --t-xl: 22px;
 
-  /* Space + shape */
+  /* Space + shape - sharp instrument corners */
   --sp-1: 4px;
   --sp-2: 8px;
   --sp-3: 12px;
   --sp-4: 16px;
   --sp-5: 24px;
   --sp-6: 32px;
-  --r-sm: 4px;
-  --r-md: 6px;
-  --r-lg: 8px;
+  --r-sm: 2px;
+  --r-md: 3px;
+  --r-lg: 4px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0a0a0b;
-    --surface: #0e0e10;
-    --surface-2: #161618;
-    --surface-inset: #1c1c20;
+:root[data-theme="light"] {
+  color-scheme: light;
 
-    --ink: #fafafa;
-    --ink-muted: #a1a1aa;
-    --ink-faint: #71717a;
-    --line: #27272a;
-    --line-strong: #3f3f46;
+  --bg: #f4f4f2;
+  --surface: #fbfbfa;
+  --surface-2: #f0f0ee;
+  --surface-inset: #eceded;
+  --surface-raised: #f3eee2; /* amber-tinted selection fill */
 
-    --accent: #14b8a6;
-    --accent-hover: #2dd4bf;
-    --accent-ink: #042f2e;
-    --accent-weak: #134e4a;
-    --accent-weak-border: #115e59;
-    --accent-btn: #14b8a6; /* dark accent already clears AA on --accent-ink */
-    --accent-btn-hover: #2dd4bf;
+  --ink: #1c1f21;
+  --ink-muted: #5f686e;
+  --ink-faint: #79828a;
+  --line: #d8d8d4;
+  --line-strong: #c4c4be;
 
-    --warn-ink: #e8c583;
-    --warn-bg: #2a2114;
-    --warn-border: #4a3d20;
-    --danger: #f87171;
-    --danger-hover: #fca5a5;
-    --danger-bg: #2a1416;
-    --danger-border: #4a2226;
+  --accent: #b87500; /* burnt amber */
+  --accent-hover: #9c6300;
+  --accent-ink: #ffffff;
+  --accent-weak: #f3e8d0;
+  --accent-weak-border: #e2cfa4;
+  --accent-btn: #8f5a00; /* darker so white label clears AA (4.5) */
+  --accent-btn-hover: #7a4d00;
 
-    --ramp-low: #3f3f46;
-    --ramp-high: #2dd4bf;
+  --signal: #10714e;
+  --signal-dim: #7fb89e;
 
-    --focus: #14b8a6;
-    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow-2: 0 12px 32px rgba(0, 0, 0, 0.55);
-  }
+  --warn-ink: #8a5a00;
+  --warn-bg: #f5ead2;
+  --warn-border: #e3cd9d;
+
+  --danger: #b91c1c;
+  --danger-hover: #991b1b;
+  --danger-bg: #fdf1f1;
+  --danger-border: #ecc8c8;
+
+  --ramp-low: #b5beb8;
+  --ramp-high: #1a9e6e;
+
+  --focus: #b87500;
+  --shadow-1: 0 1px 2px rgba(28, 31, 33, 0.06);
+  --shadow-2: 0 10px 30px rgba(28, 31, 33, 0.14);
 }
 
 /* ----------------------------------------------------------------------------
