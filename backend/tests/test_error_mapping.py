@@ -17,7 +17,7 @@ class _BrokenClient:
 @pytest.fixture()
 def broken_api():
     app.dependency_overrides[get_client] = lambda: _BrokenClient()
-    yield TestClient(app, raise_server_exceptions=False)
+    yield TestClient(app, raise_server_exceptions=False, base_url="http://127.0.0.1")
     app.dependency_overrides.clear()
 
 

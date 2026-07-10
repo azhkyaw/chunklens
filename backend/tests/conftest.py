@@ -29,13 +29,15 @@ def chroma():
 
 @pytest.fixture()
 def client():
-    return TestClient(app)
+    # base_url picks a loopback Host header (the default "testserver" would be
+    # rejected by the TrustedHostMiddleware, as any non-local host should be).
+    return TestClient(app, base_url="http://127.0.0.1")
 
 
 @pytest.fixture()
 def api(chroma):
     app.dependency_overrides[get_client] = lambda: chroma
-    yield TestClient(app)
+    yield TestClient(app, base_url="http://127.0.0.1")
     app.dependency_overrides.clear()
 
 
