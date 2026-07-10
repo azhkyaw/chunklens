@@ -141,7 +141,8 @@ test("switching the connection clears caches and returns home", async () => {
   // Seed a per-collection cache entry the old onSaved forgot to clear (L-5).
   qc.setQueryData(["sources", "demo", "lang"], { key: "lang", values: [] });
 
-  await userEvent.click(screen.getByRole("button", { name: /^connection$/i }));
+  await userEvent.click(await screen.findByRole("button", { name: /\bconnected\b/i }));
+  expect(screen.getByRole("dialog", { name: /connection settings/i })).toBeInTheDocument();
   await userEvent.click(screen.getByRole("button", { name: /^connect$/i }));
 
   expect(await screen.findByText(/no collection selected/i)).toBeInTheDocument();

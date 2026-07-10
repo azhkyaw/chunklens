@@ -13,6 +13,7 @@ import { RecordsTable } from "./features/records/RecordsTable";
 import { ExportButton } from "./features/io/ExportButton";
 import { ImportPanel } from "./features/io/ImportPanel";
 import { ThemeToggle } from "./ThemeToggle";
+import { Modal } from "./ui/Modal";
 import {
   COLLECTION_TABS,
   TAB_LABELS,
@@ -64,14 +65,11 @@ export function App() {
           </h1>
           <div className="topbar-conn">
             <ThemeToggle />
-            <ConnectionStatus />
-            <button onClick={() => setShowConn((s) => !s)} aria-expanded={showConn}>
-              Connection
-            </button>
+            <ConnectionStatus onOpen={() => setShowConn(true)} />
           </div>
         </div>
         {showConn && (
-          <div className="conn-popover panel">
+          <Modal label="Connection settings" onClose={() => setShowConn(false)}>
             <ConnectionForm
               onSaved={() => {
                 refreshCollections();
@@ -85,7 +83,7 @@ export function App() {
                 navigate("/");
               }}
             />
-          </div>
+          </Modal>
         )}
       </header>
 
