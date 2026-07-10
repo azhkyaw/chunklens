@@ -12,6 +12,7 @@ import { SingleQuery } from "./features/query/SingleQuery";
 import { RecordsTable } from "./features/records/RecordsTable";
 import { ExportButton } from "./features/io/ExportButton";
 import { ImportPanel } from "./features/io/ImportPanel";
+import { StatusBar } from "./StatusBar";
 import { ThemeToggle } from "./ThemeToggle";
 import { Modal } from "./ui/Modal";
 import { MenuButton } from "./ui/MenuButton";
@@ -137,6 +138,8 @@ export function App() {
           </div>
         )}
       </main>
+
+      <StatusBar collection={selected} />
     </div>
   );
 }
