@@ -36,7 +36,7 @@ def list_collections(client) -> list[CollectionSummary]:
 
 
 def get_records(client, name: str, limit: int = 50, offset: int = 0, where: Optional[dict] = None) -> RecordsPage:
-    col = client.get_collection(name)
+    col = _get(client, name)
     if where is None:
         total = col.count()
     else:
@@ -64,7 +64,7 @@ def query(
     where: Optional[dict] = None,
     where_document: Optional[dict] = None,
 ) -> QueryResult:
-    col = client.get_collection(name)
+    col = _get(client, name)
     kwargs: dict[str, Any] = {
         "n_results": n_results,
         "include": ["documents", "metadatas", "distances"],
@@ -288,7 +288,7 @@ _SOURCE_BATCH = 1000
 
 
 def list_sources(client, name: str, key: str, cap: int = DEFAULT_SOURCE_SCAN_CAP) -> SourceList:
-    col = client.get_collection(name)
+    col = _get(client, name)
     total = col.count()
     limit_total = min(total, cap)
     counts: dict[str, int] = {}

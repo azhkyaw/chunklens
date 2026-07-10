@@ -35,7 +35,7 @@ def list_collections(client=Depends(get_client)):
 def get_records(name: str, limit: int = 50, offset: int = 0, client=Depends(get_client)):
     try:
         return chroma_service.get_records(client, name, limit=limit, offset=offset)
-    except Exception as exc:
+    except NotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc))
 
 
@@ -43,7 +43,7 @@ def get_records(name: str, limit: int = 50, offset: int = 0, client=Depends(get_
 def list_sources(name: str, key: str, cap: int = 10000, client=Depends(get_client)):
     try:
         return chroma_service.list_sources(client, name, key, cap=cap)
-    except Exception as exc:
+    except NotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc))
 
 
@@ -53,7 +53,7 @@ def get_source_records(
 ):
     try:
         return chroma_service.get_records(client, name, limit=limit, offset=offset, where={key: {"$eq": value}})
-    except Exception as exc:
+    except NotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc))
 
 

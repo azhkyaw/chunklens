@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from .. import chroma_service
 from .. import embedders as embedders_mod
+from ..chroma_service import NotFound
 from ..deps import get_client, get_embedder
 from ..schemas import QueryRequest, QueryResult
 
@@ -34,7 +35,7 @@ def run_query(
             where=body.where,
             where_document=body.where_document,
         )
+    except NotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
-    except Exception as exc:
-        raise HTTPException(status_code=404, detail=str(exc))
