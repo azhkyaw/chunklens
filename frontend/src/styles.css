@@ -904,11 +904,6 @@ p[role="alert"] {
   border-top: 1px solid var(--line);
   padding-top: var(--sp-4);
 }
-.console-head {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-}
 .console-body {
   display: flex;
   flex-direction: column;

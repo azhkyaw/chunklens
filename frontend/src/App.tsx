@@ -1,25 +1,54 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { Redirect, useLocation, useRoute } from "wouter";
 import { CollectionsList } from "./features/collections/CollectionsList";
 import { CollectionCreate } from "./features/collections/CollectionCreate";
 import { CollectionDetails } from "./features/collections/CollectionDetails";
 import { CollectionManage } from "./features/collections/CollectionManage";
 import { ConnectionForm } from "./features/connection/ConnectionForm";
 import { ConnectionStatus } from "./features/connection/ConnectionStatus";
-import { QueryPanel } from "./features/query/QueryPanel";
+import { CompareQuery } from "./features/query/CompareQuery";
+import { SingleQuery } from "./features/query/SingleQuery";
 import { RecordsTable } from "./features/records/RecordsTable";
 import { ExportButton } from "./features/io/ExportButton";
 import { ImportPanel } from "./features/io/ImportPanel";
 import { ThemeToggle } from "./ThemeToggle";
+import {
+  COLLECTION_TABS,
+  TAB_LABELS,
+  collectionPath,
+  isCollectionTab,
+  type CollectionTab,
+} from "./lib/routes";
 
 export function App() {
-  const [selected, setSelected] = useState<string | null>(null);
+  const [location, navigate] = useLocation();
+  const [onTab, tabParams] = useRoute("/c/:collection/:tab");
+  const [onBare, bareParams] = useRoute("/c/:collection");
   const [showConn, setShowConn] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  const [view, setView] = useState<"records" | "query">("records");
-  useEffect(() => setView("records"), [selected]);
   const qc = useQueryClient();
+
+  // Chroma collection names are [a-zA-Z0-9._-], so decode is a no-op today;
+  // it stays correct if the charset ever widens.
+  const selected =
+    onTab && tabParams
+      ? decodeURIComponent(tabParams.collection)
+      : onBare && bareParams
+        ? decodeURIComponent(bareParams.collection)
+        : null;
+  const tab: CollectionTab =
+    onTab && tabParams && isCollectionTab(tabParams.tab) ? tabParams.tab : "records";
+
+  // URL canonicalization, rendered as the main content so the shell stays
+  // mounted during the (replace) redirect: bare /c/name -> its records tab,
+  // unknown tab -> records, any other unknown path -> home.
+  let redirect: string | null = null;
+  if (onBare && selected) redirect = collectionPath(selected);
+  else if (onTab && tabParams && !isCollectionTab(tabParams.tab) && selected)
+    redirect = collectionPath(selected);
+  else if (!onTab && !onBare && location !== "/") redirect = "/";
 
   function refreshCollections() {
     qc.invalidateQueries({ queryKey: ["collections"] });
@@ -47,11 +76,13 @@ export function App() {
               onSaved={() => {
                 refreshCollections();
                 qc.invalidateQueries({ queryKey: ["connection"] });
-                setSelected(null);
                 qc.removeQueries({ queryKey: ["collection"] });
                 qc.removeQueries({ queryKey: ["records"] });
                 qc.removeQueries({ queryKey: ["metadata-keys"] });
+                qc.removeQueries({ queryKey: ["sources"] });
+                qc.removeQueries({ queryKey: ["source-records"] });
                 setShowConn(false);
+                navigate("/");
               }}
             />
           </div>
@@ -71,8 +102,8 @@ export function App() {
             <ImportPanel
               onImported={(name) => {
                 refreshCollections();
-                setSelected(name);
                 setShowImport(false);
+                navigate(collectionPath(name));
               }}
             />
           </div>
@@ -82,49 +113,20 @@ export function App() {
             <CollectionCreate
               onCreated={(name) => {
                 refreshCollections();
-                setSelected(name);
                 setShowCreate(false);
+                navigate(collectionPath(name));
               }}
             />
           </div>
         )}
-        <CollectionsList selected={selected} onSelect={setSelected} />
+        <CollectionsList selected={selected} onSelect={(name) => navigate(collectionPath(name))} />
       </aside>
 
       <main className="main">
-        {selected ? (
-          <>
-            <div className="collection-head">
-              <p className="eyebrow">Collection</p>
-              <h2>{selected}</h2>
-              <div className="collection-actions">
-                <CollectionManage
-                  name={selected}
-                  onRenamed={(newName) => {
-                    refreshCollections();
-                    qc.removeQueries({ queryKey: ["collection", selected] });
-                    qc.removeQueries({ queryKey: ["records", selected] });
-                    setSelected(newName);
-                  }}
-                  onDeleted={() => {
-                    refreshCollections();
-                    setSelected(null);
-                  }}
-                />
-                <ExportButton name={selected} />
-              </div>
-            </div>
-            <CollectionDetails name={selected} />
-            <div className="view-switch" role="tablist" aria-label="Collection view">
-              <button type="button" role="tab" aria-selected={view === "records"}
-                      className="view-tab" onClick={() => setView("records")}>Records</button>
-              <button type="button" role="tab" aria-selected={view === "query"}
-                      className="view-tab" onClick={() => setView("query")}>Query</button>
-            </div>
-            {/* key={selected} remounts per collection so paging, grouping, and
-                edit-draft state never leak from one collection into another */}
-            {view === "records" ? <RecordsTable key={selected} name={selected} /> : <QueryPanel name={selected} />}
-          </>
+        {redirect ? (
+          <Redirect to={redirect} replace />
+        ) : selected ? (
+          <CollectionView name={selected} tab={tab} />
         ) : (
           <div className="empty-bench">
             <span className="empty-mark" aria-hidden="true" />
@@ -134,5 +136,62 @@ export function App() {
         )}
       </main>
     </div>
+  );
+}
+
+function CollectionView({ name, tab }: { name: string; tab: CollectionTab }) {
+  const [, navigate] = useLocation();
+  const qc = useQueryClient();
+  return (
+    <>
+      <div className="collection-head">
+        <p className="eyebrow">Collection</p>
+        <h2>{name}</h2>
+        <div className="collection-actions">
+          <CollectionManage
+            name={name}
+            onRenamed={(newName) => {
+              qc.invalidateQueries({ queryKey: ["collections"] });
+              qc.removeQueries({ queryKey: ["collection", name] });
+              qc.removeQueries({ queryKey: ["records", name] });
+              navigate(collectionPath(newName, tab), { replace: true });
+            }}
+            onDeleted={() => {
+              qc.invalidateQueries({ queryKey: ["collections"] });
+              navigate("/");
+            }}
+          />
+          <ExportButton name={name} />
+        </div>
+      </div>
+      <CollectionDetails name={name} />
+      <div className="view-switch" role="tablist" aria-label="Collection view">
+        {COLLECTION_TABS.map((t) => (
+          <button
+            key={t}
+            type="button"
+            role="tab"
+            className="view-tab"
+            aria-selected={tab === t}
+            onClick={() => navigate(collectionPath(name, t))}
+          >
+            {TAB_LABELS[t]}
+          </button>
+        ))}
+      </div>
+      {/* key={name} remounts per collection so paging, grouping, query drafts,
+          and edit-draft state never leak from one collection into another */}
+      {tab === "records" && <RecordsTable key={name} name={name} />}
+      {tab === "query" && (
+        <section className="query-console">
+          <SingleQuery key={name} name={name} />
+        </section>
+      )}
+      {tab === "compare" && (
+        <section className="query-console">
+          <CompareQuery key={name} name={name} />
+        </section>
+      )}
+    </>
   );
 }
