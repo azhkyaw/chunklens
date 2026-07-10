@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from .. import chroma_service
@@ -80,7 +82,7 @@ def create_collection(body: CreateCollectionRequest, client=Depends(get_client))
 
 
 @router.post("/import", response_model=CollectionDetails, status_code=201)
-def import_collection(body: ExportFile, name: str | None = None, client=Depends(get_client)):
+def import_collection(body: ExportFile, name: Optional[str] = None, client=Depends(get_client)):
     try:
         return chroma_service.import_collection(client, body, name_override=name)
     except Conflict as exc:
