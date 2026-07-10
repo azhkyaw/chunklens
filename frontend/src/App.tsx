@@ -119,7 +119,9 @@ export function App() {
               <button type="button" role="tab" aria-selected={view === "query"}
                       className="view-tab" onClick={() => setView("query")}>Query</button>
             </div>
-            {view === "records" ? <RecordsTable name={selected} /> : <QueryPanel name={selected} />}
+            {/* key={selected} remounts per collection so paging, grouping, and
+                edit-draft state never leak from one collection into another */}
+            {view === "records" ? <RecordsTable key={selected} name={selected} /> : <QueryPanel name={selected} />}
           </>
         ) : (
           <div className="empty-bench">

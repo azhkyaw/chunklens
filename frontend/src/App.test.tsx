@@ -69,6 +69,31 @@ test("a selected collection lands on Records and can switch to Query", async () 
   expect(screen.queryByRole("table")).not.toBeInTheDocument();
 });
 
+test("switching collections resets records paging state", async () => {
+  vi.spyOn(api, "listCollections").mockResolvedValue([
+    { name: "big", count: 30 },
+    { name: "small", count: 2 },
+  ]);
+  vi.spyOn(api, "getConnection").mockResolvedValue(CONN);
+  vi.spyOn(api, "testConnection").mockResolvedValue({ ok: true });
+  vi.spyOn(api, "getCollectionDetails").mockImplementation(async (name) => ({ ...DETAILS, name }));
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  const recSpy = vi.spyOn(api, "getRecords").mockImplementation(async (name, limit = 25, offset = 0) => ({
+    items: [{ id: `${name}-${offset}`, document: "d", metadata: null }],
+    limit, offset, total: name === "big" ? 30 : 2,
+  }));
+
+  renderApp();
+  await userEvent.click(await screen.findByRole("button", { name: /^big\b/ }));
+  await userEvent.click(await screen.findByRole("button", { name: /^next$/i }));
+  expect(await screen.findByText("26–30 of 30")).toBeInTheDocument();
+
+  // Switching to another collection must start back at page one, not carry offset 25.
+  await userEvent.click(screen.getByRole("button", { name: /^small\b/ }));
+  expect(await screen.findByText("1–2 of 2")).toBeInTheDocument();
+  expect(recSpy).not.toHaveBeenCalledWith("small", 25, 25);
+});
+
 test("switching the connection clears the selected collection from the view", async () => {
   vi.spyOn(api, "listCollections").mockResolvedValue([{ name: "demo", count: 3 }]);
   vi.spyOn(api, "getConnection").mockResolvedValue(CONN);
