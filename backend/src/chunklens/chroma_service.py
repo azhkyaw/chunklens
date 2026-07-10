@@ -15,6 +15,7 @@ from .schemas import (
     QueryHit,
     QueryResult,
     Record,
+    RecordDetail,
     RecordsPage,
     SourceInfo,
     SourceList,
@@ -52,6 +53,22 @@ def get_records(client, name: str, limit: int = 50, offset: int = 0, where: Opti
         for i, d, m in zip(ids, docs, metas)
     ]
     return RecordsPage(items=items, limit=limit, offset=offset, total=total)
+
+
+def get_record(client, name: str, record_id: str) -> RecordDetail:
+    col = _get(client, name)
+    res = col.get(ids=[record_id], include=["documents", "metadatas", "embeddings"])
+    ids = res.get("ids") or []
+    if not ids:
+        raise NotFound(f"Record {record_id!r} not found in {name!r}")
+    doc = (res.get("documents") or [None])[0]
+    meta = (res.get("metadatas") or [None])[0]
+    embs = res.get("embeddings")
+    emb = None
+    # chromadb returns embeddings as numpy arrays; convert like export_collection does.
+    if embs is not None and len(embs) > 0 and embs[0] is not None:
+        emb = [float(x) for x in embs[0]]
+    return RecordDetail(id=record_id, document=doc, metadata=meta or None, embedding=emb)
 
 
 def query(

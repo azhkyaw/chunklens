@@ -17,6 +17,7 @@ from ..schemas import (
     ExportFile,
     MetadataKeysResponse,
     Record,
+    RecordDetail,
     RecordsPage,
     SourceList,
     UpdateCollectionRequest,
@@ -35,6 +36,14 @@ def list_collections(client=Depends(get_client)):
 def get_records(name: str, limit: int = 50, offset: int = 0, client=Depends(get_client)):
     try:
         return chroma_service.get_records(client, name, limit=limit, offset=offset)
+    except NotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
+@router.get("/{name}/records/{record_id}", response_model=RecordDetail)
+def get_record(name: str, record_id: str, client=Depends(get_client)):
+    try:
+        return chroma_service.get_record(client, name, record_id)
     except NotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc))
 

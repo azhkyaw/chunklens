@@ -28,6 +28,13 @@ class RecordsPage(BaseModel):
     total: int
 
 
+class RecordDetail(BaseModel):
+    id: str
+    document: Optional[str] = None
+    metadata: Optional[dict[str, Any]] = None
+    embedding: Optional[list[float]] = None
+
+
 class EmbedderSpec(BaseModel):
     provider: str
     model: Optional[str] = None

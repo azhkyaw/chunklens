@@ -266,3 +266,23 @@ def test_metadata_keys_endpoint(api):
 def test_metadata_keys_missing_collection_is_404(api):
     r = api.get("/api/collections/missing_col/metadata-keys")
     assert r.status_code == 404
+
+
+def test_get_record_detail_includes_embedding(api):
+    res = api.get("/api/collections/docs/records/a")
+    assert res.status_code == 200
+    body = res.json()
+    assert body["id"] == "a"
+    assert body["document"] == "alpha doc"
+    assert body["metadata"] == {"lang": "en"}
+    assert body["embedding"] == [1.0, 0.0]
+
+
+def test_get_record_detail_missing_record_is_404(api):
+    res = api.get("/api/collections/docs/records/zzz")
+    assert res.status_code == 404
+
+
+def test_get_record_detail_missing_collection_is_404(api):
+    res = api.get("/api/collections/nope/records/a")
+    assert res.status_code == 404
