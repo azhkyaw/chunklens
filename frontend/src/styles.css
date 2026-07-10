@@ -1253,7 +1253,7 @@ p.guard[data-level="warn"] {
 }
 
 /* ----------------------------------------------------------------------------
-   17. Modal overlay (record edit) - centered + unmissable
+   17. Modal overlay (shared) - centered + unmissable
    ---------------------------------------------------------------------------- */
 .modal-overlay {
   position: fixed;
@@ -1269,6 +1269,16 @@ p.guard[data-level="warn"] {
   max-height: 90vh;
   overflow: auto;
   box-shadow: var(--shadow-2); /* a true overlay floats; inline .panel stays flat */
+}
+/* Shared modal card rendered by ui/Modal - hosts any form surface */
+.modal-card {
+  width: min(560px, 96vw);
+  max-height: 90vh;
+  overflow: auto;
+  box-shadow: var(--shadow-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
 }
 
 /* ----------------------------------------------------------------------------
