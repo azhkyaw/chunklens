@@ -473,13 +473,37 @@ code {
   padding: var(--sp-3);
 }
 
-/* Sidebar rail header - eyebrow on top, action buttons in a row beneath
-   (the 248px rail is too narrow to fit the eyebrow + both buttons on one line) */
+/* Sidebar rail header - eyebrow + the "+" add-menu on one line */
 .rail-head {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--sp-2);
+}
+.menu-wrap {
+  position: relative;
+}
+.menu-pop {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 40;
+  min-width: 170px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  box-shadow: var(--shadow-1);
+}
+.menu-pop [role="menuitem"] {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border-color: transparent;
+}
+.menu-pop [role="menuitem"]:hover:not(:disabled) {
+  background: var(--surface-2);
+  border-color: transparent;
 }
 
 /* Collection header on the bench */
@@ -1282,14 +1306,6 @@ p.guard[data-level="warn"] {
   align-items: center;
   gap: var(--sp-3);
   font-size: var(--t-xs);
-}
-.rail-head-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-}
-.rail-head-actions button {
-  flex: 1 1 auto;
 }
 
 /* Embedder (provider) row in the query form */

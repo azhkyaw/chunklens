@@ -149,3 +149,17 @@ test("switching the connection clears caches and returns home", async () => {
   expect(history[history.length - 1]).toBe("/");
   expect(qc.getQueryData(["sources", "demo", "lang"])).toBeUndefined();
 });
+
+test("the rail add menu opens New and Import as modals", async () => {
+  mockHappyPath();
+  renderApp("/");
+  await userEvent.click(await screen.findByRole("button", { name: /add collection/i }));
+  await userEvent.click(screen.getByRole("menuitem", { name: /new collection/i }));
+  expect(screen.getByRole("dialog", { name: /new collection/i })).toBeInTheDocument();
+  await userEvent.keyboard("{Escape}");
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: /add collection/i }));
+  await userEvent.click(screen.getByRole("menuitem", { name: /import collection/i }));
+  expect(screen.getByRole("dialog", { name: /import collection/i })).toBeInTheDocument();
+});

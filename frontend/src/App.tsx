@@ -14,6 +14,7 @@ import { ExportButton } from "./features/io/ExportButton";
 import { ImportPanel } from "./features/io/ImportPanel";
 import { ThemeToggle } from "./ThemeToggle";
 import { Modal } from "./ui/Modal";
+import { MenuButton } from "./ui/MenuButton";
 import {
   COLLECTION_TABS,
   TAB_LABELS,
@@ -90,24 +91,16 @@ export function App() {
       <aside className="sidebar">
         <div className="rail-head">
           <p className="eyebrow">Collections</p>
-          <div className="rail-head-actions">
-            <button onClick={() => setShowImport((s) => !s)} aria-expanded={showImport}>Import</button>
-            <button onClick={() => setShowCreate((s) => !s)} aria-expanded={showCreate}>New collection</button>
-          </div>
+          <MenuButton
+            label="Add collection"
+            items={[
+              { label: "New collection", onSelect: () => setShowCreate(true) },
+              { label: "Import collection", onSelect: () => setShowImport(true) },
+            ]}
+          />
         </div>
-        {showImport && (
-          <div className="panel panel-tight">
-            <ImportPanel
-              onImported={(name) => {
-                refreshCollections();
-                setShowImport(false);
-                navigate(collectionPath(name));
-              }}
-            />
-          </div>
-        )}
         {showCreate && (
-          <div className="panel panel-tight">
+          <Modal label="New collection" onClose={() => setShowCreate(false)}>
             <CollectionCreate
               onCreated={(name) => {
                 refreshCollections();
@@ -115,7 +108,18 @@ export function App() {
                 navigate(collectionPath(name));
               }}
             />
-          </div>
+          </Modal>
+        )}
+        {showImport && (
+          <Modal label="Import collection" onClose={() => setShowImport(false)}>
+            <ImportPanel
+              onImported={(name) => {
+                refreshCollections();
+                setShowImport(false);
+                navigate(collectionPath(name));
+              }}
+            />
+          </Modal>
         )}
         <CollectionsList selected={selected} onSelect={(name) => navigate(collectionPath(name))} />
       </aside>
