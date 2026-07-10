@@ -17,6 +17,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { Modal } from "./ui/Modal";
 import { MenuButton } from "./ui/MenuButton";
 import { InspectorShell } from "./ui/InspectorShell";
+import { Inspector } from "./features/inspector/Inspector";
 import { SelectionProvider } from "./lib/selection";
 import { getInspectorOpen, setInspectorOpen } from "./lib/prefs";
 import {
@@ -87,6 +88,7 @@ export function App() {
                 qc.invalidateQueries({ queryKey: ["connection"] });
                 qc.removeQueries({ queryKey: ["collection"] });
                 qc.removeQueries({ queryKey: ["records"] });
+                qc.removeQueries({ queryKey: ["record"] });
                 qc.removeQueries({ queryKey: ["metadata-keys"] });
                 qc.removeQueries({ queryKey: ["sources"] });
                 qc.removeQueries({ queryKey: ["source-records"] });
@@ -140,7 +142,7 @@ export function App() {
             <CollectionView name={selected} tab={tab} />
           </main>
           <InspectorShell open={inspectorOpen} onToggle={toggleInspector}>
-            <p className="inspector-idle muted">Select a row to inspect it here.</p>
+            <Inspector collection={selected} />
           </InspectorShell>
         </SelectionProvider>
       ) : (
@@ -177,6 +179,7 @@ function CollectionView({ name, tab }: { name: string; tab: CollectionTab }) {
               qc.invalidateQueries({ queryKey: ["collections"] });
               qc.removeQueries({ queryKey: ["collection", name] });
               qc.removeQueries({ queryKey: ["records", name] });
+              qc.removeQueries({ queryKey: ["record", name] });
               navigate(collectionPath(newName, tab), { replace: true });
             }}
             onDeleted={() => {

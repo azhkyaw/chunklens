@@ -20,6 +20,13 @@ export const useRecords = (name: string, limit: number, offset: number) =>
     enabled: Boolean(name),
   });
 
+export const useRecord = (name: string, id: string | null) =>
+  useQuery({
+    queryKey: ["record", name, id],
+    queryFn: () => api.getRecord(name, id as string),
+    enabled: Boolean(name && id),
+  });
+
 export const useRunQuery = (name: string) =>
   useMutation({ mutationFn: (body: QueryRequest) => api.query(name, body) });
 

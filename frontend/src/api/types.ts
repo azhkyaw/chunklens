@@ -113,3 +113,9 @@ export interface ExportFile {
 }
 export interface SourceInfo { value: string; count: number; }
 export interface SourceList { key: string; sources: SourceInfo[]; scanned: number; total: number; }
+export interface RecordDetail {
+  id: string;
+  document: string | null;
+  metadata: Record<string, unknown> | null;
+  embedding: number[] | null;
+}

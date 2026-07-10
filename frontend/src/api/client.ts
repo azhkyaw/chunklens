@@ -11,6 +11,7 @@ import type {
   MetadataKeysResponse,
   QueryRequest,
   QueryResult,
+  RecordDetail,
   RecordRow,
   RecordsPage,
   SourceList,
@@ -33,6 +34,10 @@ export const api = {
   getRecords: (name: string, limit: number, offset: number) =>
     jsonFetch<RecordsPage>(
       `/api/collections/${encodeURIComponent(name)}/records?limit=${limit}&offset=${offset}`,
+    ),
+  getRecord: (name: string, id: string) =>
+    jsonFetch<RecordDetail>(
+      `/api/collections/${encodeURIComponent(name)}/records/${encodeURIComponent(id)}`,
     ),
   query: (name: string, body: QueryRequest) =>
     jsonFetch<QueryResult>(`/api/collections/${encodeURIComponent(name)}/query`, {
