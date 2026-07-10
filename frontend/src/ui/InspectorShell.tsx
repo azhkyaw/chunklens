@@ -13,7 +13,7 @@ export function InspectorShell({
 }) {
   if (!open) {
     return (
-      <aside className="inspector inspector-collapsed">
+      <div className="inspector inspector-collapsed">
         <button
           type="button"
           className="inspector-reopen"
@@ -23,7 +23,7 @@ export function InspectorShell({
         >
           Inspector
         </button>
-      </aside>
+      </div>
     );
   }
   return (

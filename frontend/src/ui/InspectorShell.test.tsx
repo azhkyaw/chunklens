@@ -25,6 +25,9 @@ test("collapsed shell hides children and shows a reopen strip", async () => {
     </InspectorShell>,
   );
   expect(screen.queryByText("detail body")).not.toBeInTheDocument();
+  // A collapsed inspector must expose NO complementary landmark at all,
+  // not merely one that lacks the "Inspector" name.
+  expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
   const reopen = screen.getByRole("button", { name: /open inspector/i });
   expect(reopen).toHaveAttribute("aria-expanded", "false");
   await userEvent.click(reopen);
