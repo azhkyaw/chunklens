@@ -12,6 +12,33 @@ license = "MIT"
 authors = [
   { name = "Aung Zwe Htet Kyaw", email = "azhk.dev@gmail.com" },
 ]
+keywords = [
+  "chromadb",
+  "rag",
+  "vector-database",
+  "embeddings",
+  "retrieval",
+  "retrieval-augmented-generation",
+  "fastapi",
+  "developer-tools",
+  "local-first",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Environment :: Web Environment",
+  "Framework :: FastAPI",
+  "Topic :: Database :: Front-Ends",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Utilities",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
 dependencies = [
   "fastapi>=0.110,<1",
   "uvicorn[standard]>=0.29,<1",
