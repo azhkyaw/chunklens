@@ -5,10 +5,12 @@ test("the embedder picker appears for a non-default collection", async ({ page }
   await page.goto("/");
 
   // Create a none-EF collection (non-default) so the picker should surface.
-  await page.getByRole("button", { name: /new collection/i }).click();
-  await page.getByRole("textbox", { name: /^name$/i }).fill(name);
-  await page.getByLabel(/embedding function/i).selectOption("none");
-  await page.getByRole("button", { name: /^create$/i }).click();
+  await page.getByRole("button", { name: /add collection/i }).click();
+  await page.getByRole("menuitem", { name: /new collection/i }).click();
+  const dialog = page.getByRole("dialog", { name: /new collection/i });
+  await dialog.getByRole("textbox", { name: /^name$/i }).fill(name);
+  await dialog.getByLabel(/embedding function/i).selectOption("none");
+  await dialog.getByRole("button", { name: /^create$/i }).click();
   await expect(page.getByRole("heading", { name })).toBeVisible();
 
   // Open the Query view and switch to Text mode (none-EF defaults to Vector).

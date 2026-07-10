@@ -4,12 +4,15 @@ test("create a collection, inspect it, then delete it", async ({ page }) => {
   const name = "e2e_demo_col";
   await page.goto("/");
 
-  await page.getByRole("button", { name: /new collection/i }).click();
-  await page.getByLabel(/name/i).fill(name);
-  await page.getByLabel(/embedding function/i).selectOption("none");
-  await page.getByRole("button", { name: /^create$/i }).click();
+  await page.getByRole("button", { name: /add collection/i }).click();
+  await page.getByRole("menuitem", { name: /new collection/i }).click();
+  const dialog = page.getByRole("dialog", { name: /new collection/i });
+  await dialog.getByLabel(/name/i).fill(name);
+  await dialog.getByLabel(/embedding function/i).selectOption("none");
+  await dialog.getByRole("button", { name: /^create$/i }).click();
 
-  // selected automatically -> details panel shows the guard fields
+  // created -> routed to /c/<name>/records with the details plate visible
+  await expect(page).toHaveURL(new RegExp(`/c/${name}/records$`));
   await expect(page.getByRole("heading", { name })).toBeVisible();
   await expect(page.getByText(/Embedding fn/i)).toBeVisible();
 

@@ -14,7 +14,8 @@ test("scores a query, reveals provenance, then compares two queries", async ({ p
   await expect(results.getByText("lang")).toBeVisible();        // demo records carry a `lang` metadata key
 
   // Compare mode: run both, see both panels
-  await page.getByRole("tab", { name: /compare/i }).click();
+  await page.getByRole("tab", { name: /^compare$/i }).click();
+  await expect(page).toHaveURL(/\/c\/demo\/compare$/);
   const texts = page.getByLabel(/query text/i);
   await texts.nth(0).fill("the quick brown fox");
   await texts.nth(1).fill("lazy dog");

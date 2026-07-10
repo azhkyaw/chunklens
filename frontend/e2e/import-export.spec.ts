@@ -10,8 +10,10 @@ test("export a collection, then import a new one (re-embeds documents)", async (
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toMatch(/demo\.chunklens\.json/);
 
-  // Open the import panel (only this "Import" button exists until the panel opens)
-  await page.getByRole("button", { name: /^import$/i }).click();
+  // Import lives behind the rail + menu, in a modal
+  await page.getByRole("button", { name: /add collection/i }).click();
+  await page.getByRole("menuitem", { name: /import collection/i }).click();
+  const dialog = page.getByRole("dialog", { name: /import collection/i });
 
   // Import a small documents-only JSON -> default EF re-embeds on add
   const payload = {
@@ -22,14 +24,13 @@ test("export a collection, then import a new one (re-embeds documents)", async (
       { id: "i2", document: "imported two" },
     ],
   };
-  await page.getByLabel(/import file/i).setInputFiles({
+  await dialog.getByLabel(/import file/i).setInputFiles({
     name: "e2e_import_col.chunklens.json",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(payload)),
   });
-  await expect(page.getByRole("textbox", { name: /^name$/i })).toHaveValue("e2e_import_col");
-  // Submit lives inside the import panel; scope to it (the rail toggle is also "Import")
-  await page.locator(".panel-tight").getByRole("button", { name: /^import$/i }).click();
+  await expect(dialog.getByRole("textbox", { name: /^name$/i })).toHaveValue("e2e_import_col");
+  await dialog.getByRole("button", { name: /^import$/i }).click();
 
   // New collection is created, selected, and listed
   await expect(page.getByRole("heading", { name: "e2e_import_col" })).toBeVisible();
