@@ -10,6 +10,7 @@ import { QueryPanel } from "./features/query/QueryPanel";
 import { RecordsTable } from "./features/records/RecordsTable";
 import { ExportButton } from "./features/io/ExportButton";
 import { ImportPanel } from "./features/io/ImportPanel";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function App() {
   const [selected, setSelected] = useState<string | null>(null);
@@ -33,6 +34,7 @@ export function App() {
             <span>ChunkLens</span>
           </h1>
           <div className="topbar-conn">
+            <ThemeToggle />
             <ConnectionStatus />
             <button onClick={() => setShowConn((s) => !s)} aria-expanded={showConn}>
               Connection
