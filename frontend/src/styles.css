@@ -224,10 +224,10 @@ h4 {
 
 .eyebrow,
 h3 {
-  font-family: var(--font-ui);
+  font-family: var(--font-mono);
   font-size: var(--t-eyebrow);
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-muted);
 }
@@ -426,35 +426,37 @@ code {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
-  font-family: var(--font-ui);
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--ink);
 }
-/* A small aperture/lens mark */
+/* The block glyph - a solid amber cell, the instrument's power light */
 .brand-mark {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 2px solid var(--accent);
-  position: relative;
+  width: 9px;
+  height: 16px;
+  border-radius: 1px;
+  background: var(--accent);
   flex: none;
 }
 .brand-mark::after {
-  content: "";
-  position: absolute;
-  inset: 2.5px;
-  border-radius: 50%;
-  background: var(--accent);
-  opacity: 0.5;
+  content: none;
 }
 
 .topbar-conn {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
+}
+
+/* Theme toggle - a compact instrument switch in the topbar */
+.theme-toggle {
+  padding: 4px 9px;
+  font-size: 13px;
+  line-height: 1.2;
+  font-family: var(--font-mono);
 }
 
 .conn-popover {
@@ -497,8 +499,9 @@ code {
   gap: var(--sp-1) var(--sp-3);
 }
 .collection-head h2 {
-  font-family: var(--font-ui);
+  font-family: var(--font-mono);
   font-weight: 600;
+  letter-spacing: -0.01em;
 }
 .collection-actions {
   display: flex;
@@ -531,7 +534,7 @@ code {
 .empty-mark {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  border-radius: var(--r-sm);
   border: 2px solid var(--line-strong);
   position: relative;
   margin-bottom: var(--sp-2);
@@ -540,7 +543,7 @@ code {
   content: "";
   position: absolute;
   inset: 9px;
-  border-radius: 50%;
+  border-radius: 1px;
   border: 2px solid var(--line-strong);
 }
 
@@ -616,8 +619,8 @@ p[role="alert"] {
   flex: none;
 }
 .conn-status[data-state="connected"] .led {
-  background: var(--accent);
-  box-shadow: 0 0 6px color-mix(in oklab, var(--accent) 70%, transparent);
+  background: var(--signal);
+  box-shadow: 0 0 6px color-mix(in oklab, var(--signal) 70%, transparent);
 }
 .conn-status[data-state="checking"] .led {
   background: var(--warn-ink);
@@ -679,6 +682,8 @@ p[role="alert"] {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
   font-weight: 500;
 }
 .rail-count {
@@ -687,8 +692,8 @@ p[role="alert"] {
   font-size: var(--t-xs);
   color: var(--ink-muted);
   background: var(--surface-inset);
-  border-radius: 999px;
-  padding: 1px 7px;
+  border-radius: var(--r-sm);
+  padding: 1px 6px;
 }
 .rail-item[aria-pressed="true"] .rail-count {
   color: var(--accent);
@@ -789,6 +794,8 @@ p[role="alert"] {
 }
 .cell-doc {
   max-width: 460px;
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
 }
 .cell-meta code {
   font-size: var(--t-xs);
@@ -940,29 +947,37 @@ p[role="alert"] {
 
 /* Outer Records|Query view switcher (heavier than the inner Single/Compare .tabs) */
 .view-switch {
-  display: inline-flex;
-  gap: 2px;
-  background: var(--surface-inset);
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  padding: 3px;
+  display: flex;
+  gap: var(--sp-4);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 0;
   margin: 0;
 }
 .view-tab {
   background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--r-sm);
-  padding: 6px 18px;
-  font-size: var(--t-sm);
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  margin-bottom: -1px;
+  padding: 6px 2px 8px;
+  font-family: var(--font-mono);
+  font-size: var(--t-eyebrow);
   font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--ink-muted);
 }
-.view-tab:hover:not([aria-selected="true"]) { color: var(--ink); }
-.view-tab[aria-selected="true"] {
-  background: var(--surface);
-  border-color: var(--line-strong);
+.view-tab:hover:not([aria-selected="true"]) {
   color: var(--ink);
-  box-shadow: var(--shadow-1);
+}
+.view-tab[aria-selected="true"] {
+  background: transparent;
+  border-bottom-color: var(--accent);
+  color: var(--accent);
+  box-shadow: none;
 }
 
 .query-form {
@@ -1103,7 +1118,7 @@ p.guard[data-level="warn"] {
   font-family: var(--font-mono);
   font-size: var(--t-sm);
   font-weight: 600;
-  color: var(--ink);
+  color: var(--signal);
 }
 .hit-id {
   flex: none;
@@ -1121,7 +1136,8 @@ p.guard[data-level="warn"] {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--t-sm);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
   color: var(--ink-muted);
 }
 .hit-body {
@@ -1133,7 +1149,9 @@ p.guard[data-level="warn"] {
 }
 .hit-doc {
   margin: 0;
-  font-size: var(--t-sm);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -1148,7 +1166,7 @@ p.guard[data-level="warn"] {
   height: 8px;
   background: var(--surface-inset);
   border: 1px solid var(--line);
-  border-radius: var(--r-sm);
+  border-radius: 1px;
   overflow: hidden;
   vertical-align: middle;
 }
@@ -1158,7 +1176,16 @@ p.guard[data-level="warn"] {
   width: max(8%, calc(var(--frac, 0) * 1%));
   background: color-mix(in oklab, var(--ramp-high) calc(var(--frac, 0) * 1%), var(--ramp-low));
   border-radius: inherit;
-  transition: width 0.2s ease;
+  transition: width 0.3s ease-out;
+  transform-origin: left;
+  animation: meter-settle 0.3s ease-out;
+}
+/* The one deliberate motion: the meter settles when a result arrives.
+   The global prefers-reduced-motion rule in section 2 disables it. */
+@keyframes meter-settle {
+  from {
+    transform: scaleX(0);
+  }
 }
 
 /* Metadata table inside an expanded hit - provenance keys glow teal */
@@ -1212,7 +1239,7 @@ p.guard[data-level="warn"] {
   font-size: var(--t-xs);
 }
 .delta-up {
-  color: var(--accent);
+  color: var(--signal);
 }
 .delta-down {
   color: var(--warn-ink);
@@ -1237,7 +1264,7 @@ p.guard[data-level="warn"] {
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: rgba(10, 16, 18, 0.55);
+  background: rgba(6, 8, 9, 0.6);
   display: grid;
   place-items: center;
   padding: var(--sp-4);
