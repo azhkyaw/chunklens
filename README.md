@@ -2,7 +2,7 @@
 
 A local-first inspector and retrieval debugger for ChromaDB.
 
-> Status: `0.1.0`. Early but functional. Install it as a single command (see [Install](#install-packaged)) or run from source. Not yet on PyPI, so build the wheel locally for now.
+> Status: `0.1.0`, published on PyPI. Early but functional. Install it with `pipx install chunklens` (see [Install](#install-packaged)) or run from source.
 
 ChunkLens runs entirely on your machine. A small FastAPI backend wraps the official `chromadb` client and serves a React UI. It binds to `127.0.0.1` only and sends no telemetry. The one outbound request it can make is the one you ask for: embedding a query through a provider you choose. Any API key you enter stays in memory for the session and is never written to disk.
 
@@ -23,18 +23,13 @@ Working with a vector database usually means writing throwaway scripts to answer
 
 ## Install (packaged)
 
-ChunkLens installs as a single command with the UI bundled in.
+ChunkLens is on PyPI and installs as a single command, with the UI bundled in:
 
 ```bash
-pipx install chunklens          # once published to PyPI
+pipx install chunklens
 ```
 
-It is not on PyPI yet, so build a wheel locally and install that:
-
-```bash
-uv run --project backend python scripts/build_release.py   # builds the UI + wheel into backend/dist/
-pipx install backend/dist/chunklens-0.1.0-py3-none-any.whl
-```
+Prefer uv? `uv tool install chunklens` does the same thing. Either way you get a `chunklens` command on your PATH.
 
 Then run it:
 
@@ -48,6 +43,13 @@ For local sentence-transformer embeddings, install the extra:
 
 ```bash
 pipx install "chunklens[local-embedders]"
+```
+
+To build and install from source instead, for development or to try an unreleased change, build the wheel locally:
+
+```bash
+uv run --project backend python scripts/build_release.py   # builds the UI + wheel into backend/dist/
+pipx install backend/dist/chunklens-0.1.0-py3-none-any.whl
 ```
 
 ## Requirements
@@ -153,7 +155,6 @@ npm run e2e
 
 ## Roadmap
 
-- Publishing to PyPI, so `pipx install chunklens` works without building the wheel yourself. The packaged build now exists at `0.1.0` (see [Install](#install-packaged)).
 - Saved queries and relevance checks, to track whether retrieval quality drifts over time.
 - A visual view of the embedding space.
 - A desktop build.
