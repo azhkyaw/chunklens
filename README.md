@@ -4,6 +4,8 @@
 [![Python versions](https://img.shields.io/pypi/pyversions/chunklens.svg)](https://pypi.org/project/chunklens/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
+![ChunkLens: a text query returning ranked, scored results with per-hit provenance](assets/demo.gif)
+
 A local-first inspector and retrieval debugger for ChromaDB.
 
 > Status: `0.1.0`, published on PyPI. Early but functional. Install it with `pipx install chunklens` (see [Install](#install-packaged)) or run from source.
