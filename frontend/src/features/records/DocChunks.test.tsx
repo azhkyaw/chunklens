@@ -9,6 +9,15 @@ function wrap(ui: React.ReactNode) {
   return <QueryClientProvider client={new QueryClient()}>{ui}</QueryClientProvider>;
 }
 
+test("renders a placeholder instead of crashing when the query is disabled (empty value)", () => {
+  // A disabled, never-fetched TanStack v5 query has isLoading false and error null,
+  // so the component must guard on missing data rather than assert it.
+  const spy = vi.spyOn(api, "getSourceRecords").mockResolvedValue({ items: [], limit: 25, offset: 0, total: 0 });
+  render(wrap(<DocChunks name="docs" sourceKey="source" value="" />));
+  expect(screen.getByText(/loading chunks/i)).toBeInTheDocument();
+  expect(spy).not.toHaveBeenCalled();
+});
+
 test("fetches and renders the chunks for a source value", async () => {
   const spy = vi.spyOn(api, "getSourceRecords").mockResolvedValue({
     items: [{ id: "c1", document: "chunk one", metadata: { source: "a.pdf" } }],

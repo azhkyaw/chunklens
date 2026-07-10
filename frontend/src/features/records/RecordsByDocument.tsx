@@ -42,16 +42,20 @@ export function RecordsByDocument({ name }: { name: string }) {
           )}
           <ul className="doc-list">
             {data.sources.map((s) => {
-              const expandable = s.value !== "(none)";
+              // "(none)" is the backend sentinel for records missing the key; "" is a
+              // present-but-empty value. Neither can be fetched as a source filter.
+              const expandable = s.value !== "(none)" && s.value !== "";
               const isOpen = open === s.value;
               return (
                 <li key={s.value} className="doc-item">
                   <button type="button" className="doc-head" aria-expanded={isOpen} disabled={!expandable}
                           onClick={() => setOpen(isOpen ? null : s.value)}>
-                    <span className="doc-value">{s.value}</span>
+                    <span className="doc-value">{s.value === "" ? "(empty)" : s.value}</span>
                     <span className="doc-count">{s.count} chunk{s.count === 1 ? "" : "s"}</span>
                   </button>
-                  {!expandable && <span className="faint"> · no {key} value</span>}
+                  {!expandable && (
+                    <span className="faint"> · {s.value === "" ? `empty ${key} value` : `no ${key} value`}</span>
+                  )}
                   {isOpen && expandable && <DocChunks name={name} sourceKey={key} value={s.value} />}
                 </li>
               );

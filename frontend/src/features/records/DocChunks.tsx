@@ -7,9 +7,11 @@ export function DocChunks({ name, sourceKey, value }: { name: string; sourceKey:
   const [offset, setOffset] = useState(0);
   const { data, isLoading, error } = useSourceRecords(name, sourceKey, value, PAGE, offset);
 
-  if (isLoading) return <p className="muted">Loading chunks…</p>;
   if (error) return <p role="alert">Failed to load chunks.</p>;
-  const page = data!;
+  // Covers both an in-flight fetch and a disabled query (TanStack v5 leaves
+  // isLoading false and error null when a query is disabled and never fetched).
+  if (isLoading || !data) return <p className="muted">Loading chunks…</p>;
+  const page = data;
 
   return (
     <div className="doc-chunks">

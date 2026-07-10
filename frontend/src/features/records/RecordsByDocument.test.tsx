@@ -42,6 +42,13 @@ test("the (none) bucket is not expandable", async () => {
   expect(await screen.findByRole("button", { name: /\(none\)/ })).toBeDisabled();
 });
 
+test("an empty-string bucket is labeled (empty) and is not expandable", async () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [{ key: "source", types: ["string"] }], sampled: 1, total: 1 });
+  vi.spyOn(api, "listSources").mockResolvedValue({ key: "source", sources: [{ value: "", count: 2 }], scanned: 2, total: 2 });
+  render(wrap(<RecordsByDocument name="docs" />));
+  expect(await screen.findByRole("button", { name: /\(empty\)/ })).toBeDisabled();
+});
+
 test("mixed-type key is excluded; only the purely-string key is chosen as auto key", async () => {
   vi.spyOn(api, "getMetadataKeys").mockResolvedValue({
     keys: [{ key: "mixed", types: ["int", "string"] }, { key: "source", types: ["string"] }],
