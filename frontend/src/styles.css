@@ -1,28 +1,19 @@
 /* ============================================================================
-   ChunkLens - "Graphite & Teal" design system
-   A clean developer-SaaS surface for reading vector retrieval.
-   Identity: Geist (self-hosted, offline) · graphite neutrals · teal accent ·
-   the score-keyed bar as the signature. Light + dark follow the OS.
+   ChunkLens - "Instrument" design system
+   An oscilloscope for embeddings: graphite-black precision surfaces, hairline
+   borders, sharp corners, and two light channels with fixed meanings -
+   amber is the machine talking (brand, actions, selection, focus, warnings),
+   green is the data talking (scores, health). Danger is red. Nothing else
+   may use either channel. Dark is the flagship; light is the day shift.
    ============================================================================ */
 
 /* ----------------------------------------------------------------------------
-   0. Fonts - self-hosted Geist (SIL OFL, see assets/fonts/OFL.txt). Bundled by
-   Vite into web/assets so the app stays fully offline - no CDN/webfont fetch.
+   0. Fonts - self-hosted IBM Plex (SIL OFL, see assets/fonts/OFL.txt).
+   The @font-face rules ship via @fontsource imports in main.tsx; Vite bundles
+   the woff2 files into web/assets so the app stays fully offline.
+   Sans = chrome (labels, buttons, prose). Mono = ALL data (ids, names,
+   scores, documents, metadata, vectors) - the mono/sans split is semantic.
    ---------------------------------------------------------------------------- */
-@font-face {
-  font-family: "Geist Sans";
-  src: url("./assets/fonts/Geist-Variable.woff2") format("woff2");
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Geist Mono";
-  src: url("./assets/fonts/GeistMono-Variable.woff2") format("woff2");
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-}
 
 /* ----------------------------------------------------------------------------
    1. Design tokens - light (default) + dark (follows the OS)
@@ -72,10 +63,10 @@
   --shadow-2: 0 10px 30px rgba(9, 9, 11, 0.12);
 
   /* Type */
-  --font-ui: "Geist Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial,
-    sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, "SF Mono", "JetBrains Mono", Menlo,
-    Consolas, monospace;
+  --font-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto,
+    Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", "JetBrains Mono",
+    Menlo, Consolas, monospace;
   --t-eyebrow: 11px;
   --t-xs: 11.5px;
   --t-sm: 12.5px;
