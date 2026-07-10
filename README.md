@@ -1,7 +1,8 @@
 # ChunkLens
 
 [![PyPI](https://img.shields.io/pypi/v/chunklens.svg)](https://pypi.org/project/chunklens/)
-[![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://pypi.org/project/chunklens/)
+[![CI](https://github.com/azhkyaw/chunklens/actions/workflows/ci.yml/badge.svg)](https://github.com/azhkyaw/chunklens/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://pypi.org/project/chunklens/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ![ChunkLens: a text query returning ranked, scored results with per-hit provenance](assets/demo.gif)

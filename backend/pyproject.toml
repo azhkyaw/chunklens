@@ -7,7 +7,7 @@ name = "chunklens"
 dynamic = ["version"]
 description = "The local-first inspector & retrieval debugger for ChromaDB."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = "MIT"
 authors = [
   { name = "Aung Zwe Htet Kyaw", email = "azhk.dev@gmail.com" },
@@ -33,7 +33,6 @@ classifiers = [
   "Topic :: Utilities",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -54,6 +53,12 @@ local-embedders = ["sentence-transformers>=2,<6"]
 
 [dependency-groups]
 dev = ["pytest>=8", "httpx>=0.27"]
+
+[tool.uv]
+# onnxruntime (a chromadb dependency) ships no cp310 wheels from 1.21 on; keep the
+# last cp310 release for Python 3.10 (Ubuntu 22.04's system Python) and let newer
+# interpreters take the current version. Drop this when the floor moves to 3.11.
+constraint-dependencies = ["onnxruntime<1.21; python_version < '3.11'"]
 
 [project.scripts]
 chunklens = "chunklens.server:main"
