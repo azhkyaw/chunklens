@@ -171,6 +171,8 @@ Support for other vector databases may come later. The current focus is making t
 
 ChunkLens is local-first by design. It binds to `127.0.0.1`, ships no telemetry, and uses no webfonts or external assets. The only outbound request it ever makes is one you start yourself: embedding a query through a provider you pick, with a key you supply. That key lives in memory for the session and is never written to disk.
 
+One thing that is stored on disk: the optional Chroma connection token (not an embedding-provider key) is saved with the rest of the connection settings in `~/.chunklens/config.json`, so you do not have to re-enter it. On macOS and Linux that file is created with owner-only permissions (0600). Windows has no direct equivalent, so the file is only as protected as your user profile; if other people share the machine account, prefer leaving the token out and entering it per session.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
