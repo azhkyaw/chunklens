@@ -16,6 +16,9 @@ import { StatusBar } from "./StatusBar";
 import { ThemeToggle } from "./ThemeToggle";
 import { Modal } from "./ui/Modal";
 import { MenuButton } from "./ui/MenuButton";
+import { InspectorShell } from "./ui/InspectorShell";
+import { SelectionProvider } from "./lib/selection";
+import { getInspectorOpen, setInspectorOpen } from "./lib/prefs";
 import {
   COLLECTION_TABS,
   TAB_LABELS,
@@ -31,6 +34,12 @@ export function App() {
   const [showConn, setShowConn] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [inspectorOpen, setInspectorOpenState] = useState(getInspectorOpen);
+  function toggleInspector() {
+    const next = !inspectorOpen;
+    setInspectorOpen(next);
+    setInspectorOpenState(next);
+  }
   const qc = useQueryClient();
 
   // Chroma collection names are [a-zA-Z0-9._-], so decode is a no-op today;
@@ -125,19 +134,28 @@ export function App() {
         <CollectionsList selected={selected} onSelect={(name) => navigate(collectionPath(name))} />
       </aside>
 
-      <main className="main">
-        {redirect ? (
-          <Redirect to={redirect} replace />
-        ) : selected ? (
-          <CollectionView name={selected} tab={tab} />
-        ) : (
-          <div className="empty-bench">
-            <span className="empty-mark" aria-hidden="true" />
-            <p className="empty-title">No collection selected</p>
-            <p className="muted">Pick a collection from the rail to inspect its records and debug retrieval.</p>
-          </div>
-        )}
-      </main>
+      {selected && !redirect ? (
+        <SelectionProvider resetKey={`${selected}/${tab}`}>
+          <main className="main">
+            <CollectionView name={selected} tab={tab} />
+          </main>
+          <InspectorShell open={inspectorOpen} onToggle={toggleInspector}>
+            <p className="inspector-idle muted">Select a row to inspect it here.</p>
+          </InspectorShell>
+        </SelectionProvider>
+      ) : (
+        <main className="main">
+          {redirect ? (
+            <Redirect to={redirect} replace />
+          ) : (
+            <div className="empty-bench">
+              <span className="empty-mark" aria-hidden="true" />
+              <p className="empty-title">No collection selected</p>
+              <p className="muted">Pick a collection from the rail to inspect its records and debug retrieval.</p>
+            </div>
+          )}
+        </main>
+      )}
 
       <StatusBar collection={selected} />
     </div>

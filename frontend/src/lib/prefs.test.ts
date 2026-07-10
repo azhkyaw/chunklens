@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { getThemePref, initTheme, setThemePref } from "./prefs";
+import { afterEach, describe, expect, it, test, vi } from "vitest";
+import { getInspectorOpen, getThemePref, initTheme, setInspectorOpen, setThemePref } from "./prefs";
 
 type Listener = (e: { matches: boolean }) => void;
 
@@ -84,4 +84,15 @@ describe("initTheme", () => {
     media.fireChange(true);
     expect(document.documentElement.dataset.theme).toBe("dark");
   });
+});
+
+test("inspector open defaults to true and persists a close for the session", () => {
+  sessionStorage.clear();
+  expect(getInspectorOpen()).toBe(true);
+  setInspectorOpen(false);
+  expect(getInspectorOpen()).toBe(false);
+  expect(sessionStorage.getItem("chunklens:inspector-open")).toBe("0");
+  setInspectorOpen(true);
+  expect(getInspectorOpen()).toBe(true);
+  expect(sessionStorage.getItem("chunklens:inspector-open")).toBeNull();
 });

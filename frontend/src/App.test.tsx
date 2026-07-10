@@ -7,7 +7,10 @@ import { memoryLocation } from "wouter/memory-location";
 import { App } from "./App";
 import { api } from "./api/client";
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  sessionStorage.clear();
+});
 
 const CONN = {
   host: "localhost", port: 8000, ssl: false,
@@ -162,4 +165,36 @@ test("the rail add menu opens New and Import as modals", async () => {
   await userEvent.click(screen.getByRole("button", { name: /add collection/i }));
   await userEvent.click(screen.getByRole("menuitem", { name: /import collection/i }));
   expect(screen.getByRole("dialog", { name: /import collection/i })).toBeInTheDocument();
+});
+
+test("a collection route shows the inspector pane; home does not", async () => {
+  mockHappyPath();
+  renderApp("/c/demo/records");
+  expect(await screen.findByRole("complementary", { name: /inspector/i })).toBeInTheDocument();
+  expect(screen.getByText(/select a row/i)).toBeInTheDocument();
+});
+
+test("the home route has no inspector pane", async () => {
+  mockHappyPath();
+  renderApp("/");
+  expect(await screen.findByText(/no collection selected/i)).toBeInTheDocument();
+  expect(screen.queryByRole("complementary", { name: /inspector/i })).not.toBeInTheDocument();
+});
+
+test("the inspector collapses to a reopen strip and expands back", async () => {
+  mockHappyPath();
+  renderApp("/c/demo/records");
+  await screen.findByRole("complementary", { name: /inspector/i });
+  await userEvent.click(screen.getByRole("button", { name: /close inspector/i }));
+  expect(screen.queryByRole("complementary", { name: /inspector/i })).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: /open inspector/i }));
+  expect(screen.getByRole("complementary", { name: /inspector/i })).toBeInTheDocument();
+});
+
+test("a session-collapsed inspector starts collapsed", async () => {
+  sessionStorage.setItem("chunklens:inspector-open", "0");
+  mockHappyPath();
+  renderApp("/c/demo/records");
+  expect(await screen.findByRole("button", { name: /open inspector/i })).toBeInTheDocument();
+  sessionStorage.clear();
 });

@@ -41,3 +41,19 @@ export function initTheme(): void {
       .addEventListener("change", applyTheme);
   }
 }
+
+// Inspector visibility persists per browser session only (spec: "collapsed
+// state persists per session"), hence sessionStorage rather than localStorage.
+const INSPECTOR_KEY = "chunklens:inspector-open";
+
+export function getInspectorOpen(): boolean {
+  return sessionStorage.getItem(INSPECTOR_KEY) !== "0";
+}
+
+export function setInspectorOpen(open: boolean): void {
+  if (open) {
+    sessionStorage.removeItem(INSPECTOR_KEY);
+  } else {
+    sessionStorage.setItem(INSPECTOR_KEY, "0");
+  }
+}
