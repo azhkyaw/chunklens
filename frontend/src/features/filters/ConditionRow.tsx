@@ -50,6 +50,7 @@ export function ConditionRow({
   const info = keys.find((k) => k.key === node.field);
   const singleKnown = info && info.types.length === 1 ? chromaTypeToValueType(info.types[0]) : undefined;
   const isArrayOp = node.operator === "$in" || node.operator === "$nin";
+  const isComparisonOp = COMPARISON_OPS.has(node.operator);
   const currentValueType = node.valueType;
 
   function setOperator(op: MetaOperator) {
@@ -57,10 +58,16 @@ export function ConditionRow({
     const patch: Patch = { operator: op };
     if (nowArray && !isArrayOp) patch.value = [];
     if (!nowArray && isArrayOp) patch.value = "";
-    // Comparisons only make sense on numbers. When the key's type is not
-    // locked by the sample (singleKnown), flip the row to num so the value
-    // serializes as a number instead of a string. (audit L-4)
-    if (COMPARISON_OPS.has(op) && currentValueType !== "number" && !singleKnown) {
+    // Comparisons only make sense on numbers, so flip the row to num and let
+    // the value serialize as a number instead of a string.
+    //
+    // This overrides the type the metadata sample reports, deliberately. The
+    // sample only sees 200 records and only says what it found: a key whose
+    // values were all written as strings (page numbers out of a PDF extractor
+    // are the classic case) reads as a str key. If the sample won here, asking
+    // for page > 5 would produce a row that validation rejects and that offers
+    // no way to comply, blocking the whole query.
+    if (COMPARISON_OPS.has(op) && currentValueType !== "number") {
       patch.valueType = "number";
       patch.value = nowArray ? [] : "";
     }
@@ -69,7 +76,10 @@ export function ConditionRow({
   function setField(field: string) {
     const inf = keys.find((k) => k.key === field);
     const known = inf && inf.types.length === 1 ? chromaTypeToValueType(inf.types[0]) : undefined;
-    if (known) onChange({ field, valueType: known, value: isArrayOp ? [] : coerce("", known) });
+    // Same rule from the other direction: adopt the sampled type for the newly
+    // picked key, unless the row is on a comparison, which needs num regardless.
+    const next = isComparisonOp ? "number" : known;
+    if (next) onChange({ field, valueType: next, value: isArrayOp ? [] : coerce("", next) });
     else onChange({ field });
   }
 
@@ -80,7 +90,10 @@ export function ConditionRow({
       <select aria-label="operator" value={node.operator} onChange={(e) => setOperator(e.target.value as MetaOperator)}>
         {META_OPS.map((o) => <option key={o.op} value={o.op}>{o.label}</option>)}
       </select>
-      {!singleKnown && (
+      {/* Hidden when the sample pinned the key to one type - except on a
+          comparison, where the row is forced to num and the user must be able to
+          see that and take it back. */}
+      {(!singleKnown || isComparisonOp) && (
         <select aria-label="value type" value={node.valueType}
           onChange={(e) => {
             const vt = e.target.value as ValueType;

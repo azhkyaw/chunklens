@@ -40,7 +40,10 @@ function walk(node: FilterNode, errors: FilterError[]): void {
         errors.push({ id: node.id, message: "add at least one value" });
       } else if (
         node.valueType === "number" &&
-        node.value.some((v) => typeof v === "number" && Number.isNaN(v))
+        // Not just NaN: an empty field (a trailing comma in "1,2,") coerces to
+        // "" rather than NaN, so anything that is not a real number has to go
+        // or it ships straight to the server as {"$in":[1,2,""]}.
+        node.value.some((v) => typeof v !== "number" || !Number.isFinite(v))
       ) {
         errors.push({ id: node.id, message: "every value must be a number" });
       }
@@ -49,7 +52,7 @@ function walk(node: FilterNode, errors: FilterError[]): void {
     } else if (COMPARISON.includes(node.operator)) {
       if (node.valueType !== "number") {
         // Chroma's $gt/$gte/$lt/$lte compare numbers; a string "5" would be
-        // sent as a string and mismatch or be rejected server-side. (audit L-4)
+        // sent as a string and mismatch or be rejected server-side.
         errors.push({ id: node.id, message: "comparisons need the num value type" });
       } else if (typeof node.value === "number" && Number.isNaN(node.value)) {
         errors.push({ id: node.id, message: "expects a number" });

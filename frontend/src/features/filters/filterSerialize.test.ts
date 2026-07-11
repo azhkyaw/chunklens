@@ -56,6 +56,15 @@ test("numeric in-lists reject values that did not parse", () => {
   expect(validate(meta("page", "$in", [1, NaN], "number")).map((e) => e.message)).toContain("every value must be a number");
 });
 
+test("numeric in-lists reject an empty entry from a trailing comma", () => {
+  // Typing "1,2," yields an empty last field, and coercing "" to a number keeps
+  // it as "" rather than producing NaN - so a NaN-only check waves it through
+  // and ships {"page":{"$in":[1,2,""]}}, which the server rejects.
+  expect(validate(meta("page", "$in", [1, 2, ""], "number")).map((e) => e.message)).toContain(
+    "every value must be a number",
+  );
+});
+
 test("a fully-specified tree validates clean", () => {
   let root = newGroup();
   root = addChild(root, root.id, meta("lang", "$eq", "en"));
