@@ -1,11 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./client";
+import { timed, setLastLatency } from "../lib/latency";
 import type {
   ConnectionInput,
   CreateCollectionInput,
   EmbedderSpec,
   ExportFile,
   QueryRequest,
+  QueryResult,
   ScalarMetadata,
   UpdateCollectionInput,
 } from "./types";
@@ -27,8 +29,20 @@ export const useRecord = (name: string, id: string | null) =>
     enabled: Boolean(name && id),
   });
 
+// Client-measured latency rides along with the result; ms is a UI fact, not
+// part of the API contract, so it lives here rather than in api/types.ts.
+export interface TimedQueryResult extends QueryResult {
+  ms: number;
+}
+
 export const useRunQuery = (name: string) =>
-  useMutation({ mutationFn: (body: QueryRequest) => api.query(name, body) });
+  useMutation({
+    mutationFn: async (body: QueryRequest): Promise<TimedQueryResult> => {
+      const { result, ms } = await timed(() => api.query(name, body));
+      setLastLatency(ms);
+      return { ...result, ms };
+    },
+  });
 
 export const useConnection = () =>
   useQuery({ queryKey: ["connection"], queryFn: api.getConnection });
