@@ -132,6 +132,25 @@ test("j and k move the row selection", async () => {
   expect(rowNamed("a")).toHaveAttribute("aria-selected", "true");
 });
 
+test("j moves DOM focus with the selection so Enter acts on the newly selected row, not a stale click target", async () => {
+  vi.spyOn(api, "getRecords").mockResolvedValue(PAGE_1);
+  renderTable();
+  const rowA = await screen.findByRole("row", { name: /alpha doc/ });
+  await userEvent.click(rowA);
+  expect(rowA).toHaveAttribute("aria-selected", "true");
+
+  fireEvent.keyDown(window, { key: "j" });
+  const rowB = screen.getByRole("row", { name: /beta doc/ });
+  expect(rowB).toHaveAttribute("aria-selected", "true");
+  expect(rowB).toHaveFocus();
+
+  // Enter fires on whatever currently holds DOM focus - if focus never
+  // moved with the selection, this would re-select rowA (the stale click
+  // target) instead of the row the selection actually moved to.
+  fireEvent.keyDown(document.activeElement!, { key: "Enter" });
+  expect(rowB).toHaveAttribute("aria-selected", "true");
+});
+
 test("switches to the By document view", async () => {
   vi.spyOn(api, "getRecords").mockResolvedValue(PAGE_1);
   vi.spyOn(api, "getMetadataKeys").mockResolvedValue({

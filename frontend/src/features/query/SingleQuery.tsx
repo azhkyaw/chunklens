@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRunQuery, useCollectionDetails, useMetadataKeys, useEmbedders } from "../../api/hooks";
 import { useSelection } from "../../lib/selection";
+import { focusSelected, nextIndex } from "../../lib/selectionMove";
 import { useShortcut } from "../../lib/shortcuts";
 import { QueryForm } from "./QueryForm";
 import { ResultsPanel } from "../retrieval/ResultsPanel";
@@ -18,6 +19,10 @@ export function SingleQuery({ name }: { name: string }) {
   const { data: embedders } = useEmbedders();
   const { selection, select } = useSelection();
   const queryInput = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
+  // Set only by a j/k move (never a click - the browser already focuses a
+  // clicked hit natively) so the effect below knows when to steal focus.
+  const focusPending = useRef(false);
   const metric = details?.distance_metric ?? "l2";
   const keyNames = (keysData?.keys ?? []).map((k) => k.key);
   const provider = details ? (embedders ?? []).find((e) => e.id === details.embedding_function) : undefined;
@@ -29,16 +34,24 @@ export function SingleQuery({ name }: { name: string }) {
   useShortcut("j", () => moveHit(1));
   useShortcut("k", () => moveHit(-1));
 
+  // j/k move the selection state, but Enter is handled by whichever element
+  // holds DOM focus. Without moving focus too, the still-focused hit button
+  // from the last click re-fires its click on Enter and the selection snaps
+  // back. Runs after render so the newly selected hit's button already exists.
+  useEffect(() => {
+    if (!focusPending.current) return;
+    focusPending.current = false;
+    if (selection?.kind === "hit") focusSelected(resultsRef.current, selection.hit.id);
+  }, [selection]);
+
   function moveHit(delta: number) {
     const hits = run.data?.hits ?? [];
     if (hits.length === 0) return;
     const cur =
       selection?.kind === "hit" ? hits.findIndex((h) => h.id === selection.hit.id) : -1;
-    const next =
-      cur === -1
-        ? delta > 0 ? 0 : hits.length - 1
-        : Math.min(hits.length - 1, Math.max(0, cur + delta));
+    const next = nextIndex(hits.length, cur, delta);
     if (next === cur) return;
+    focusPending.current = true;
     select({ kind: "hit", hit: hits[next], rank: next + 1, metric });
   }
 
@@ -57,7 +70,7 @@ export function SingleQuery({ name }: { name: string }) {
   const ready = spec.mode === "text" ? spec.text.trim() !== "" : verr === null;
 
   return (
-    <div className="console-body">
+    <div className="console-body" ref={resultsRef}>
       <QueryContextStrip details={details} />
       <QueryForm name={name} spec={spec} details={details} onChange={setSpec} inputRef={queryInput} />
       <GuardBanner guards={guards} />

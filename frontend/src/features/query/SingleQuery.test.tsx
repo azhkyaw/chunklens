@@ -98,6 +98,28 @@ test("j moves the hit selection after a run", async () => {
   expect(within(list).getAllByRole("option")[1]).toHaveAttribute("aria-selected", "true");
 });
 
+test("j moves DOM focus onto the hit button so Enter acts on the selected hit", async () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
+  vi.spyOn(api, "query").mockResolvedValue({
+    hits: [
+      { id: "doc_1", document: "alpha", metadata: null, distance: 0.1 },
+      { id: "doc_2", document: "beta", metadata: null, distance: 0.2 },
+    ],
+  });
+  render(wrap(<SingleQuery name="docs" />));
+  await userEvent.type(screen.getByLabelText(/query text/i), "alpha");
+  await userEvent.click(screen.getByRole("button", { name: /^run$/i }));
+  await screen.findByText("doc_1");
+  const list = screen.getByRole("listbox", { name: /^results$/i });
+  fireEvent.keyDown(window, { key: "j" });
+  fireEvent.keyDown(window, { key: "j" });
+  const second = within(list).getAllByRole("option")[1];
+  expect(second).toHaveAttribute("aria-selected", "true");
+  expect(within(second).getByRole("button")).toHaveFocus();
+});
+
 test("/ focuses the query input", async () => {
   vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
   vi.spyOn(api, "listEmbedders").mockResolvedValue([]);

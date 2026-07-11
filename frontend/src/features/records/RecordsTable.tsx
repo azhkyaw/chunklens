@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "wouter";
 import { useRecords } from "../../api/hooks";
 import type { RecordRow } from "../../api/types";
 import { useSelection } from "../../lib/selection";
+import { focusSelected, nextIndex } from "../../lib/selectionMove";
 import { useShortcut } from "../../lib/shortcuts";
 import { RecordsByDocument } from "./RecordsByDocument";
 
@@ -19,6 +20,10 @@ export function RecordsTable({ name }: { name: string }) {
   const { data, isLoading, error } = useRecords(name, PAGE, offset);
   const { selection, select } = useSelection();
   const selParam = params.get("sel");
+  const tbodyRef = useRef<HTMLTableSectionElement>(null);
+  // Set only by a j/k move (never a click - the browser already focuses a
+  // clicked row natively) so the effect below knows when to steal focus.
+  const focusPending = useRef(false);
 
   // Restore a deep-linked selection once its row is on the loaded page.
   useEffect(() => {
@@ -26,6 +31,16 @@ export function RecordsTable({ name }: { name: string }) {
     const row = data?.items.find((r) => r.id === selParam);
     if (row) select({ kind: "record", record: row });
   }, [data, selParam, selection, select]);
+
+  // j/k move the selection state, but Enter is handled by whichever element
+  // holds DOM focus. Without moving focus too, the still-focused row from
+  // the last click re-selects itself on Enter and the selection snaps back.
+  // Runs after render so the newly selected row's <tr> already exists.
+  useEffect(() => {
+    if (!focusPending.current) return;
+    focusPending.current = false;
+    if (selection?.kind === "record") focusSelected(tbodyRef.current, selection.record.id);
+  }, [selection]);
 
   function selectRow(record: RecordRow) {
     select({ kind: "record", record });
@@ -50,11 +65,11 @@ export function RecordsTable({ name }: { name: string }) {
       selection?.kind === "record"
         ? items.findIndex((r) => r.id === selection.record.id)
         : -1;
-    const next =
-      cur === -1
-        ? delta > 0 ? 0 : items.length - 1
-        : Math.min(items.length - 1, Math.max(0, cur + delta));
-    if (next !== cur) selectRow(items[next]);
+    const next = nextIndex(items.length, cur, delta);
+    if (next !== cur) {
+      focusPending.current = true;
+      selectRow(items[next]);
+    }
   }
 
   function goTo(nextOffset: number) {
@@ -90,13 +105,14 @@ export function RecordsTable({ name }: { name: string }) {
               <thead>
                 <tr><th>ID</th><th>Document</th><th>Metadata</th></tr>
               </thead>
-              <tbody>
+              <tbody ref={tbodyRef}>
                 {data!.items.map((r) => {
                   const isSelected =
                     selection?.kind === "record" && selection.record.id === r.id;
                   return (
                     <tr
                       key={r.id}
+                      data-id={r.id}
                       tabIndex={0}
                       aria-selected={isSelected}
                       onClick={() => selectRow(r)}

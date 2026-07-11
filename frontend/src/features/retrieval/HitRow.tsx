@@ -17,7 +17,7 @@ export function HitRow({
   const score = interpretScore(hit.distance, metric);
   return (
     <li className="hit" role="option" aria-selected={selected}>
-      <button type="button" className="hit-head" onClick={onSelect}>
+      <button type="button" className="hit-head" data-id={hit.id} onClick={onSelect}>
         <span className="hit-rank">#{rank}</span>
         <ScoreBar fraction={fraction} betterIsHigher={score.betterIsHigher} />
         <span className="hit-score">{score.primary}</span>

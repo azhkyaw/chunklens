@@ -45,6 +45,15 @@ test("j moves the hit selection within side A by default", () => {
   expect(within(listA).getAllByRole("option")[0]).toHaveAttribute("aria-selected", "true");
 });
 
+test("j moves DOM focus onto the hit button in side A", () => {
+  render(wrap(<CompareView a={r("x", "y")} b={r("y", "z")} metric="cosine" />));
+  fireEvent.keyDown(window, { key: "j" });
+  const listA = screen.getByRole("listbox", { name: /^results a$/i });
+  const first = within(listA).getAllByRole("option")[0];
+  expect(first).toHaveAttribute("aria-selected", "true");
+  expect(within(first).getByRole("button")).toHaveFocus();
+});
+
 test("selecting a shared hit in column B carries side B and its rank delta", async () => {
   // A: [x,y]  B: [y,x]  -> y is shared, delta = aRank(2) - bRank(1) = 1
   render(wrap(<CompareView a={r("x", "y")} b={r("y", "x")} metric="cosine" />));
