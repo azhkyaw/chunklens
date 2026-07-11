@@ -1,11 +1,17 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
 import { api } from "./api/client";
 import { setLastLatency } from "./lib/latency";
 import { StatusBar } from "./StatusBar";
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  // StatusBar (if still mounted from the test that just ran) subscribes to
+  // this store via useSyncExternalStore, so resetting it can synchronously
+  // trigger a re-render - wrap in act() to keep that off the console.
+  act(() => setLastLatency(null));
+});
 
 function renderBar(collection: string | null) {
   vi.spyOn(api, "getConnection").mockResolvedValue({

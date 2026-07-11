@@ -41,7 +41,11 @@ export function recordQuery(collection: string, spec: QuerySpec): void {
 }
 
 export function getHistory(collection: string): HistoryEntry[] {
-  return rings.get(collection) ?? [];
+  // A fresh array of plain { spec, label } objects - never the ring itself
+  // (a caller mutating it, e.g. .sort()/.push(), would corrupt the internal
+  // ring state) and never the internal StoredEntry (whose `key` field is a
+  // dedupe implementation detail, not part of the documented shape).
+  return (rings.get(collection) ?? []).map(({ spec, label }) => ({ spec, label }));
 }
 
 // One-slot replay handoff: the palette requests, SingleQuery consumes - at

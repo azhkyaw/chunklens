@@ -187,6 +187,28 @@ test("copy JS is disabled until the query is ready", async () => {
   expect(btn).toBeEnabled();
 });
 
+test("copy buttons stay enabled while Run is disabled by a guard block", async () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue({ name: "docs", count: 0, dimensionality: 3, distance_metric: "l2", embedding_function: "none", metadata: {} });
+  vi.spyOn(api, "getConnection").mockResolvedValue({
+    host: "localhost", port: 8000, ssl: false,
+    tenant: "default_tenant", database: "default_database",
+    auth_mode: "none", has_token: false,
+  });
+  render(wrap(<SingleQuery name="docs" />));
+  await waitFor(() => expect(screen.getByText(/EF:/)).toBeInTheDocument());
+  // none-EF defaults to Vector; switch to Text to exercise the text-query block
+  await userEvent.click(screen.getByRole("tab", { name: /^text$/i }));
+  await userEvent.type(screen.getByLabelText(/query text/i), "hello");
+  expect(screen.getByRole("button", { name: /^run$/i })).toBeDisabled();
+  expect(screen.getByRole("alert")).toHaveTextContent(/no embedding function/i);
+  // Copy is a clipboard action, not a server round-trip: a blocked query
+  // (guard) is still a query worth copying out to debug elsewhere.
+  expect(await screen.findByRole("button", { name: /^copy python$/i })).toBeEnabled();
+  expect(screen.getByRole("button", { name: /^copy js$/i })).toBeEnabled();
+});
+
 test("a successful run records the query in the session history", async () => {
   vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
   vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
@@ -222,6 +244,24 @@ test("a pending replay is consumed on mount, restores the form, and auto-runs", 
     expect(q).toHaveBeenCalledWith("docs", expect.objectContaining({ query_text: "replayed" })),
   );
   expect(screen.getByLabelText(/query text/i)).toHaveValue("replayed");
+});
+
+test("a replayed vector-mode spec is not clobbered back to text mode once the details fetch (whose smart default is text) resolves", async () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS); // dim 384, default EF -> smart default is text
+  const vector = JSON.stringify(Array(384).fill(0.1));
+  const q = vi.spyOn(api, "query").mockResolvedValue({ hits: [] });
+  requestReplay("docs", { ...newQuerySpec(), mode: "vector", vector });
+  render(wrap(<SingleQuery name="docs" />));
+  await waitFor(() =>
+    expect(q).toHaveBeenCalledWith("docs", expect.objectContaining({ query_embedding: Array(384).fill(0.1) })),
+  );
+  // By now the details/embedders fetches (and the smart-default effect they
+  // drive, whose default for this collection is text) have settled too -
+  // confirm the form is still in Vector mode, not clobbered back to text.
+  expect(screen.getByLabelText(/query vector/i)).toBeInTheDocument();
+  expect(screen.getByRole("tab", { name: /^vector$/i })).toHaveAttribute("aria-selected", "true");
 });
 
 test("a replay requested while mounted runs immediately", async () => {

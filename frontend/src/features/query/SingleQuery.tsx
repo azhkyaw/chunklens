@@ -85,7 +85,6 @@ export function SingleQuery({ name }: { name: string }) {
     check();
     return subscribeReplay(check);
     // run.mutate is referentially stable in TanStack Query v5
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [name]);
 
   const errors = specErrors(spec);

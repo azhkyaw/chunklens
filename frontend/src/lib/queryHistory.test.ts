@@ -4,6 +4,7 @@ import {
   recordQuery, requestReplay, subscribeReplay,
 } from "./queryHistory";
 import { newQuerySpec, type QuerySpec } from "../features/query/querySpec";
+import { addChild, newMetaCondition } from "../features/filters/filterModel";
 
 beforeEach(() => clearHistory());
 
@@ -30,6 +31,21 @@ test("re-running an identical query moves it to the front instead of duplicating
 test("same text with different settings stays as separate entries", () => {
   recordQuery("a", spec("one", 5));
   recordQuery("a", spec("one", 10));
+  expect(getHistory("a")).toHaveLength(2);
+});
+
+test("same text and nResults with different filter content stays as separate entries", () => {
+  // stripIds() only strips filter-tree node ids for the dedupe key - it must
+  // not also strip the filter's actual content (field/operator/value).
+  const base = spec("one");
+  const withFilter = {
+    ...base,
+    whereTree: addChild(base.whereTree, base.whereTree.id, {
+      ...newMetaCondition(), field: "lang", operator: "$eq" as const, value: "en",
+    }),
+  };
+  recordQuery("a", base);
+  recordQuery("a", withFilter);
   expect(getHistory("a")).toHaveLength(2);
 });
 

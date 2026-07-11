@@ -3,9 +3,12 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
 import { api } from "./client";
 import { useRunQuery } from "./hooks";
-import { getLastLatency } from "../lib/latency";
+import { getLastLatency, setLastLatency } from "../lib/latency";
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  setLastLatency(null);
+});
 
 function wrapper({ children }: { children: React.ReactNode }) {
   const qc = new QueryClient();
