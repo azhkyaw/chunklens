@@ -269,3 +269,11 @@ test("ctrl+k a second time closes the palette", async () => {
     expect(screen.queryByRole("dialog", { name: /command palette/i })).not.toBeInTheDocument(),
   );
 });
+
+test("? opens the shortcuts cheat sheet", async () => {
+  mockHappyPath();
+  renderApp("/");
+  await screen.findByText(/no collection selected/i);
+  fireEvent.keyDown(window, { key: "?" });
+  expect(await screen.findByRole("dialog", { name: /keyboard shortcuts/i })).toBeInTheDocument();
+});

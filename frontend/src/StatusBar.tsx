@@ -24,6 +24,7 @@ export function StatusBar({ collection }: { collection: string | null }) {
           {details.count} records · {details.dimensionality ?? "?"} dims · {details.distance_metric}
         </span>
       )}
+      <span className="statusbar-hints">j/k navigate · ? shortcuts</span>
     </footer>
   );
 }

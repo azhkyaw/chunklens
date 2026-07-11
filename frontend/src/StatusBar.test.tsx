@@ -43,3 +43,8 @@ test("omits stats when no collection is open", async () => {
   expect(await screen.findByText("localhost:8000")).toBeInTheDocument();
   expect(screen.queryByText(/records ·/)).not.toBeInTheDocument();
 });
+
+test("shows the keyboard hints", () => {
+  renderBar(null);
+  expect(screen.getByText(/j\/k navigate · \? shortcuts/i)).toBeInTheDocument();
+});

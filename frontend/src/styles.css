@@ -1678,3 +1678,39 @@ p.guard[data-level="warn"] {
 .toast-error {
   border-left-color: var(--danger);
 }
+
+/* ============================================================================
+   24. Shortcuts cheat sheet + status bar hints
+   ========================================================================= */
+
+.shortcuts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 12px 0 0;
+  min-width: 300px;
+}
+
+.shortcuts-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.shortcuts-row dt {
+  display: flex;
+  gap: 3px;
+  min-width: 84px;
+}
+
+.shortcuts-row dd {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink-muted);
+}
+
+.statusbar-hints {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  color: var(--ink-faint);
+}

@@ -22,6 +22,7 @@ import { InspectorShell } from "./ui/InspectorShell";
 import { Inspector } from "./features/inspector/Inspector";
 import { Kbd } from "./ui/Kbd";
 import { Palette, type PaletteCommand } from "./ui/Palette";
+import { ShortcutsHelp } from "./ui/ShortcutsHelp";
 import { SelectionProvider } from "./lib/selection";
 import { getInspectorOpen, setInspectorOpen, cycleThemePref } from "./lib/prefs";
 import { useShortcut, isMac } from "./lib/shortcuts";
@@ -41,6 +42,7 @@ export function App() {
   const [showCreate, setShowCreate] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showPalette, setShowPalette] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   // Which collection Manage is open for (null = closed). Deriving the open
   // flag from this instead of a plain boolean makes a stale modal
   // un-representable: switching collections changes `selected`, so
@@ -60,6 +62,8 @@ export function App() {
     e.preventDefault();
     setShowPalette((s) => !s);
   });
+
+  useShortcut("?", () => setShowHelp(true));
 
   // Chroma collection names are [a-zA-Z0-9._-], so decode is a no-op today;
   // it stays correct if the charset ever widens.
@@ -151,6 +155,7 @@ export function App() {
           </Modal>
         )}
         {showPalette && <Palette commands={commands} onClose={() => setShowPalette(false)} />}
+        {showHelp && <ShortcutsHelp onClose={() => setShowHelp(false)} />}
       </header>
 
       <aside className="sidebar">
