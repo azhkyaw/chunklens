@@ -4,10 +4,29 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, expect, test, vi } from "vitest";
 import { RecordsByDocument } from "./RecordsByDocument";
 import { api } from "../../api/client";
+import { SelectionProvider, useSelection } from "../../lib/selection";
 
 afterEach(() => vi.restoreAllMocks());
+
+function SelectionProbe() {
+  const { selection } = useSelection();
+  if (!selection) return <output data-testid="probe">none</output>;
+  if (selection.kind === "source")
+    return <output data-testid="probe">source:{selection.value}:{selection.count}</output>;
+  if (selection.kind === "record")
+    return <output data-testid="probe">record:{selection.record.id}</output>;
+  return <output data-testid="probe">{selection.kind}</output>;
+}
+
 function wrap(ui: React.ReactNode) {
-  return <QueryClientProvider client={new QueryClient()}>{ui}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={new QueryClient()}>
+      <SelectionProvider resetKey="docs/records">
+        {ui}
+        <SelectionProbe />
+      </SelectionProvider>
+    </QueryClientProvider>
+  );
 }
 
 test("auto-detects a string provenance key and lists documents with counts", async () => {
@@ -80,4 +99,19 @@ test("auto-detect prefers a high-priority provenance key (source) over a lower o
   render(wrap(<RecordsByDocument name="docs" />));
   await waitFor(() => expect(srcSpy).toHaveBeenCalledWith("docs", "source"));
   expect(srcSpy).not.toHaveBeenCalledWith("docs", "doc_id");
+});
+
+test("clicking a document group selects its source summary", async () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({
+    keys: [{ key: "source", types: ["string"] }], sampled: 1, total: 1,
+  });
+  vi.spyOn(api, "listSources").mockResolvedValue({
+    key: "source", sources: [{ value: "a.pdf", count: 3 }], scanned: 3, total: 3,
+  });
+  vi.spyOn(api, "getSourceRecords").mockResolvedValue({
+    items: [], limit: 25, offset: 0, total: 0,
+  });
+  render(wrap(<RecordsByDocument name="docs" />));
+  await userEvent.click(await screen.findByRole("button", { name: /a\.pdf/i }));
+  expect(screen.getByTestId("probe")).toHaveTextContent("source:a.pdf:3");
 });

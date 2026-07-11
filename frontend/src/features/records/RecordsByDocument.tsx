@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMetadataKeys, useSources } from "../../api/hooks";
+import { useSelection } from "../../lib/selection";
 import { PROVENANCE_KEYS } from "../retrieval/provenance";
 import { DocChunks } from "./DocChunks";
 
@@ -18,6 +19,7 @@ export function RecordsByDocument({ name }: { name: string }) {
 
   const { data, isLoading, error } = useSources(name, key || null);
   const [open, setOpen] = useState<string | null>(null);
+  const { select } = useSelection();
 
   if (keysData && stringKeys.length === 0) {
     return <p className="muted">This collection has no string metadata to group by.</p>;
@@ -49,7 +51,10 @@ export function RecordsByDocument({ name }: { name: string }) {
               return (
                 <li key={s.value} className="doc-item">
                   <button type="button" className="doc-head" aria-expanded={isOpen} disabled={!expandable}
-                          onClick={() => setOpen(isOpen ? null : s.value)}>
+                          onClick={() => {
+                            select({ kind: "source", sourceKey: key, value: s.value, count: s.count });
+                            setOpen(isOpen ? null : s.value);
+                          }}>
                     <span className="doc-value">{s.value === "" ? "(empty)" : s.value}</span>
                     <span className="doc-count">{s.count} chunk{s.count === 1 ? "" : "s"}</span>
                   </button>

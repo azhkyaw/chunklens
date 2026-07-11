@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { useSourceRecords } from "../../api/hooks";
+import type { RecordRow } from "../../api/types";
+import { useSelection } from "../../lib/selection";
 
 const PAGE = 25;
 
 export function DocChunks({ name, sourceKey, value }: { name: string; sourceKey: string; value: string }) {
   const [offset, setOffset] = useState(0);
   const { data, isLoading, error } = useSourceRecords(name, sourceKey, value, PAGE, offset);
+  const { selection, select } = useSelection();
 
   if (error) return <p role="alert">Failed to load chunks.</p>;
   // Covers both an in-flight fetch and a disabled query (TanStack v5 leaves
@@ -13,19 +16,37 @@ export function DocChunks({ name, sourceKey, value }: { name: string; sourceKey:
   if (isLoading || !data) return <p className="muted">Loading chunks…</p>;
   const page = data;
 
+  function selectRow(record: RecordRow) {
+    select({ kind: "record", record });
+  }
+
   return (
     <div className="doc-chunks">
       <div className="table-scroll">
-        <table className="records-table">
+        <table className="records-table" role="grid" aria-label="Chunks">
           <thead><tr><th>ID</th><th>Document</th><th>Metadata</th></tr></thead>
           <tbody>
-            {page.items.map((r) => (
-              <tr key={r.id}>
-                <td className="cell-id">{r.id}</td>
-                <td className="cell-doc">{r.document}</td>
-                <td className="cell-meta"><code>{JSON.stringify(r.metadata)}</code></td>
-              </tr>
-            ))}
+            {page.items.map((r) => {
+              const isSelected = selection?.kind === "record" && selection.record.id === r.id;
+              return (
+                <tr
+                  key={r.id}
+                  tabIndex={0}
+                  aria-selected={isSelected}
+                  onClick={() => selectRow(r)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      selectRow(r);
+                    }
+                  }}
+                >
+                  <td className="cell-id">{r.id}</td>
+                  <td className="cell-doc">{r.document}</td>
+                  <td className="cell-meta"><code>{JSON.stringify(r.metadata)}</code></td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
