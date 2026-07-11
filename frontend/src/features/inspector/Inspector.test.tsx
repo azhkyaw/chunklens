@@ -27,7 +27,10 @@ function Select({ to }: { to: Selection }) {
 }
 
 function renderInspector(selection?: Selection) {
-  const qc = new QueryClient();
+  // retry: false - a rejected fetch (see the raw-JSON error test) must settle
+  // to its error state promptly instead of burning through react-query's
+  // default retry/backoff schedule and timing out the test.
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={qc}>
       <SelectionProvider resetKey="docs/records">
@@ -191,6 +194,23 @@ test("raw JSON replaces the pretty sections with the full fetched record", async
   expect(pre.textContent).toContain('"lang": "en"');
   // pretty view is replaced, not duplicated
   expect(screen.queryByText(/^Document$/)).not.toBeInTheDocument();
+});
+
+test("raw JSON shows a failure alert and the partial payload when the full record fetch errors", async () => {
+  stubClipboard();
+  vi.spyOn(api, "getConnection").mockResolvedValue(CONN);
+  vi.spyOn(api, "getRecord").mockRejectedValue(new Error("boom"));
+  renderInspector(REC);
+  await screen.findByText("r1");
+  await userEvent.click(screen.getByRole("button", { name: /^raw json$/i }));
+  const alert = await screen.findByRole("alert");
+  expect(alert.textContent).toMatch(/could not be loaded|failed to load/i);
+  expect(alert.textContent).toMatch(/partial/i);
+  // still shows the partial (list-row) payload - it's useful, just no longer
+  // silently presented as the complete record.
+  const pre = await screen.findByTestId("inspector-raw");
+  expect(pre.textContent).toContain('"id": "r1"');
+  expect(pre.textContent).not.toContain('"embedding"');
 });
 
 test("raw JSON of a hit shows the query hit payload without a fetch", async () => {

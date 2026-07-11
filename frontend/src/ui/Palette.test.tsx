@@ -107,3 +107,51 @@ test("keyword search finds a command whose label does not contain the search tex
   expect(screen.getByText("Manage collection")).toBeInTheDocument();
   expect(screen.queryByText("demo")).not.toBeInTheDocument();
 });
+
+// Regression for a ranking that is not total: the old filter scored matches
+// by position only (1000 - idx), so an exact label and a longer label that
+// merely contains it both scored 1000 and tied. Ties fell back to cmdk's
+// stable sort over DOM order, i.e. whatever order the commands array was
+// built in - so typing a collection's FULL EXACT NAME and pressing Enter
+// could open a DIFFERENT collection. An exact (case-insensitive) label match
+// must now win outright over any other match.
+test("an exact label match outranks a longer label that merely contains it", async () => {
+  const cmds: PaletteCommand[] = [
+    { group: "Collections", label: "docs", run: vi.fn() },
+    { group: "Collections", label: "docs-archive", run: vi.fn() },
+  ];
+  render(<Palette commands={cmds} onClose={() => {}} />);
+  await userEvent.keyboard("docs");
+  expect(screen.getByText("docs")).toHaveAttribute("aria-selected", "true");
+  expect(screen.getByText("docs-archive")).toHaveAttribute("aria-selected", "false");
+});
+
+// Same failure mode with a collection name that collides with an action's
+// label rather than another collection's label.
+test("an exact collection name outranks an action whose label merely contains it", async () => {
+  const cmds: PaletteCommand[] = [
+    { group: "Collections", label: "connection", run: vi.fn() },
+    { group: "Actions", label: "Connection settings", run: vi.fn() },
+  ];
+  render(<Palette commands={cmds} onClose={() => {}} />);
+  await userEvent.keyboard("connection");
+  expect(screen.getByText("connection")).toHaveAttribute("aria-selected", "true");
+  expect(screen.getByText("Connection settings")).toHaveAttribute("aria-selected", "false");
+});
+
+// Proves the ranking is total (score-based) rather than accidentally correct
+// because of DOM/array order: the exact match must win no matter which item
+// was registered - and therefore rendered - first.
+test("the exact match wins regardless of which item was registered first", async () => {
+  const exact: PaletteCommand = { group: "Collections", label: "docs", run: vi.fn() };
+  const longer: PaletteCommand = { group: "Collections", label: "docs-archive", run: vi.fn() };
+
+  const { unmount } = render(<Palette commands={[exact, longer]} onClose={() => {}} />);
+  await userEvent.keyboard("docs");
+  expect(screen.getByText("docs")).toHaveAttribute("aria-selected", "true");
+  unmount();
+
+  render(<Palette commands={[longer, exact]} onClose={() => {}} />);
+  await userEvent.keyboard("docs");
+  expect(screen.getByText("docs")).toHaveAttribute("aria-selected", "true");
+});

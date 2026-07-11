@@ -2,16 +2,25 @@ import type { QueryRequest } from "../api/types";
 
 // The connection facts a runnable snippet needs. ConnectionInfo (api/types)
 // is structurally assignable, so callers pass useConnection()'s data as-is.
+// Deliberately has no field for the token itself - the frontend never even
+// has that value (the backend only ever exposes has_token) - but auth_mode
+// lets the snippet at least warn the user it needs to be supplied.
 export interface CodeTarget {
   host: string;
   port: number;
   ssl: boolean;
   tenant: string;
   database: string;
+  auth_mode: "none" | "token";
 }
 
 const DEFAULT_TENANT = "default_tenant";
 const DEFAULT_DATABASE = "default_database";
+
+const PY_AUTH_NOTE =
+  "# This server requires a token; pass your own credentials via chromadb.config.Settings (chroma_client_auth_provider / chroma_client_auth_credentials).";
+const JS_AUTH_NOTE =
+  '// This server requires a token; pass your own credentials via the client\'s auth option (auth: { provider: "token", credentials: "<your token>" }).';
 
 // JSON-shaped value -> Python literal (True/False/None, dicts, lists).
 function py(v: unknown): string {
@@ -31,7 +40,10 @@ function pyClient(t: CodeTarget): string {
   if (t.ssl) args.push("ssl=True");
   if (t.tenant !== DEFAULT_TENANT) args.push(`tenant=${py(t.tenant)}`);
   if (t.database !== DEFAULT_DATABASE) args.push(`database=${py(t.database)}`);
-  return `client = chromadb.HttpClient(${args.join(", ")})`;
+  const client = `client = chromadb.HttpClient(${args.join(", ")})`;
+  // Never emit the token itself (CodeTarget has no field for it - see the
+  // interface comment); just tell the user this server needs one.
+  return t.auth_mode === "token" ? `${client}\n${PY_AUTH_NOTE}` : client;
 }
 
 function jsClient(t: CodeTarget): string {
@@ -39,7 +51,8 @@ function jsClient(t: CodeTarget): string {
   if (t.ssl) opts.push("ssl: true");
   if (t.tenant !== DEFAULT_TENANT) opts.push(`tenant: ${JSON.stringify(t.tenant)}`);
   if (t.database !== DEFAULT_DATABASE) opts.push(`database: ${JSON.stringify(t.database)}`);
-  return `const client = new ChromaClient({ ${opts.join(", ")} });`;
+  const client = `const client = new ChromaClient({ ${opts.join(", ")} });`;
+  return t.auth_mode === "token" ? `${client}\n${JS_AUTH_NOTE}` : client;
 }
 
 // ChunkLens embeds server-side via its own EF registry; raw chromadb clients

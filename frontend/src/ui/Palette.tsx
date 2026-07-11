@@ -13,14 +13,22 @@ export interface PaletteCommand {
 // value+keywords, so an unrelated command can outrank an exact collection
 // name (e.g. "demo" subsequence-matches "Toggle density" via "density" +
 // "comfortable"). This filter instead requires a contiguous, case-insensitive
-// substring match: a label match always outranks a keyword match, and within
-// each band an earlier match index scores higher. No match returns 0, which
-// cmdk treats as "exclude this item".
+// substring match, ranked by a TOTAL order (no ties resolved by array/DOM
+// order, which is unstable - it comes from whatever order the backend
+// happened to return collections in):
+//   1. an exact (case-insensitive) label match always wins outright
+//   2. among label substring matches, an earlier match index ranks higher
+//   3. on equal index, a SHORTER target label wins (mirrors cmdk's own
+//      default filter, which normalizes by target length)
+//   4. keyword matches rank strictly below every label match
+// No match returns 0, which cmdk treats as "exclude this item".
 function paletteFilter(value: string, search: string, keywords: string[] = []): number {
   const needle = search.trim().toLowerCase();
   if (!needle) return 1;
-  const idx = value.toLowerCase().indexOf(needle);
-  if (idx !== -1) return 1000 - idx;
+  const v = value.toLowerCase();
+  if (v === needle) return 3000;
+  const idx = v.indexOf(needle);
+  if (idx !== -1) return 2000 - idx + (1000 - Math.min(999, v.length));
   let bestIdx = -1;
   for (const kw of keywords) {
     const ki = kw.toLowerCase().indexOf(needle);

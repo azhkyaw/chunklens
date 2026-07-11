@@ -105,6 +105,11 @@ function RawView({
 }) {
   const isRecord = selection.kind === "record";
   const detail = useRecord(collection, isRecord ? selection.record.id : null);
+  const failed = isRecord && Boolean(detail.error);
+  // On a failed fetch, detail.data is undefined - fall back to the list-row
+  // payload (selection.record), which is missing the embedding. That's still
+  // useful, but it must never be presented as the complete record (Copy JSON
+  // would then hand the user a silently-truncated object).
   const entity = isRecord ? (detail.data ?? selection.record) : selection.hit;
   const json = JSON.stringify(entity, null, 2);
   return (
@@ -115,6 +120,11 @@ function RawView({
           Copy JSON
         </button>
       </div>
+      {failed && (
+        <p role="alert">
+          The full record could not be loaded. Showing the partial payload from the list (no embedding).
+        </p>
+      )}
       {isRecord && detail.isLoading ? (
         <p className="muted">Loading full record…</p>
       ) : (
