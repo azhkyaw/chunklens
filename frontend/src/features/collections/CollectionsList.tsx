@@ -1,4 +1,5 @@
 import { useCollections } from "../../api/hooks";
+import { EmptyState } from "../../ui/EmptyState";
 import { ErrorState } from "../../ui/ErrorState";
 import { Skeleton } from "../../ui/Skeleton";
 
@@ -13,7 +14,10 @@ export function CollectionsList({
   if (isLoading) return <Skeleton label="Loading collections" rows={4} className="skeleton-rail" />;
   if (error) return <ErrorState message="Failed to load collections." onRetry={() => refetch()} />;
   const items = data ?? [];
-  if (items.length === 0) return <p className="muted rail-empty">No collections yet.</p>;
+  // No hint or actions here: the rail is narrow, and the main pane already
+  // carries the hero that explains what to do about this exact state. The
+  // wording matches it so one condition does not speak with two voices.
+  if (items.length === 0) return <EmptyState className="rail-empty" title="no collections yet" />;
   return (
     <ul className="rail-list">
       {items.map((c) => (

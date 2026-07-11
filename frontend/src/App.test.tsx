@@ -74,9 +74,12 @@ test("first run with zero collections shows the hero with create, import, and th
   mockHappyPath();
   vi.spyOn(api, "listCollections").mockResolvedValue([]);
   renderApp("/");
-  expect(await screen.findByText("no collections yet")).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: /new collection/i })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: /import/i })).toBeInTheDocument();
+  // The rail states the same fact in the same words for the same condition, so
+  // scope the hero assertions to the main pane.
+  const main = within(await screen.findByRole("main"));
+  expect(await main.findByText("no collections yet")).toBeInTheDocument();
+  expect(main.getByRole("button", { name: /new collection/i })).toBeInTheDocument();
+  expect(main.getByRole("button", { name: /import/i })).toBeInTheDocument();
   // The seed pointer names the script and where it runs from, and says plainly
   // that it only exists in a source checkout. It must NOT read as a runnable
   // one-liner: there is no root pyproject for `uv run` to resolve, and a PyPI

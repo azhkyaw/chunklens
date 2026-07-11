@@ -21,6 +21,14 @@ test("renders collection name and count", async () => {
   expect(screen.getByText(/3/)).toBeInTheDocument();
 });
 
+test("an empty rail speaks in the same voice as every other empty surface", async () => {
+  vi.spyOn(api, "listCollections").mockResolvedValue([]);
+  const { container } = render(wrap(<CollectionsList selected={null} onSelect={() => {}} />));
+  // same wording and casing as the hero the main pane shows for this same state
+  expect(await screen.findByText("no collections yet")).toBeInTheDocument();
+  expect(container.querySelector(".empty-state")).not.toBeNull();
+});
+
 test("shows a skeleton while collections load", () => {
   vi.spyOn(api, "listCollections").mockReturnValue(new Promise(() => {}));
   render(wrap(<CollectionsList selected={null} onSelect={() => {}} />));
