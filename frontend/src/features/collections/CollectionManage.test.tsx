@@ -194,3 +194,51 @@ test("renaming drops an abandoned metadata edit and reseeds from the new collect
     expect(reopened).toHaveValue(JSON.stringify(renamed.metadata, null, 2)),
   );
 });
+
+// App swaps the `name` prop without remounting when the open collection
+// changes. Unlike a rename (which also routes through close()), a bare prop
+// swap relies entirely on the name-change effect to drop per-collection state:
+// an abandoned metadata edit, and a typed delete confirmation that would
+// otherwise arm the Delete button against the NEW collection.
+test("a bare name prop swap drops the previous collection's edit and confirmation", async () => {
+  const other = { ...DETAILS, name: "other", metadata: { owner: "kai" } };
+  vi.spyOn(api, "getCollectionDetails").mockImplementation(async (n: string) =>
+    (n === "docs" ? DETAILS : other));
+  let swap: (n: string) => void = () => {};
+  // `open` is a plain controlled prop here (the component never manages its
+  // own open state - see the Manage button, which only calls onOpenChange),
+  // so setting it true up front keeps the modal mounted across the swap
+  // without needing to click Manage first.
+  function Harness() {
+    const [name, setName] = useState("docs");
+    swap = setName;
+    return (
+      <CollectionManage
+        name={name}
+        open={true}
+        onOpenChange={() => {}}
+        onRenamed={() => {}}
+        onDeleted={() => {}}
+      />
+    );
+  }
+  render(
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <Harness />
+    </QueryClientProvider>,
+  );
+  const box = await screen.findByRole("textbox", { name: /collection metadata/i });
+  await waitFor(() => expect(box).toHaveValue("{}"));
+  fireEvent.change(box, { target: { value: '{"junk":1}' } }); // abandoned mid-edit
+  await userEvent.type(screen.getByLabelText(/type the name/i), "docs"); // armed delete
+
+  act(() => swap("other"));
+
+  await waitFor(() =>
+    expect(screen.getByRole("textbox", { name: /collection metadata/i }))
+      .toHaveValue(JSON.stringify(other.metadata, null, 2)),
+  );
+  expect(screen.getByLabelText(/type the name/i)).toHaveValue("");
+  expect(screen.getByLabelText(/^rename$/i)).toHaveValue("other");
+  expect(screen.getByRole("button", { name: /^delete$/i })).toBeDisabled();
+});
