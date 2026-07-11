@@ -1525,6 +1525,30 @@ p.guard[data-level="warn"] {
   max-height: 40vh;
   overflow: auto;
 }
+.inspector-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+.inspector-actions .btn-sm[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.inspector-raw {
+  margin: 6px 0 0;
+  padding: var(--sp-3);
+  background: var(--surface-inset);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 420px;
+  overflow: auto;
+}
 .inspector-dim {
   margin: 0;
   font-family: var(--font-mono);

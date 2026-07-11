@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useRecord, useUpdateRecordMetadata } from "../../api/hooks";
+import { useConnection, useRecord, useUpdateRecordMetadata } from "../../api/hooks";
 import type { ScalarMetadata } from "../../api/types";
 import { useSelection, type Selection } from "../../lib/selection";
+import { copyText } from "../../lib/copy";
+import { recordGetAsJs, recordGetAsPython } from "../../lib/copyAsCode";
 import { toastSuccess } from "../../ui/toast";
 import { MetadataEditor, parseScalarMetadata } from "../collections/MetadataEditor";
 import { MetadataTable } from "../retrieval/MetadataTable";
@@ -10,6 +12,10 @@ import { interpretScore } from "../retrieval/scoring";
 
 export function Inspector({ collection }: { collection: string }) {
   const { selection, select } = useSelection();
+  const { data: conn } = useConnection();
+  // Raw persists across selections on purpose: browsing raw views with j/k
+  // should not keep snapping back to pretty.
+  const [raw, setRaw] = useState(false);
 
   if (!selection) {
     return <p className="inspector-idle muted">Select a row to inspect it here.</p>;
@@ -46,18 +52,75 @@ export function Inspector({ collection }: { collection: string }) {
     <div className="inspector-detail">
       <p className="inspector-id">{rec.id}</p>
       {selection.kind === "hit" && <HitContext sel={selection} />}
-      <section className="inspector-section">
-        <p className="eyebrow">Document</p>
-        {rec.document ? (
-          <pre className="inspector-doc">{rec.document}</pre>
-        ) : (
-          <p className="muted">(no document)</p>
-        )}
-      </section>
-      {/* key: a new selection resets any in-progress edit */}
-      <MetadataSection key={rec.id} collection={collection} record={rec} onSaved={onMetadataSaved} />
-      <EmbeddingBlock collection={collection} id={rec.id} />
+      <div className="inspector-actions">
+        <button
+          type="button"
+          className="btn-sm"
+          disabled={!conn}
+          onClick={() => conn && copyText(recordGetAsPython(conn, collection, rec.id), "Python snippet")}
+        >
+          Copy as Python
+        </button>
+        <button
+          type="button"
+          className="btn-sm"
+          disabled={!conn}
+          onClick={() => conn && copyText(recordGetAsJs(conn, collection, rec.id), "JS snippet")}
+        >
+          Copy as JS
+        </button>
+        <button type="button" className="btn-sm" aria-pressed={raw} onClick={() => setRaw((r) => !r)}>
+          Raw JSON
+        </button>
+      </div>
+      {raw ? (
+        <RawView collection={collection} selection={selection} />
+      ) : (
+        <>
+          <section className="inspector-section">
+            <p className="eyebrow">Document</p>
+            {rec.document ? (
+              <pre className="inspector-doc">{rec.document}</pre>
+            ) : (
+              <p className="muted">(no document)</p>
+            )}
+          </section>
+          {/* key: a new selection resets any in-progress edit */}
+          <MetadataSection key={rec.id} collection={collection} record={rec} onSaved={onMetadataSaved} />
+          <EmbeddingBlock collection={collection} id={rec.id} />
+        </>
+      )}
     </div>
+  );
+}
+
+// Records show the full fetched detail (incl. embedding); hits show exactly
+// the query response payload, so no fetch is made for them.
+function RawView({
+  collection,
+  selection,
+}: {
+  collection: string;
+  selection: Extract<Selection, { kind: "record" } | { kind: "hit" }>;
+}) {
+  const isRecord = selection.kind === "record";
+  const detail = useRecord(collection, isRecord ? selection.record.id : null);
+  const entity = isRecord ? (detail.data ?? selection.record) : selection.hit;
+  const json = JSON.stringify(entity, null, 2);
+  return (
+    <section className="inspector-section">
+      <div className="inspector-section-head">
+        <p className="eyebrow">Raw JSON</p>
+        <button type="button" className="btn-sm" onClick={() => copyText(json, "JSON")}>
+          Copy JSON
+        </button>
+      </div>
+      {isRecord && detail.isLoading ? (
+        <p className="muted">Loading full record…</p>
+      ) : (
+        <pre className="inspector-raw" data-testid="inspector-raw">{json}</pre>
+      )}
+    </section>
   );
 }
 
@@ -157,19 +220,31 @@ function MetadataSection({
 
 function EmbeddingBlock({ collection, id }: { collection: string; id: string }) {
   const { data, isLoading, error } = useRecord(collection, id);
+  const embedding = data?.embedding && data.embedding.length > 0 ? data.embedding : null;
   return (
     <section className="inspector-section">
-      <p className="eyebrow">Embedding</p>
+      <div className="inspector-section-head">
+        <p className="eyebrow">Embedding</p>
+        {embedding && (
+          <button
+            type="button"
+            className="btn-sm"
+            onClick={() => copyText(JSON.stringify(embedding), "Vector")}
+          >
+            Copy vector
+          </button>
+        )}
+      </div>
       {error ? (
         <p role="alert">Failed to load the embedding.</p>
       ) : isLoading || !data ? (
         <p className="muted">Loading embedding…</p>
-      ) : data.embedding && data.embedding.length > 0 ? (
+      ) : embedding ? (
         <>
-          <p className="inspector-dim">dim {data.embedding.length}</p>
+          <p className="inspector-dim">dim {embedding.length}</p>
           <p className="inspector-emb">
-            [{data.embedding.slice(0, 8).map((v) => v.toFixed(4)).join(", ")}
-            {data.embedding.length > 8 ? ", …" : ""}]
+            [{embedding.slice(0, 8).map((v) => v.toFixed(4)).join(", ")}
+            {embedding.length > 8 ? ", …" : ""}]
           </p>
         </>
       ) : (

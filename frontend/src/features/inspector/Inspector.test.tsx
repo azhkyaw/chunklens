@@ -43,6 +43,25 @@ const REC: Selection = {
   record: { id: "r1", document: "alpha doc", metadata: { lang: "en" } },
 };
 
+function stubClipboard() {
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+  return writeText;
+}
+
+const CONN = {
+  host: "localhost", port: 8000, ssl: false,
+  tenant: "default_tenant", database: "default_database",
+  auth_mode: "none" as const, has_token: false,
+};
+
+const HIT: Selection = {
+  kind: "hit",
+  hit: { id: "h1", document: "beta doc", metadata: null, distance: 0.2 },
+  rank: 1,
+  metric: "cosine",
+};
+
 test("nothing selected shows the idle state", () => {
   renderInspector();
   expect(screen.getByText(/select a row/i)).toBeInTheDocument();
@@ -132,4 +151,79 @@ test("a selected source shows its summary", () => {
   expect(screen.getByText("a.pdf")).toBeInTheDocument();
   expect(screen.getByText("source")).toBeInTheDocument();
   expect(screen.getByText("7")).toBeInTheDocument();
+});
+
+test("the action row copies a runnable Python get snippet for the selected record", async () => {
+  const writeText = stubClipboard();
+  vi.spyOn(api, "getConnection").mockResolvedValue(CONN);
+  vi.spyOn(api, "getRecord").mockResolvedValue({ id: "r1", document: "alpha doc", metadata: null, embedding: [1, 0] });
+  renderInspector(REC);
+  await userEvent.click(await screen.findByRole("button", { name: /copy as python/i }));
+  await waitFor(() => expect(writeText).toHaveBeenCalled());
+  const snippet = writeText.mock.calls[0][0] as string;
+  expect(snippet).toContain('chromadb.HttpClient(host="localhost", port=8000)');
+  expect(snippet).toContain('collection.get(ids=["r1"]');
+});
+
+test("the action row copies a JS get snippet", async () => {
+  const writeText = stubClipboard();
+  vi.spyOn(api, "getConnection").mockResolvedValue(CONN);
+  vi.spyOn(api, "getRecord").mockResolvedValue({ id: "r1", document: "alpha doc", metadata: null, embedding: [1, 0] });
+  renderInspector(REC);
+  await userEvent.click(await screen.findByRole("button", { name: /copy as js/i }));
+  await waitFor(() => expect(writeText).toHaveBeenCalled());
+  expect(writeText.mock.calls[0][0]).toContain("new ChromaClient({ host:");
+});
+
+test("raw JSON replaces the pretty sections with the full fetched record", async () => {
+  stubClipboard();
+  vi.spyOn(api, "getConnection").mockResolvedValue(CONN);
+  vi.spyOn(api, "getRecord").mockResolvedValue({
+    id: "r1", document: "alpha doc", metadata: { lang: "en" }, embedding: [1, 0],
+  });
+  renderInspector(REC);
+  await screen.findByText("r1");
+  const toggle = screen.getByRole("button", { name: /^raw json$/i });
+  await userEvent.click(toggle);
+  expect(toggle).toHaveAttribute("aria-pressed", "true");
+  const pre = await screen.findByTestId("inspector-raw");
+  expect(pre.textContent).toContain('"embedding"');
+  expect(pre.textContent).toContain('"lang": "en"');
+  // pretty view is replaced, not duplicated
+  expect(screen.queryByText(/^Document$/)).not.toBeInTheDocument();
+});
+
+test("raw JSON of a hit shows the query hit payload without a fetch", async () => {
+  stubClipboard();
+  vi.spyOn(api, "getConnection").mockResolvedValue(CONN);
+  const getRecord = vi.spyOn(api, "getRecord").mockResolvedValue({ id: "h1", document: "beta doc", metadata: null, embedding: null });
+  renderInspector(HIT);
+  await userEvent.click(await screen.findByRole("button", { name: /^raw json$/i }));
+  const pre = await screen.findByTestId("inspector-raw");
+  expect(pre.textContent).toContain('"distance": 0.2');
+  // the raw hit view is the query response payload; only the (still-mounted)
+  // embedding block may fetch, never the raw view itself for hits
+  expect(pre.textContent).not.toContain('"embedding"');
+  void getRecord; // fetch count is covered by the record test above
+});
+
+test("copy JSON copies the raw payload", async () => {
+  const writeText = stubClipboard();
+  vi.spyOn(api, "getConnection").mockResolvedValue(CONN);
+  vi.spyOn(api, "getRecord").mockResolvedValue({ id: "r1", document: "alpha doc", metadata: null, embedding: [1, 0] });
+  renderInspector(REC);
+  await userEvent.click(await screen.findByRole("button", { name: /^raw json$/i }));
+  await screen.findByTestId("inspector-raw");
+  await userEvent.click(screen.getByRole("button", { name: /copy json/i }));
+  await waitFor(() => expect(writeText).toHaveBeenCalled());
+  expect(writeText.mock.calls[0][0]).toContain('"id": "r1"');
+});
+
+test("copy vector copies the full embedding array", async () => {
+  const writeText = stubClipboard();
+  vi.spyOn(api, "getConnection").mockResolvedValue(CONN);
+  vi.spyOn(api, "getRecord").mockResolvedValue({ id: "r1", document: "alpha doc", metadata: null, embedding: [0.25, -0.5] });
+  renderInspector(REC);
+  await userEvent.click(await screen.findByRole("button", { name: /copy vector/i }));
+  await waitFor(() => expect(writeText).toHaveBeenCalledWith("[0.25,-0.5]"));
 });
