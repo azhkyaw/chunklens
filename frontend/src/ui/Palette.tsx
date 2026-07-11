@@ -17,24 +17,44 @@ export interface PaletteCommand {
 // order, which is unstable - it comes from whatever order the backend
 // happened to return collections in):
 //   1. an exact (case-insensitive) label match always wins outright
-//   2. among label substring matches, an earlier match index ranks higher
-//   3. on equal index, a SHORTER target label wins (mirrors cmdk's own
-//      default filter, which normalizes by target length)
+//   2. among label substring matches, an earlier match index ranks higher -
+//      the index term DOMINATES the length term (it is lexicographic, not a
+//      sum of commensurable quantities), so a prefix match on a long label
+//      always beats an infix match on a short one
+//   3. only once the index ties does a SHORTER target label win (mirrors
+//      cmdk's own default filter, which normalizes by target length)
 //   4. keyword matches rank strictly below every label match
 // No match returns 0, which cmdk treats as "exclude this item".
+//
+// Band arithmetic (why the three bands cannot overlap for any input):
+//   idx and v.length are each clamped to [0, 999] before scoring, so the
+//   label-substring band 1000 * (1000 - idxC) + (1000 - lenC) is bounded to
+//   [1000 * 1 + 1, 1000 * 1000 + 1000] = [1001, 1_001_000] regardless of how
+//   long a real label ever gets (Chroma collection names: 3-63 chars;
+//   history labels: truncated to 48 + a suffix - both far inside the clamp,
+//   but the bound holds even if that changes).
+//   The keyword band 1000 - idxC (idxC in [0, 999]) is bounded to [1, 1000],
+//   strictly below the label band's floor of 1001, and strictly above 0.
+//   The exact-match constant (2_000_000) sits strictly above the label
+//   band's ceiling of 1_001_000.
+//   So: exact (2_000_000) > label (1001..1_001_000) > keyword (1..1000) > 0.
 function paletteFilter(value: string, search: string, keywords: string[] = []): number {
   const needle = search.trim().toLowerCase();
   if (!needle) return 1;
   const v = value.toLowerCase();
-  if (v === needle) return 3000;
+  if (v === needle) return 2_000_000;
   const idx = v.indexOf(needle);
-  if (idx !== -1) return 2000 - idx + (1000 - Math.min(999, v.length));
+  if (idx !== -1) {
+    const idxC = Math.min(999, idx);
+    const lenC = Math.min(999, v.length);
+    return 1000 * (1000 - idxC) + (1000 - lenC);
+  }
   let bestIdx = -1;
   for (const kw of keywords) {
     const ki = kw.toLowerCase().indexOf(needle);
     if (ki !== -1 && (bestIdx === -1 || ki < bestIdx)) bestIdx = ki;
   }
-  return bestIdx !== -1 ? 500 - bestIdx : 0;
+  return bestIdx !== -1 ? 1000 - Math.min(999, bestIdx) : 0;
 }
 
 /**

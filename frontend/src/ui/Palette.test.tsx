@@ -155,3 +155,26 @@ test("the exact match wins regardless of which item was registered first", async
   await userEvent.keyboard("docs");
   expect(screen.getByText("docs")).toHaveAttribute("aria-selected", "true");
 });
+
+// Regression for the ranking not being lexicographic: the old filter SUMMED
+// the index term and the length term (`2000 - idx + (1000 - len)`), so a
+// later-index (infix) match on a short label could outscore an earlier-index
+// (prefix) match on a longer label - e.g. searching "doc" scored
+// "documentation-index" (idx 0, len 19) at 2981 but "my-doc" (idx 3, len 6)
+// at 2991, so the infix match wrongly won. Index must dominate length: a
+// prefix match must outrank an infix match regardless of either label's
+// length. Registered in both orders since cmdk breaks true ties by DOM order,
+// so a single fixed order could pass for the wrong reason.
+test("a prefix match outranks an infix match on a shorter label", async () => {
+  const prefix: PaletteCommand = { group: "Collections", label: "documentation-index", run: vi.fn() };
+  const infix: PaletteCommand = { group: "Collections", label: "my-doc", run: vi.fn() };
+
+  const { unmount } = render(<Palette commands={[prefix, infix]} onClose={() => {}} />);
+  await userEvent.keyboard("doc");
+  expect(screen.getByText("documentation-index")).toHaveAttribute("aria-selected", "true");
+  unmount();
+
+  render(<Palette commands={[infix, prefix]} onClose={() => {}} />);
+  await userEvent.keyboard("doc");
+  expect(screen.getByText("documentation-index")).toHaveAttribute("aria-selected", "true");
+});
