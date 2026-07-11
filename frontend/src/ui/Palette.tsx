@@ -9,6 +9,26 @@ export interface PaletteCommand {
   run: () => void;
 }
 
+// cmdk's default filter scores items by fuzzy SUBSEQUENCE matching over
+// value+keywords, so an unrelated command can outrank an exact collection
+// name (e.g. "demo" subsequence-matches "Toggle density" via "density" +
+// "comfortable"). This filter instead requires a contiguous, case-insensitive
+// substring match: a label match always outranks a keyword match, and within
+// each band an earlier match index scores higher. No match returns 0, which
+// cmdk treats as "exclude this item".
+function paletteFilter(value: string, search: string, keywords: string[] = []): number {
+  const needle = search.trim().toLowerCase();
+  if (!needle) return 1;
+  const idx = value.toLowerCase().indexOf(needle);
+  if (idx !== -1) return 1000 - idx;
+  let bestIdx = -1;
+  for (const kw of keywords) {
+    const ki = kw.toLowerCase().indexOf(needle);
+    if (ki !== -1 && (bestIdx === -1 || ki < bestIdx)) bestIdx = ki;
+  }
+  return bestIdx !== -1 ? 500 - bestIdx : 0;
+}
+
 /**
  * The command palette: a plain cmdk <Command> inside our own Modal, so the
  * focus trap, Escape, overlay click, and inert background all behave exactly
@@ -32,7 +52,7 @@ export function Palette({
   const inputRef = useRef<HTMLInputElement>(null);
   return (
     <Modal label="Command palette" onClose={onClose} initialFocus={inputRef}>
-      <Command label="Command palette" className="palette">
+      <Command label="Command palette" className="palette" filter={paletteFilter}>
         <Command.Input ref={inputRef} placeholder="Type a command or collection..." />
         <Command.List>
           <Command.Empty>No matching commands.</Command.Empty>

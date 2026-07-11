@@ -81,3 +81,29 @@ test("Enter runs the highlighted command", async () => {
   await userEvent.keyboard("demo{Enter}");
   expect(run).toHaveBeenCalled();
 });
+
+// Regression for the palette running the WRONG command: cmdk's default filter
+// does fuzzy SUBSEQUENCE matching over value+keywords, so typing "demo" could
+// also match "Toggle density" (d,e from "density", m,o from "comfortable")
+// and the two would race for the auto-selected (and Enter-activated) item.
+test("typing a collection name matches only that collection, not an unrelated command with overlapping letters", async () => {
+  const cmds: PaletteCommand[] = [
+    { group: "Collections", label: "demo", run: vi.fn() },
+    { group: "Actions", label: "Toggle density", keywords: ["compact", "comfortable", "rows"], run: vi.fn() },
+  ];
+  render(<Palette commands={cmds} onClose={() => {}} />);
+  await userEvent.keyboard("demo");
+  expect(screen.getByText("demo")).toBeInTheDocument();
+  expect(screen.queryByText("Toggle density")).not.toBeInTheDocument();
+});
+
+test("keyword search finds a command whose label does not contain the search text", async () => {
+  const cmds: PaletteCommand[] = [
+    { group: "Collections", label: "demo", run: vi.fn() },
+    { group: "Actions", label: "Manage collection", keywords: ["rename", "delete"], run: vi.fn() },
+  ];
+  render(<Palette commands={cmds} onClose={() => {}} />);
+  await userEvent.keyboard("rename");
+  expect(screen.getByText("Manage collection")).toBeInTheDocument();
+  expect(screen.queryByText("demo")).not.toBeInTheDocument();
+});
