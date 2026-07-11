@@ -1,8 +1,11 @@
 import type { QueryResult } from "../../api/types";
+import { useSelection } from "../../lib/selection";
+import { useShortcut } from "../../lib/shortcuts";
 import { ResultsPanel } from "./ResultsPanel";
 import { compareResults, type CompareRow } from "./compareResults";
 
 export function CompareView({ a, b, metric }: { a: QueryResult; b: QueryResult; metric: string }) {
+  const { selection, select } = useSelection();
   const rows = compareResults(a.hits, b.hits);
   const annA = new Map<string, React.ReactNode>();
   const annB = new Map<string, React.ReactNode>();
@@ -16,6 +19,33 @@ export function CompareView({ a, b, metric }: { a: QueryResult; b: QueryResult; 
       annB.set(r.id, deltaBadge(r));                              // A->B rank movement, shown once (on B)
     }
   }
+
+  useShortcut("j", () => moveHit(1));
+  useShortcut("k", () => moveHit(-1));
+
+  function moveHit(delta: number) {
+    const side = selection?.kind === "hit" && selection.side ? selection.side : "A";
+    const hits = side === "A" ? a.hits : b.hits;
+    if (hits.length === 0) return;
+    const cur =
+      selection?.kind === "hit" && selection.side === side
+        ? hits.findIndex((h) => h.id === selection.hit.id)
+        : -1;
+    const next =
+      cur === -1
+        ? delta > 0 ? 0 : hits.length - 1
+        : Math.min(hits.length - 1, Math.max(0, cur + delta));
+    if (next === cur) return;
+    select({
+      kind: "hit",
+      hit: hits[next],
+      rank: next + 1,
+      metric,
+      side,
+      delta: deltas.get(hits[next].id) ?? null,
+    });
+  }
+
   return (
     <div className="compare-view">
       <div className="compare-col"><h4>Query A</h4><ResultsPanel hits={a.hits} metric={metric} annotations={annA} side="A" deltas={deltas} /></div>

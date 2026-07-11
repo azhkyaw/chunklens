@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useRunQuery, useCollectionDetails, useEmbedders } from "../../api/hooks";
+import { useShortcut } from "../../lib/shortcuts";
 import { QueryForm } from "./QueryForm";
 import { CompareView } from "../retrieval/CompareView";
 import { QueryContextStrip } from "../retrieval/QueryContextStrip";
@@ -17,6 +18,11 @@ export function CompareQuery({ name }: { name: string }) {
   const { data: embedders } = useEmbedders();
   const metric = details?.distance_metric ?? "l2";
   const provider = details ? (embedders ?? []).find((e) => e.id === details.embedding_function) : undefined;
+  const queryInputA = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+  useShortcut("/", (e) => {
+    e.preventDefault();
+    queryInputA.current?.focus();
+  });
 
   const appliedFor = useRef<string | null>(null);
   useEffect(() => {
@@ -47,7 +53,7 @@ export function CompareQuery({ name }: { name: string }) {
     <div className="console-body">
       <QueryContextStrip details={details} />
       <div className="compare-forms">
-        <div className="compare-col"><p className="eyebrow">Input A</p><QueryForm name={name} spec={specA} details={details} onChange={setSpecA} /><GuardBanner guards={guardsA} /></div>
+        <div className="compare-col"><p className="eyebrow">Input A</p><QueryForm name={name} spec={specA} details={details} onChange={setSpecA} inputRef={queryInputA} /><GuardBanner guards={guardsA} /></div>
         <div className="compare-col"><p className="eyebrow">Input B</p><QueryForm name={name} spec={specB} details={details} onChange={setSpecB} /><GuardBanner guards={guardsB} /></div>
       </div>
       <div className="form-actions">

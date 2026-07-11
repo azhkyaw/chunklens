@@ -7,8 +7,14 @@ import { vectorError, type QuerySpec } from "./querySpec";
 import type { CollectionDetails } from "../../api/types";
 
 export function QueryForm({
-  name, spec, details, onChange,
-}: { name: string; spec: QuerySpec; details?: CollectionDetails; onChange: (s: QuerySpec) => void }) {
+  name, spec, details, onChange, inputRef,
+}: {
+  name: string;
+  spec: QuerySpec;
+  details?: CollectionDetails;
+  onChange: (s: QuerySpec) => void;
+  inputRef?: React.Ref<HTMLInputElement | HTMLTextAreaElement>;
+}) {
   const { data: keysData } = useMetadataKeys(name);
   const { data: embedders } = useEmbedders();
   const keys = keysData?.keys ?? [];
@@ -42,11 +48,11 @@ export function QueryForm({
       <div className="form-row">
         {spec.mode === "vector" ? (
           <label className="field" style={{ flex: 1 }}>Query vector
-            <textarea value={spec.vector} rows={3} placeholder="[0.1, 0.2, ...]"
+            <textarea ref={inputRef as React.Ref<HTMLTextAreaElement>} value={spec.vector} rows={3} placeholder="[0.1, 0.2, ...]"
                       onChange={(e) => onChange({ ...spec, vector: e.target.value })} /></label>
         ) : (
           <label className="field" style={{ flex: 1 }}>Query text
-            <input value={spec.text} onChange={(e) => onChange({ ...spec, text: e.target.value })} /></label>
+            <input ref={inputRef as React.Ref<HTMLInputElement>} value={spec.text} onChange={(e) => onChange({ ...spec, text: e.target.value })} /></label>
         )}
         <label className="field" style={{ width: 96 }}>n_results <input type="number" min={1} value={spec.nResults}
           onChange={(e) => onChange({ ...spec, nResults: Math.max(1, Number(e.target.value) || 1) })} /></label>

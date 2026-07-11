@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRunQuery, useCollectionDetails, useMetadataKeys, useEmbedders } from "../../api/hooks";
+import { useSelection } from "../../lib/selection";
+import { useShortcut } from "../../lib/shortcuts";
 import { QueryForm } from "./QueryForm";
 import { ResultsPanel } from "../retrieval/ResultsPanel";
 import { QueryContextStrip } from "../retrieval/QueryContextStrip";
@@ -14,9 +16,31 @@ export function SingleQuery({ name }: { name: string }) {
   const { data: details } = useCollectionDetails(name);
   const { data: keysData } = useMetadataKeys(name);
   const { data: embedders } = useEmbedders();
+  const { selection, select } = useSelection();
+  const queryInput = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
   const metric = details?.distance_metric ?? "l2";
   const keyNames = (keysData?.keys ?? []).map((k) => k.key);
   const provider = details ? (embedders ?? []).find((e) => e.id === details.embedding_function) : undefined;
+
+  useShortcut("/", (e) => {
+    e.preventDefault(); // keep the slash out of the freshly focused field
+    queryInput.current?.focus();
+  });
+  useShortcut("j", () => moveHit(1));
+  useShortcut("k", () => moveHit(-1));
+
+  function moveHit(delta: number) {
+    const hits = run.data?.hits ?? [];
+    if (hits.length === 0) return;
+    const cur =
+      selection?.kind === "hit" ? hits.findIndex((h) => h.id === selection.hit.id) : -1;
+    const next =
+      cur === -1
+        ? delta > 0 ? 0 : hits.length - 1
+        : Math.min(hits.length - 1, Math.max(0, cur + delta));
+    if (next === cur) return;
+    select({ kind: "hit", hit: hits[next], rank: next + 1, metric });
+  }
 
   const appliedFor = useRef<string | null>(null);
   useEffect(() => {
@@ -35,7 +59,7 @@ export function SingleQuery({ name }: { name: string }) {
   return (
     <div className="console-body">
       <QueryContextStrip details={details} />
-      <QueryForm name={name} spec={spec} details={details} onChange={setSpec} />
+      <QueryForm name={name} spec={spec} details={details} onChange={setSpec} inputRef={queryInput} />
       <GuardBanner guards={guards} />
       <div className="form-actions">
         <button className="btn-primary" onClick={() => run.mutate(serializeSpec(spec))}

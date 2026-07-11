@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, expect, test, vi } from "vitest";
 import { Router } from "wouter";
@@ -115,6 +115,21 @@ test("there is no per-row Edit button anymore (editing lives in the inspector)",
   renderTable();
   await screen.findByText("a");
   expect(screen.queryByRole("button", { name: /edit/i })).not.toBeInTheDocument();
+});
+
+test("j and k move the row selection", async () => {
+  vi.spyOn(api, "getRecords").mockResolvedValue(PAGE_1);
+  renderTable();
+  await screen.findByRole("grid");
+  const rowNamed = (id: string) => screen.getByRole("row", { name: new RegExp(`^${id}\\b`) });
+  fireEvent.keyDown(window, { key: "j" });
+  expect(rowNamed("a")).toHaveAttribute("aria-selected", "true");
+  fireEvent.keyDown(window, { key: "j" });
+  expect(rowNamed("b")).toHaveAttribute("aria-selected", "true");
+  fireEvent.keyDown(window, { key: "j" }); // clamped at the end
+  expect(rowNamed("b")).toHaveAttribute("aria-selected", "true");
+  fireEvent.keyDown(window, { key: "k" });
+  expect(rowNamed("a")).toHaveAttribute("aria-selected", "true");
 });
 
 test("switches to the By document view", async () => {

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, expect, test, vi } from "vitest";
 import { SingleQuery } from "./SingleQuery";
@@ -75,6 +75,37 @@ test("a none-EF collection defaults to Vector mode and runs with query_embedding
   await userEvent.type(ta, "1, 2, 3");                       // bare CSV (avoid userEvent's [ ] special chars)
   await userEvent.click(screen.getByRole("button", { name: /^run$/i }));
   await waitFor(() => expect(q).toHaveBeenCalledWith("docs", expect.objectContaining({ query_embedding: [1, 2, 3] })));
+});
+
+test("j moves the hit selection after a run", async () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
+  vi.spyOn(api, "query").mockResolvedValue({
+    hits: [
+      { id: "doc_1", document: "alpha", metadata: null, distance: 0.1 },
+      { id: "doc_2", document: "beta", metadata: null, distance: 0.2 },
+    ],
+  });
+  render(wrap(<SingleQuery name="docs" />));
+  await userEvent.type(screen.getByLabelText(/query text/i), "alpha");
+  await userEvent.click(screen.getByRole("button", { name: /^run$/i }));
+  await screen.findByText("doc_1");
+  const list = screen.getByRole("listbox", { name: /^results$/i });
+  fireEvent.keyDown(window, { key: "j" });
+  expect(within(list).getAllByRole("option")[0]).toHaveAttribute("aria-selected", "true");
+  fireEvent.keyDown(window, { key: "j" });
+  expect(within(list).getAllByRole("option")[1]).toHaveAttribute("aria-selected", "true");
+});
+
+test("/ focuses the query input", async () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
+  render(wrap(<SingleQuery name="docs" />));
+  await screen.findByLabelText(/query text/i);
+  fireEvent.keyDown(window, { key: "/" });
+  expect(screen.getByLabelText(/query text/i)).toHaveFocus();
 });
 
 test("a surfaced-provider collection (openai, 1536-dim) opens in Text mode with picker and no warn", async () => {

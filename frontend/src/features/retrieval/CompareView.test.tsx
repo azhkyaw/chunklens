@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, test } from "vitest";
 import { CompareView } from "./CompareView";
@@ -36,6 +36,13 @@ test("annotates a shared hit's rank movement", () => {
   // A: [x,y]  B: [y,x]  -> y moved up in B (▲1)
   render(wrap(<CompareView a={r("x", "y")} b={r("y", "x")} metric="cosine" />));
   expect(screen.getAllByText(/▲1|▼1/).length).toBeGreaterThan(0);
+});
+
+test("j moves the hit selection within side A by default", () => {
+  render(wrap(<CompareView a={r("x", "y")} b={r("y", "z")} metric="cosine" />));
+  fireEvent.keyDown(window, { key: "j" });
+  const listA = screen.getByRole("listbox", { name: /^results a$/i });
+  expect(within(listA).getAllByRole("option")[0]).toHaveAttribute("aria-selected", "true");
 });
 
 test("selecting a shared hit in column B carries side B and its rank delta", async () => {

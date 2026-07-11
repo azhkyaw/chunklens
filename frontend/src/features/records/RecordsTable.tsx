@@ -3,6 +3,7 @@ import { useSearchParams } from "wouter";
 import { useRecords } from "../../api/hooks";
 import type { RecordRow } from "../../api/types";
 import { useSelection } from "../../lib/selection";
+import { useShortcut } from "../../lib/shortcuts";
 import { RecordsByDocument } from "./RecordsByDocument";
 
 const PAGE = 25;
@@ -36,6 +37,24 @@ export function RecordsTable({ name }: { name: string }) {
       },
       { replace: true },
     );
+  }
+
+  useShortcut("j", () => moveSelection(1));
+  useShortcut("k", () => moveSelection(-1));
+
+  function moveSelection(delta: number) {
+    if (view !== "flat") return; // by-document rows are group disclosures, not a flat list
+    const items = data?.items ?? [];
+    if (items.length === 0) return;
+    const cur =
+      selection?.kind === "record"
+        ? items.findIndex((r) => r.id === selection.record.id)
+        : -1;
+    const next =
+      cur === -1
+        ? delta > 0 ? 0 : items.length - 1
+        : Math.min(items.length - 1, Math.max(0, cur + delta));
+    if (next !== cur) selectRow(items[next]);
   }
 
   function goTo(nextOffset: number) {
