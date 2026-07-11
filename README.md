@@ -64,7 +64,7 @@ To build and install from source instead, for development or to try an unrelease
 
 ```bash
 uv run --project backend python scripts/build_release.py   # builds the UI + wheel into backend/dist/
-pipx install backend/dist/chunklens-0.2.0-py3-none-any.whl
+pipx install backend/dist/*.whl
 ```
 
 ## Requirements

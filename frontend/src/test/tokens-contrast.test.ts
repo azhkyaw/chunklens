@@ -69,7 +69,7 @@ const PAIRS: Array<[string, string, number]> = [
 
   // Pairings introduced by the inspector, selection fills, banners, and chips:
   ["signal", "surface-inset", 4.5], // score text on inset code/JSON blocks
-  ["signal", "surface-raised", 4.5], // score text on the selected row fill
+  ["signal", "surface-raised", 4.5], // score color against surface-raised itself: the palette's selected-item fill and the loading-skeleton shimmer, not the hit row (that fill is accent-weak, gated below)
   ["danger", "surface-raised", 4.5], // error text inside a selected context
   ["warn-ink", "surface", 4.5], // inline warnings outside their banner
   ["ink", "accent-weak", 4.5], // text on amber-tinted chips and banners
