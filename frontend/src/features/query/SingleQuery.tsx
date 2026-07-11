@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { useRunQuery, useCollectionDetails, useMetadataKeys, useEmbedders } from "../../api/hooks";
+import { useRunQuery, useCollectionDetails, useMetadataKeys, useEmbedders, useConnection } from "../../api/hooks";
 import { useSelection } from "../../lib/selection";
 import { focusSelected, nextIndex } from "../../lib/selectionMove";
 import { useShortcut } from "../../lib/shortcuts";
+import { copyText } from "../../lib/copy";
+import { queryAsJs, queryAsPython } from "../../lib/copyAsCode";
 import { QueryForm } from "./QueryForm";
 import { ResultsPanel } from "../retrieval/ResultsPanel";
 import { QueryContextStrip } from "../retrieval/QueryContextStrip";
@@ -17,6 +19,7 @@ export function SingleQuery({ name }: { name: string }) {
   const { data: details } = useCollectionDetails(name);
   const { data: keysData } = useMetadataKeys(name);
   const { data: embedders } = useEmbedders();
+  const { data: conn } = useConnection();
   const { selection, select } = useSelection();
   const queryInput = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
@@ -77,6 +80,14 @@ export function SingleQuery({ name }: { name: string }) {
       <div className="form-actions">
         <button className="btn-primary" onClick={() => run.mutate(serializeSpec(spec))}
                 disabled={!ready || errors.length > 0 || blocked || run.isPending}>Run</button>
+        <button type="button" className="btn-sm" disabled={!ready || errors.length > 0 || !conn}
+                onClick={() => conn && copyText(queryAsPython(conn, name, serializeSpec(spec)), "Python snippet")}>
+          Copy Python
+        </button>
+        <button type="button" className="btn-sm" disabled={!ready || errors.length > 0 || !conn}
+                onClick={() => conn && copyText(queryAsJs(conn, name, serializeSpec(spec)), "JS snippet")}>
+          Copy JS
+        </button>
       </div>
       {errors.length > 0 && <p role="alert">Fix filter errors: {errors.map((e) => e.message).join("; ")}</p>}
       {run.error && <p role="alert">Query failed - {interpretQueryError((run.error as Error).message, { details })}</p>}

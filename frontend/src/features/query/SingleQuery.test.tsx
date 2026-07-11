@@ -142,3 +142,42 @@ test("a surfaced-provider collection (openai, 1536-dim) opens in Text mode with 
   expect(screen.getByLabelText(/query text/i)).toBeInTheDocument();                 // text input, not vector paste
   expect(screen.queryByText(/won't match/i)).not.toBeInTheDocument();               // dim warn suppressed
 });
+
+test("copy Python renders the current query including filters", async () => {
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [{ key: "lang", types: ["string"] }], sampled: 3, total: 3 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
+  vi.spyOn(api, "getConnection").mockResolvedValue({
+    host: "localhost", port: 8000, ssl: false,
+    tenant: "default_tenant", database: "default_database",
+    auth_mode: "none", has_token: false,
+  });
+  render(wrap(<SingleQuery name="docs" />));
+  await userEvent.type(screen.getByLabelText(/query text/i), "hello");
+  await userEvent.click(screen.getAllByRole("button", { name: /add condition/i })[0]);
+  await userEvent.type(screen.getByLabelText(/^field$/i), "lang");
+  await userEvent.type(screen.getByLabelText(/^value$/i), "en");
+  await userEvent.click(await screen.findByRole("button", { name: /^copy python$/i }));
+  await waitFor(() => expect(writeText).toHaveBeenCalled());
+  const snippet = writeText.mock.calls[0][0] as string;
+  expect(snippet).toContain('query_texts=["hello"]');
+  expect(snippet).toContain('where={"lang": {"$eq": "en"}}');
+});
+
+test("copy JS is disabled until the query is ready", async () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
+  vi.spyOn(api, "getConnection").mockResolvedValue({
+    host: "localhost", port: 8000, ssl: false,
+    tenant: "default_tenant", database: "default_database",
+    auth_mode: "none", has_token: false,
+  });
+  render(wrap(<SingleQuery name="docs" />));
+  const btn = await screen.findByRole("button", { name: /^copy js$/i });
+  expect(btn).toBeDisabled(); // empty query text
+  await userEvent.type(screen.getByLabelText(/query text/i), "hello");
+  expect(btn).toBeEnabled();
+});
