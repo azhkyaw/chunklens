@@ -1,5 +1,6 @@
+import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, expect, test, vi } from "vitest";
 import { Router } from "wouter";
@@ -478,4 +479,30 @@ test("the onboarding toast actually reaches the toaster and renders", async () =
     </QueryClientProvider>,
   );
   expect(await screen.findByText(/K for the command palette/)).toBeInTheDocument();
+});
+
+test("StrictMode's double effect run still yields exactly one onboarding toast", async () => {
+  // The mount effect marks the onboarded flag BEFORE deferring the toast
+  // publish. StrictMode runs the effect twice; the second run must hit the
+  // guard. If the flag moved inside the deferred callback, both runs would
+  // pass the guard and the first-run toast would appear twice.
+  localStorage.removeItem("chunklens:onboarded");
+  mockHappyPath();
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <React.StrictMode>
+      <QueryClientProvider client={qc}>
+        <Router hook={memoryLocation({ path: "/" }).hook}>
+          <App />
+        </Router>
+        <AppToaster />
+      </QueryClientProvider>
+    </React.StrictMode>,
+  );
+  await screen.findByText(/K for the command palette/);
+  // Let any second (buggy) microtask-deferred publish land before counting.
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  });
+  expect(screen.getAllByText(/K for the command palette/)).toHaveLength(1);
 });
