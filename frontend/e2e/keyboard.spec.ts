@@ -8,8 +8,10 @@ test("j and k move the records selection and i toggles the inspector", async ({ 
   await expect(grid.getByRole("row").nth(1)).toHaveAttribute("aria-selected", "true");
   await page.keyboard.press("j");
   await expect(grid.getByRole("row").nth(2)).toHaveAttribute("aria-selected", "true");
+  await expect(grid.getByRole("row").nth(1)).toHaveAttribute("aria-selected", "false");
   await page.keyboard.press("k");
   await expect(grid.getByRole("row").nth(1)).toHaveAttribute("aria-selected", "true");
+  await expect(grid.getByRole("row").nth(2)).toHaveAttribute("aria-selected", "false");
   const inspector = page.getByRole("complementary", { name: /inspector/i });
   await page.keyboard.press("i");
   await expect(inspector).not.toBeVisible();

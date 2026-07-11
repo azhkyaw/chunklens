@@ -696,8 +696,6 @@ p[role="alert"] {
   gap: var(--sp-2);
   margin-right: auto;
 }
-.statusbar-stats {
-}
 
 /* ----------------------------------------------------------------------------
    10. Collections rail - an instrument "channel selector"
