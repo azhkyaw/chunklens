@@ -1,4 +1,5 @@
 import { Command } from "cmdk";
+import { useRef } from "react";
 import { Modal } from "./Modal";
 
 export interface PaletteCommand {
@@ -28,10 +29,11 @@ export function Palette({
     if (g) g.items.push(c);
     else groups.push({ name: c.group, items: [c] });
   }
+  const inputRef = useRef<HTMLInputElement>(null);
   return (
-    <Modal label="Command palette" onClose={onClose}>
+    <Modal label="Command palette" onClose={onClose} initialFocus={inputRef}>
       <Command label="Command palette" className="palette">
-        <Command.Input autoFocus placeholder="Type a command or collection..." />
+        <Command.Input ref={inputRef} placeholder="Type a command or collection..." />
         <Command.List>
           <Command.Empty>No matching commands.</Command.Empty>
           {groups.map((g) => (

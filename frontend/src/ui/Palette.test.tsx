@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import React, { useState } from "react";
 import { expect, test, vi } from "vitest";
 import { Palette, type PaletteCommand } from "./Palette";
 
@@ -11,16 +12,43 @@ function commands(overrides: Partial<PaletteCommand> = {}): PaletteCommand[] {
   ];
 }
 
+// Mounts the Palette the way the real app does: opened from a keyboard
+// shortcut while some other control (here, this button) has focus. Modal
+// captures that opener as its restore target, so this is what makes the
+// StrictMode double-invoke bug reproduce (rendering <Palette> with nothing
+// previously focused leaves the restore target as document.body, which
+// isn't natively focusable and so never actually moves focus back).
+function Host() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button onClick={() => setOpen(true)}>Open palette</button>
+      {open && <Palette commands={commands()} onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
 test("renders a dialog with an autofocused input and grouped commands", () => {
   render(<Palette commands={commands()} onClose={() => {}} />);
   expect(screen.getByRole("dialog", { name: /command palette/i })).toBeInTheDocument();
-  // The input's native autoFocus claims focus in the layout phase; Modal's
-  // own mount effect (passive, later) sees focus already inside the dialog
-  // and does not steal it back (see Modal.tsx).
+  // Modal owns initial focus via its initialFocus prop (see Modal.tsx and
+  // Palette.tsx, which points it at the Command.Input ref) rather than the
+  // input's own native autoFocus, so the focus target is stable across
+  // StrictMode's double-invoked mount effects.
   expect(screen.getByPlaceholderText(/type a command/i)).toHaveFocus();
   expect(screen.getByText("Collections")).toBeInTheDocument();
   expect(screen.getByText("Actions")).toBeInTheDocument();
   expect(screen.getByText("demo")).toBeInTheDocument();
+});
+
+test("under StrictMode (the real app's configuration), the input is still focused on open", async () => {
+  render(
+    <React.StrictMode>
+      <Host />
+    </React.StrictMode>,
+  );
+  await userEvent.click(screen.getByRole("button", { name: "Open palette" }));
+  expect(screen.getByPlaceholderText(/type a command/i)).toHaveFocus();
 });
 
 test("typing filters the list, including by keyword", async () => {

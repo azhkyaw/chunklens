@@ -22,16 +22,20 @@ function setShellInert(on: boolean) {
 
 /**
  * Focus-trapped modal dialog. Focus starts on the dialog itself (so the
- * accessible label is announced), Tab wraps inside, Escape and overlay
- * clicks close, and focus returns to the opener on unmount.
+ * accessible label is announced) unless the caller names an `initialFocus`
+ * target (e.g. a search input), Tab wraps inside, Escape and overlay clicks
+ * close, and focus returns to the opener on unmount.
  */
 export function Modal({
   label,
   onClose,
+  initialFocus,
   children,
 }: {
   label: string;
   onClose: () => void;
+  /** Focus this element on open instead of the dialog itself (e.g. a search input). */
+  initialFocus?: React.RefObject<HTMLElement>;
   children: React.ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -45,10 +49,12 @@ export function Modal({
   }
 
   useEffect(() => {
-    // Only take focus ourselves if it isn't already inside the dialog - a
-    // content control (e.g. an autoFocus input) may have already claimed it
-    // during the earlier layout phase, and it should keep it.
-    if (!ref.current?.contains(document.activeElement)) ref.current?.focus();
+    // Focus the caller's target if it named one, else the dialog itself (so its
+    // accessible label is announced). This runs unconditionally: StrictMode
+    // double-invokes effects (setup, simulated cleanup, setup), and the cleanup
+    // restores focus to the opener - so setup must re-establish focus every time
+    // rather than testing where focus currently is.
+    (initialFocus?.current ?? ref.current)?.focus();
     setShellInert(true);
     return () => {
       // Un-inert first so the restore target is focusable again.
