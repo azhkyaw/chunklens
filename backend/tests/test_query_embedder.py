@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import chunklens.embedders as E
 from chunklens.app import app
 from chunklens.deps import get_embedder
 from chunklens.schemas import QueryResult
