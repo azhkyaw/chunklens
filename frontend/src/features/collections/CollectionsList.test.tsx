@@ -17,3 +17,9 @@ test("renders collection name and count", async () => {
   await waitFor(() => expect(screen.getByText(/docs/)).toBeInTheDocument());
   expect(screen.getByText(/3/)).toBeInTheDocument();
 });
+
+test("shows a skeleton while collections load", () => {
+  vi.spyOn(api, "listCollections").mockReturnValue(new Promise(() => {}));
+  render(wrap(<CollectionsList selected={null} onSelect={() => {}} />));
+  expect(screen.getByRole("status", { name: /loading collections/i })).toBeInTheDocument();
+});

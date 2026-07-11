@@ -33,6 +33,20 @@ test("runs both queries and renders a compare with only-A / only-B", async () =>
   expect(screen.getByText(/only B/i)).toBeInTheDocument();
 });
 
+test("shows a running-queries skeleton while both queries are pending", async () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
+  vi.spyOn(api, "query").mockReturnValue(new Promise(() => {}));
+  render(wrap(<CompareQuery name="docs" />));
+  const texts = screen.getAllByLabelText(/query text/i);
+  await userEvent.type(texts[0], "aa");
+  await userEvent.type(texts[1], "bb");
+  await userEvent.click(screen.getByRole("button", { name: /run both/i }));
+  expect(await screen.findByRole("status", { name: /running queries/i })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /run both/i })).toHaveAttribute("aria-busy", "true");
+});
+
 test("running both records each side in the session history", async () => {
   vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
   vi.spyOn(api, "listEmbedders").mockResolvedValue([]);

@@ -9,6 +9,7 @@ import { evaluateGuards, defaultQueryMode } from "../retrieval/guards";
 import { interpretQueryError } from "../retrieval/errorInterpret";
 import { newQuerySpec, serializeSpec, specErrors, vectorError, type QuerySpec } from "./querySpec";
 import { recordQuery } from "../../lib/queryHistory";
+import { Skeleton } from "../../ui/Skeleton";
 
 export function CompareQuery({ name }: { name: string }) {
   const [specA, setSpecA] = useState<QuerySpec>(() => newQuerySpec());
@@ -58,10 +59,11 @@ export function CompareQuery({ name }: { name: string }) {
         <div className="compare-col"><p className="eyebrow">Input B</p><QueryForm name={name} spec={specB} details={details} onChange={setSpecB} /><GuardBanner guards={guardsB} /></div>
       </div>
       <div className="form-actions">
-        <button className="btn-primary" onClick={runBoth} disabled={!readyA || !readyB || invalid || blocked || pending}>Run both</button>
+        <button className="btn-primary" onClick={runBoth} aria-busy={pending} disabled={!readyA || !readyB || invalid || blocked || pending}>Run both</button>
       </div>
       {runA.error && <p role="alert">Query A failed - {interpretQueryError((runA.error as Error).message, { details })}</p>}
       {runB.error && <p role="alert">Query B failed - {interpretQueryError((runB.error as Error).message, { details })}</p>}
+      {pending && <Skeleton label="Running queries" rows={5} className="skeleton-hits" />}
       {runA.data && runB.data && (
         <CompareView a={runA.data} b={runB.data} metric={metric} aMs={runA.data.ms} bMs={runB.data.ms} />
       )}

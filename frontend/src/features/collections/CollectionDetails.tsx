@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useCollectionDetails } from "../../api/hooks";
 import { copyText } from "../../lib/copy";
+import { Skeleton } from "../../ui/Skeleton";
 
 export function CollectionDetails({ name }: { name: string }) {
   const { data } = useCollectionDetails(name);
   const [raw, setRaw] = useState(false);
 
-  if (!data) return <p className="muted">Loading details…</p>;
+  if (!data) return <Skeleton label="Loading collection details" rows={1} className="skeleton-plate" />;
 
   const json = JSON.stringify(data, null, 2);
   return (

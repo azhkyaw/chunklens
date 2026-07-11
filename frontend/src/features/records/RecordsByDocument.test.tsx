@@ -29,6 +29,15 @@ function wrap(ui: React.ReactNode) {
   );
 }
 
+test("shows a skeleton while scanning documents", async () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({
+    keys: [{ key: "source", types: ["string"] }], sampled: 1, total: 1,
+  });
+  vi.spyOn(api, "listSources").mockReturnValue(new Promise(() => {}));
+  render(wrap(<RecordsByDocument name="docs" />));
+  expect(await screen.findByRole("status", { name: /scanning documents/i })).toBeInTheDocument();
+});
+
 test("auto-detects a string provenance key and lists documents with counts", async () => {
   vi.spyOn(api, "getMetadataKeys").mockResolvedValue({
     keys: [{ key: "page", types: ["int"] }, { key: "source", types: ["string"] }], sampled: 5, total: 5,

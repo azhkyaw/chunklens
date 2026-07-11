@@ -19,6 +19,14 @@ function wrap(ui: React.ReactNode) {
   return <QueryClientProvider client={qc}>{ui}</QueryClientProvider>;
 }
 
+test("Create button shows aria-busy while creating", async () => {
+  vi.spyOn(api, "createCollection").mockReturnValue(new Promise(() => {}));
+  render(wrap(<CollectionCreate onCreated={() => {}} />));
+  await userEvent.type(screen.getByLabelText(/name/i), "made");
+  await userEvent.click(screen.getByRole("button", { name: /create/i }));
+  expect(screen.getByRole("button", { name: /create/i })).toHaveAttribute("aria-busy", "true");
+});
+
 test("submits the create form with metric and EF", async () => {
   const create = vi.spyOn(api, "createCollection").mockResolvedValue({
     name: "made", count: 0, dimensionality: null,

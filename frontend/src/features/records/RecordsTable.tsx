@@ -5,6 +5,7 @@ import type { RecordRow } from "../../api/types";
 import { useSelection } from "../../lib/selection";
 import { focusSelected, nextIndex } from "../../lib/selectionMove";
 import { useShortcut } from "../../lib/shortcuts";
+import { Skeleton } from "../../ui/Skeleton";
 import { RecordsByDocument } from "./RecordsByDocument";
 
 const PAGE = 25;
@@ -95,7 +96,7 @@ export function RecordsTable({ name }: { name: string }) {
       {view === "doc" ? (
         <RecordsByDocument name={name} />
       ) : isLoading ? (
-        <p className="muted">Loading records…</p>
+        <Skeleton label="Loading records" rows={6} className="skeleton-table" />
       ) : error ? (
         <p role="alert">Failed to load records.</p>
       ) : (

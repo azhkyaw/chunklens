@@ -31,6 +31,18 @@ test("runs a query and shows scored ranked hits", async () => {
   expect(screen.getByText("0.91")).toBeInTheDocument();          // cosine similarity
 });
 
+test("shows a results skeleton while the query runs", async () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
+  vi.spyOn(api, "query").mockReturnValue(new Promise(() => {}));
+  render(wrap(<SingleQuery name="docs" />));
+  await userEvent.type(screen.getByLabelText(/query text/i), "alpha");
+  await userEvent.click(screen.getByRole("button", { name: /^run$/i }));
+  expect(await screen.findByRole("status", { name: /running query/i })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /^run$/i })).toHaveAttribute("aria-busy", "true");
+});
+
 test("sends the built where filter with the query", async () => {
   vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [{ key: "lang", types: ["string"] }], sampled: 3, total: 3 });
   vi.spyOn(api, "listEmbedders").mockResolvedValue([]);

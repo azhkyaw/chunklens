@@ -34,7 +34,7 @@ test("renders a placeholder instead of crashing when the query is disabled (empt
   // so the component must guard on missing data rather than assert it.
   const spy = vi.spyOn(api, "getSourceRecords").mockResolvedValue({ items: [], limit: 25, offset: 0, total: 0 });
   render(wrap(<DocChunks name="docs" sourceKey="source" value="" />));
-  expect(screen.getByText(/loading chunks/i)).toBeInTheDocument();
+  expect(screen.getByRole("status", { name: /loading chunks/i })).toBeInTheDocument();
   expect(spy).not.toHaveBeenCalled();
 });
 

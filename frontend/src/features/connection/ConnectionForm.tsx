@@ -68,7 +68,7 @@ export function ConnectionForm({ onSaved }: { onSaved?: () => void }) {
       )}
       <div className="form-actions">
         <button type="button" onClick={() => test.mutate(buildInput())}>Test</button>
-        <button type="submit" className="btn-primary" disabled={save.isPending}>Connect</button>
+        <button type="submit" className="btn-primary" disabled={save.isPending} aria-busy={save.isPending}>Connect</button>
       </div>
       {test.data && (
         <p role="status">{test.data.ok ? "Connection OK" : `Failed: ${test.data.error}`}</p>

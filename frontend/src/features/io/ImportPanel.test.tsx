@@ -27,6 +27,15 @@ const FILE = new File(
   { type: "application/json" },
 );
 
+test("Import button shows aria-busy while importing", async () => {
+  vi.spyOn(api, "importCollection").mockReturnValue(new Promise(() => {}));
+  render(wrap(<ImportPanel onImported={() => {}} />));
+  await userEvent.upload(screen.getByLabelText(/import file/i), FILE);
+  await waitFor(() => expect((screen.getByLabelText(/^name$/i) as HTMLInputElement).value).toBe("imp"));
+  await userEvent.click(screen.getByRole("button", { name: /^import$/i }));
+  expect(screen.getByRole("button", { name: /^import$/i })).toHaveAttribute("aria-busy", "true");
+});
+
 test("parses a file, prefills the name, and imports", async () => {
   vi.spyOn(api, "importCollection").mockResolvedValue({
     name: "imp", count: 1, dimensionality: 2, distance_metric: "l2", embedding_function: "none", metadata: {},

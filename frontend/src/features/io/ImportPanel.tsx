@@ -51,7 +51,7 @@ export function ImportPanel({ onImported }: { onImported: (name: string) => void
       <label className="field">Import file <input type="file" accept=".json,application/json" onChange={onFile} /></label>
       {data && <label className="field">Name <input value={name} onChange={(e) => setName(e.target.value)} /></label>}
       <div className="form-actions">
-        <button type="button" className="btn-primary" onClick={submit} disabled={!data || !name || imp.isPending}>Import</button>
+        <button type="button" className="btn-primary" onClick={submit} disabled={!data || !name || imp.isPending} aria-busy={imp.isPending}>Import</button>
       </div>
       {error && <p role="alert">{error}</p>}
     </div>

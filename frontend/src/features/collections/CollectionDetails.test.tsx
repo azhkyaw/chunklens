@@ -17,6 +17,12 @@ const DETAILS = {
   distance_metric: "l2", embedding_function: "default", metadata: {},
 };
 
+test("shows a skeleton while details load", () => {
+  vi.spyOn(api, "getCollectionDetails").mockReturnValue(new Promise(() => {}));
+  render(wrap(<CollectionDetails name="docs" />));
+  expect(screen.getByRole("status", { name: /loading collection details/i })).toBeInTheDocument();
+});
+
 test("shows the guard fields", async () => {
   vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
   render(wrap(<CollectionDetails name="docs" />));

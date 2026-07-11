@@ -35,6 +35,12 @@ const PAGE_1 = {
   total: 30,
 };
 
+test("shows table skeleton rows while records load", () => {
+  vi.spyOn(api, "getRecords").mockReturnValue(new Promise(() => {}));
+  renderTable();
+  expect(screen.getByRole("status", { name: /loading records/i })).toBeInTheDocument();
+});
+
 test("renders record ids and document text", async () => {
   vi.spyOn(api, "getRecords").mockResolvedValue(PAGE_1);
   renderTable();

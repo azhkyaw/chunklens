@@ -40,6 +40,14 @@ test("saves config and omits token when blank", async () => {
   });
 });
 
+test("Connect button shows aria-busy while saving", async () => {
+  vi.spyOn(api, "getConnection").mockResolvedValue(INFO);
+  vi.spyOn(api, "saveConnection").mockReturnValue(new Promise(() => {}));
+  render(wrap(<ConnectionForm />));
+  await userEvent.click(screen.getByRole("button", { name: /^connect$/i }));
+  expect(screen.getByRole("button", { name: /^connect$/i })).toHaveAttribute("aria-busy", "true");
+});
+
 test("Test button shows a result", async () => {
   vi.spyOn(api, "getConnection").mockResolvedValue(INFO);
   vi.spyOn(api, "testConnection").mockResolvedValue({ ok: true });

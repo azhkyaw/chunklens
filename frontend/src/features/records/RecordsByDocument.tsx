@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMetadataKeys, useSources } from "../../api/hooks";
 import { useSelection } from "../../lib/selection";
+import { Skeleton } from "../../ui/Skeleton";
 import { PROVENANCE_KEYS } from "../retrieval/provenance";
 import { DocChunks } from "./DocChunks";
 
@@ -33,7 +34,7 @@ export function RecordsByDocument({ name }: { name: string }) {
         </select>
       </label>
 
-      {isLoading && <p className="muted">Scanning documents…</p>}
+      {isLoading && <Skeleton label="Scanning documents" rows={4} className="skeleton-table" />}
       {error && <p role="alert">Failed to list documents.</p>}
       {data && (
         <>

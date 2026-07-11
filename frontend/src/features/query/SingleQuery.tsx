@@ -13,6 +13,7 @@ import { evaluateGuards, defaultQueryMode } from "../retrieval/guards";
 import { interpretQueryError } from "../retrieval/errorInterpret";
 import { newQuerySpec, serializeSpec, specErrors, vectorError, type QuerySpec } from "./querySpec";
 import { consumeReplay, recordQuery, subscribeReplay } from "../../lib/queryHistory";
+import { Skeleton } from "../../ui/Skeleton";
 
 export function SingleQuery({ name }: { name: string }) {
   const [spec, setSpec] = useState<QuerySpec>(() => newQuerySpec());
@@ -99,7 +100,7 @@ export function SingleQuery({ name }: { name: string }) {
       <QueryForm name={name} spec={spec} details={details} onChange={setSpec} inputRef={queryInput} />
       <GuardBanner guards={guards} />
       <div className="form-actions">
-        <button className="btn-primary" onClick={() => runQuery(spec)}
+        <button className="btn-primary" onClick={() => runQuery(spec)} aria-busy={run.isPending}
                 disabled={!ready || errors.length > 0 || blocked || run.isPending}>Run</button>
         <button type="button" className="btn-sm" disabled={!ready || errors.length > 0 || !conn}
                 onClick={() => conn && copyText(queryAsPython(conn, name, serializeSpec(spec)), "Python snippet")}>
@@ -112,7 +113,11 @@ export function SingleQuery({ name }: { name: string }) {
       </div>
       {errors.length > 0 && <p role="alert">Fix filter errors: {errors.map((e) => e.message).join("; ")}</p>}
       {run.error && <p role="alert">Query failed - {interpretQueryError((run.error as Error).message, { details })}</p>}
-      {run.data && <ResultsPanel hits={run.data.hits} metric={metric} keys={keyNames} latencyMs={run.data.ms} />}
+      {run.isPending ? (
+        <Skeleton label="Running query" rows={5} className="skeleton-hits" />
+      ) : run.data ? (
+        <ResultsPanel hits={run.data.hits} metric={metric} keys={keyNames} latencyMs={run.data.ms} />
+      ) : null}
     </div>
   );
 }

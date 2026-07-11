@@ -54,7 +54,7 @@ export function CollectionCreate({ onCreated }: { onCreated: (name: string) => v
       </div>
       <MetadataEditor value={metaText} onChange={setMetaText} label="Metadata (JSON, optional)" />
       <div className="form-actions">
-        <button type="submit" className="btn-primary" disabled={create.isPending || !name}>Create</button>
+        <button type="submit" className="btn-primary" disabled={create.isPending || !name} aria-busy={create.isPending}>Create</button>
       </div>
       {error && <p role="alert">{error}</p>}
     </form>

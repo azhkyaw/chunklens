@@ -1,4 +1,5 @@
 import { useCollections } from "../../api/hooks";
+import { Skeleton } from "../../ui/Skeleton";
 
 export function CollectionsList({
   selected,
@@ -8,7 +9,7 @@ export function CollectionsList({
   onSelect: (name: string) => void;
 }) {
   const { data, isLoading, error } = useCollections();
-  if (isLoading) return <p className="muted rail-empty">Loading collections…</p>;
+  if (isLoading) return <Skeleton label="Loading collections" rows={4} className="skeleton-rail" />;
   if (error) return <p role="alert" className="rail-empty">Failed to load collections.</p>;
   const items = data ?? [];
   if (items.length === 0) return <p className="muted rail-empty">No collections yet.</p>;
