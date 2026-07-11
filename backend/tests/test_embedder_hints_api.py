@@ -32,6 +32,34 @@ def test_rename_moves_hint(api, conn_env):
     assert api.get("/api/collections/docs2").json()["embedder_hint"] == {"provider": "openai", "model": "m"}
 
 
+def test_metadata_patch_response_carries_the_hint(api, conn_env):
+    # PATCH answers with the same CollectionDetails shape as GET, and the UI
+    # writes that answer straight into its collection cache. Dropping the hint
+    # here would publish "this collection has no embedder" for a collection the
+    # user explicitly configured, and text queries would stop being offered.
+    api.put("/api/collections/docs/embedder", json={"provider": "openai", "model": "m"})
+    r = api.patch("/api/collections/docs", json={"metadata": {"team": "search"}})
+    assert r.status_code == 200
+    assert r.json()["embedder_hint"] == {"provider": "openai", "model": "m"}
+
+
+def test_rename_patch_response_carries_the_moved_hint(api, conn_env):
+    # The hint has already been moved to the new name by the time we answer, so
+    # the response must report the hint of the collection it actually describes.
+    api.put("/api/collections/docs/embedder", json={"provider": "openai", "model": "m"})
+    r = api.patch("/api/collections/docs", json={"name": "docs2"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["name"] == "docs2"
+    assert body["embedder_hint"] == {"provider": "openai", "model": "m"}
+
+
+def test_patch_response_hint_is_none_when_unset(api, conn_env):
+    r = api.patch("/api/collections/docs", json={"metadata": {"team": "search"}})
+    assert r.status_code == 200
+    assert r.json()["embedder_hint"] is None
+
+
 def test_delete_collection_clears_hint(api, conn_env):
     api.put("/api/collections/docs/embedder", json={"provider": "openai"})
     assert api.delete("/api/collections/docs").status_code == 204

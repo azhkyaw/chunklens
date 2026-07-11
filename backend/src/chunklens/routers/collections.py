@@ -141,16 +141,27 @@ def update_collection(
         if body.name is not None and body.name != name:
             chroma_service.rename_collection(client, name, body.name)
             embedder_hints.move_hint(cfg, name, body.name)
+            # Rebind so everything below - including the hint lookup - describes
+            # the collection the response is actually about.
             name = body.name
         if body.metadata is not None:
-            return chroma_service.update_collection_metadata(client, name, body.metadata)
-        return chroma_service.get_collection_details(client, name)
+            details = chroma_service.update_collection_metadata(client, name, body.metadata)
+        else:
+            details = chroma_service.get_collection_details(client, name)
     except NotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc))
     except Conflict as exc:
         raise HTTPException(status_code=409, detail=str(exc))
     except InvalidName as exc:
         raise HTTPException(status_code=400, detail=str(exc))
+    # The embedder hint lives beside Chroma (it is our own on-disk preference,
+    # not collection state), so the service layer cannot fill it in. Attach it
+    # on every path, exactly as GET does: this response is the same
+    # CollectionDetails shape and clients cache it as the current truth, so a
+    # missing hint here reads as "no embedder configured" and silently disables
+    # text querying for a collection the user deliberately set up for it.
+    details.embedder_hint = embedder_hints.load_hint(cfg, name)
+    return details
 
 
 @router.delete("/{name}", status_code=204)
