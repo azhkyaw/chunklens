@@ -67,8 +67,20 @@ export function App() {
 
   useEffect(() => {
     if (wasOnboarded()) return;
+    // Set the flag first: StrictMode double-invokes this effect in dev, and the
+    // guard above is what keeps the greeting single-shot.
     markOnboarded();
-    toastInfo(`Press ${isMac() ? "Cmd" : "Ctrl"}+K for the command palette · ? lists every shortcut`);
+    // Defer the toast by a microtask. AppToaster is a SIBLING of App, so sonner
+    // subscribes to the toast bus in its own effect, which React runs after
+    // this one in the same commit. Publishing synchronously here would emit to
+    // zero subscribers and the toast would be silently dropped - which is
+    // exactly what shipped until an e2e run in a real browser caught it (the
+    // unit test only proved toastInfo was CALLED, not that anything rendered).
+    // A microtask drains after the whole passive-effect flush, so the Toaster
+    // is listening by then.
+    queueMicrotask(() =>
+      toastInfo(`Press ${isMac() ? "Cmd" : "Ctrl"}+K for the command palette · ? lists every shortcut`),
+    );
   }, []);
 
   useShortcut("mod+k", (e) => {

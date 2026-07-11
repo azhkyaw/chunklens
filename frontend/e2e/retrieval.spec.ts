@@ -22,6 +22,14 @@ test("scores a query, reveals provenance, then compares two queries", async ({ p
   await texts.nth(0).fill("the quick brown fox");
   await texts.nth(1).fill("lazy dog");
   await page.getByRole("button", { name: /run both/i }).click();
-  await expect(page.getByText("Query A")).toBeVisible();
-  await expect(page.getByText("Query B")).toBeVisible();
+  // Compare fires TWO queries at once, and a default-EF collection embeds each
+  // one server-side through ONNX. In a full-suite run that pair regularly takes
+  // longer than Playwright's 5s default assertion budget (a single query alone
+  // has been measured at ~4.6s here), so the default budget makes this spec flaky
+  // in suite order while it passes in isolation. The app is correct throughout:
+  // Run both stays disabled and the Running queries skeleton shows. Give the
+  // slow backend room rather than pretending the UI is at fault.
+  const COMPARE_READY = 25_000;
+  await expect(page.getByText("Query A")).toBeVisible({ timeout: COMPARE_READY });
+  await expect(page.getByText("Query B")).toBeVisible({ timeout: COMPARE_READY });
 });

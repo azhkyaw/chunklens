@@ -10,6 +10,7 @@ import { getHistory, recordQuery, clearHistory } from "./lib/queryHistory";
 import { newQuerySpec } from "./features/query/querySpec";
 import * as latencyModule from "./lib/latency";
 import * as toastModule from "./ui/toast";
+import { AppToaster } from "./ui/toast";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -446,4 +447,25 @@ test("shows the one-time onboarding toast on first run only", async () => {
   unmount();
   renderApp("/");
   expect(info).not.toHaveBeenCalled();
+});
+
+test("the onboarding toast actually reaches the toaster and renders", async () => {
+  // Asserting that toastInfo was CALLED is not enough: sonner's Toaster
+  // subscribes to the toast bus in its own effect, and AppToaster is a SIBLING
+  // of App, so a toast published synchronously from App's mount effect is
+  // emitted to zero subscribers and silently dropped. That shipped, and only a
+  // real browser caught it. This test renders the REAL toaster and asserts the
+  // user-visible text, so the drop cannot come back.
+  localStorage.removeItem("chunklens:onboarded");
+  mockHappyPath();
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={qc}>
+      <Router hook={memoryLocation({ path: "/" }).hook}>
+        <App />
+      </Router>
+      <AppToaster />
+    </QueryClientProvider>,
+  );
+  expect(await screen.findByText(/K for the command palette/)).toBeInTheDocument();
 });
