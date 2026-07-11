@@ -236,3 +236,36 @@ test("the palette toggles the theme", async () => {
   await userEvent.click(within(dialog).getByText("Toggle theme"));
   expect(document.documentElement.dataset.theme).toBe("light");
 });
+
+test("switching collections via the palette closes a manage modal left open for the old one", async () => {
+  mockHappyPath();
+  vi.spyOn(api, "listCollections").mockResolvedValue([
+    { name: "demo", count: 3 },
+    { name: "other", count: 5 },
+  ]);
+  const { history } = renderApp("/c/demo/records");
+  await screen.findByRole("grid");
+
+  await userEvent.click(screen.getByRole("button", { name: /^manage$/i }));
+  expect(await screen.findByRole("dialog", { name: /manage collection/i })).toBeInTheDocument();
+
+  // mod+ combos fire even while a dialog is open (see useShortcut), so the
+  // palette must still open on top of the already-open Manage modal.
+  fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+  const dialog = await screen.findByRole("dialog", { name: /command palette/i });
+  await userEvent.click(within(dialog).getByText("other"));
+
+  await waitFor(() => expect(history[history.length - 1]).toBe("/c/other/records"));
+  expect(screen.queryByRole("dialog", { name: /manage collection/i })).not.toBeInTheDocument();
+});
+
+test("ctrl+k a second time closes the palette", async () => {
+  mockHappyPath();
+  renderApp("/");
+  fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+  expect(await screen.findByRole("dialog", { name: /command palette/i })).toBeInTheDocument();
+  fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+  await waitFor(() =>
+    expect(screen.queryByRole("dialog", { name: /command palette/i })).not.toBeInTheDocument(),
+  );
+});

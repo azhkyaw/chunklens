@@ -41,7 +41,12 @@ export function App() {
   const [showCreate, setShowCreate] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showPalette, setShowPalette] = useState(false);
-  const [showManage, setShowManage] = useState(false);
+  // Which collection Manage is open for (null = closed). Deriving the open
+  // flag from this instead of a plain boolean makes a stale modal
+  // un-representable: switching collections changes `selected`, so
+  // `manageFor === selected` goes false by construction - no reset effect
+  // needed (mirrors SelectionProvider's resetKey comparison in lib/selection).
+  const [manageFor, setManageFor] = useState<string | null>(null);
   const [inspectorOpen, setInspectorOpenState] = useState(getInspectorOpen);
   function toggleInspector() {
     const next = !inspectorOpen;
@@ -98,7 +103,7 @@ export function App() {
     ...(selected
       ? [
           { group: "Actions", label: "Export collection", run: () => void runExport(selected, false) },
-          { group: "Actions", label: "Manage collection", keywords: ["rename", "delete"], run: () => setShowManage(true) },
+          { group: "Actions", label: "Manage collection", keywords: ["rename", "delete"], run: () => setManageFor(selected) },
         ]
       : []),
     { group: "Actions", label: "Connection settings", run: () => setShowConn(true) },
@@ -190,8 +195,8 @@ export function App() {
             <CollectionView
               name={selected}
               tab={tab}
-              showManage={showManage}
-              onManageChange={setShowManage}
+              showManage={manageFor === selected}
+              onManageChange={(open) => setManageFor(open ? selected : null)}
             />
           </main>
           <InspectorShell open={inspectorOpen} onToggle={toggleInspector}>
