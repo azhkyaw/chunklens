@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, test, vi } from "vitest";
-import { cycleThemePref, getDensity, getInspectorOpen, getThemePref, initDensity, initTheme, setInspectorOpen, setDensity, setThemePref, subscribeTheme, toggleDensity } from "./prefs";
+import { cycleThemePref, getDensity, getInspectorOpen, getThemePref, initDensity, initTheme, markOnboarded, setInspectorOpen, setDensity, setThemePref, subscribeTheme, toggleDensity, wasOnboarded } from "./prefs";
 
 type Listener = (e: { matches: boolean }) => void;
 
@@ -134,4 +134,11 @@ test("density defaults to comfortable, toggles to compact, and persists", () => 
 test("garbage in density storage reads as comfortable", () => {
   localStorage.setItem("chunklens:density", "banana");
   expect(getDensity()).toBe("comfortable");
+});
+
+test("onboarding flag is unset by default and sticks once marked", () => {
+  expect(wasOnboarded()).toBe(false);
+  markOnboarded();
+  expect(wasOnboarded()).toBe(true);
+  expect(localStorage.getItem("chunklens:onboarded")).toBe("1");
 });

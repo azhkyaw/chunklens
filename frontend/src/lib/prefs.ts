@@ -105,3 +105,16 @@ function applyDensity(): void {
 export function initDensity(): void {
   applyDensity();
 }
+
+// One-time onboarding: a single toast pointing at the palette and the
+// shortcut sheet. The flag is written BEFORE the toast fires so a
+// StrictMode double-invoked effect stays single-shot.
+const ONBOARDED_KEY = "chunklens:onboarded";
+
+export function wasOnboarded(): boolean {
+  return localStorage.getItem(ONBOARDED_KEY) === "1";
+}
+
+export function markOnboarded(): void {
+  localStorage.setItem(ONBOARDED_KEY, "1");
+}

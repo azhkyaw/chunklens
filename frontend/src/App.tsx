@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Redirect, useLocation, useRoute } from "wouter";
 import { useCollections } from "./api/hooks";
@@ -26,10 +26,11 @@ import { Kbd } from "./ui/Kbd";
 import { Palette, type PaletteCommand } from "./ui/Palette";
 import { ShortcutsHelp } from "./ui/ShortcutsHelp";
 import { SelectionProvider } from "./lib/selection";
-import { getInspectorOpen, setInspectorOpen, cycleThemePref, toggleDensity } from "./lib/prefs";
+import { getInspectorOpen, setInspectorOpen, cycleThemePref, toggleDensity, markOnboarded, wasOnboarded } from "./lib/prefs";
 import { clearHistory, getHistory, requestReplay } from "./lib/queryHistory";
 import { setLastLatency } from "./lib/latency";
 import { useShortcut, isMac } from "./lib/shortcuts";
+import { toastInfo } from "./ui/toast";
 import {
   adjacentTab,
   COLLECTION_TABS,
@@ -63,6 +64,12 @@ export function App() {
   const inspectorPane = useRef<HTMLElement>(null);
   const qc = useQueryClient();
   const { data: collections } = useCollections();
+
+  useEffect(() => {
+    if (wasOnboarded()) return;
+    markOnboarded();
+    toastInfo(`Press ${isMac() ? "Cmd" : "Ctrl"}+K for the command palette · ? lists every shortcut`);
+  }, []);
 
   useShortcut("mod+k", (e) => {
     e.preventDefault();

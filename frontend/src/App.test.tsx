@@ -9,6 +9,7 @@ import { api } from "./api/client";
 import { getHistory, recordQuery, clearHistory } from "./lib/queryHistory";
 import { newQuerySpec } from "./features/query/querySpec";
 import * as latencyModule from "./lib/latency";
+import * as toastModule from "./ui/toast";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -51,14 +52,14 @@ function mockHappyPath() {
 function renderApp(path = "/") {
   const { hook, history } = memoryLocation({ path, record: true });
   const qc = new QueryClient();
-  render(
+  const { unmount } = render(
     <QueryClientProvider client={qc}>
       <Router hook={hook}>
         <App />
       </Router>
     </QueryClientProvider>,
   );
-  return { qc, history };
+  return { qc, history, unmount };
 }
 
 test("the home route shows the brand and the empty bench", async () => {
@@ -413,4 +414,20 @@ test("saving the connection clears the session query history", async () => {
   await userEvent.click(screen.getByRole("button", { name: /^connect$/i }));
   await screen.findByText(/no collection selected/i);
   expect(getHistory("demo")).toEqual([]);
+});
+
+test("shows the one-time onboarding toast on first run only", async () => {
+  localStorage.removeItem("chunklens:onboarded");
+  mockHappyPath();
+  const info = vi.spyOn(toastModule, "toastInfo");
+  const { unmount } = renderApp("/");
+  await waitFor(() => expect(info).toHaveBeenCalledTimes(1));
+  expect(info.mock.calls[0][0]).toMatch(/K for the command palette/);
+  expect(localStorage.getItem("chunklens:onboarded")).toBe("1");
+
+  // a second mount must stay quiet
+  info.mockClear();
+  unmount();
+  renderApp("/");
+  expect(info).not.toHaveBeenCalled();
 });
