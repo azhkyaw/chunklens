@@ -27,7 +27,7 @@ export function QueryForm({
   // has already chosen an embedder this session (spec.embedder set). This sets state
   // only; persistence happens on explicit user interaction inside EmbedderPicker.
   useEffect(() => {
-    if (spec.mode !== "text" || spec.embedder) return;
+    if (spec.mode !== "text" || spec.embedder || spec.embedderCleared) return;
     const hint = details?.embedder_hint;
     if (hint) {
       onChange({ ...spec, embedder: { provider: hint.provider, model: hint.model ?? "" } });

@@ -7,13 +7,17 @@ export interface QuerySpec {
   text: string;
   vector: string;
   embedder: EmbedderSpec | null;
+  // true once the user explicitly picked "- none -"; distinguishes "cleared
+  // on purpose" from "not chosen yet" so the prefill effect stops re-applying
+  // the hint after its own invalidation refetch. (audit M-4)
+  embedderCleared: boolean;
   nResults: number;
   whereTree: GroupNode;
   docTree: GroupNode;
 }
 
 export function newQuerySpec(): QuerySpec {
-  return { mode: "text", text: "", vector: "", embedder: null, nResults: 10, whereTree: newGroup(), docTree: newGroup() };
+  return { mode: "text", text: "", vector: "", embedder: null, embedderCleared: false, nResults: 10, whereTree: newGroup(), docTree: newGroup() };
 }
 
 export function parseVector(raw: string): { vector?: number[]; error?: string } {

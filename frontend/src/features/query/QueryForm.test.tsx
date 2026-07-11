@@ -1,10 +1,12 @@
+import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, expect, test, vi } from "vitest";
 import { QueryForm } from "./QueryForm";
-import { newQuerySpec } from "./querySpec";
+import { newQuerySpec, type QuerySpec } from "./querySpec";
 import { api } from "../../api/client";
+import { useCollectionDetails } from "../../api/hooks";
 import type { CollectionDetails, EmbedderInfo } from "../../api/types";
 
 const details: CollectionDetails = {
@@ -76,6 +78,36 @@ test("auto-detects a provider collection and attaches an embedder", async () => 
   expect(await screen.findByLabelText(/embed query with/i)).toBeInTheDocument();
   // auto-attach fires onChange with the detected provider (embedders hook is async, so wait)
   await waitFor(() => expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ embedder: { provider: "openai", model: "" } })));
+});
+
+test("clearing the embedder to none survives the hint-invalidation refetch", async () => {
+  // Real refetch trigger: the clear-hint mutation invalidates ["collection", name],
+  // and the *actual* backend payload changes (embedder_hint: {provider:"openai"} -> null)
+  // - a genuine content change, not a fabricated identity change - so structural sharing
+  // mints a new `details` object and the prefill effect's dependency array changes.
+  const withHint: CollectionDetails = { ...openaiDetails, embedder_hint: { provider: "openai", model: null } };
+  const withoutHint: CollectionDetails = { ...openaiDetails, embedder_hint: null };
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([OPENAI]);
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValueOnce(withHint).mockResolvedValue(withoutHint);
+  vi.spyOn(api, "clearCollectionEmbedder").mockResolvedValue(undefined);
+
+  function Harness() {
+    const [spec, setSpec] = useState<QuerySpec>(() => newQuerySpec());
+    const { data: details } = useCollectionDetails("docs");
+    return <QueryForm name="docs" spec={spec} details={details} onChange={setSpec} />;
+  }
+  render(wrap(<Harness />));
+
+  const select = await screen.findByLabelText(/embed query with/i);
+  await waitFor(() => expect(select).toHaveValue("openai")); // prefill applied
+
+  await userEvent.selectOptions(select, ""); // pick - none -
+
+  // the clear-hint mutation's onSuccess invalidates ["collection", "docs"]; the
+  // refetch resolves to `withoutHint` above (a real content change).
+  await waitFor(() => expect(select).toHaveValue(""));
+  expect(select).toHaveValue(""); // stays cleared, does not snap back to openai
 });
 
 test("no embedder UI for a default-EF collection", async () => {

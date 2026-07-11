@@ -49,7 +49,7 @@ export function EmbedderPicker({
 
   function pickProvider(id: string) {
     if (!id) {
-      onChange({ ...spec, embedder: null });
+      onChange({ ...spec, embedder: null, embedderCleared: true });
       clearHint.mutate(undefined, {
         onSuccess: () => toastSuccess("Embedder hint cleared"),
         onError: (e) => toastError((e as Error).message),
@@ -58,7 +58,7 @@ export function EmbedderPicker({
     }
     const model = spec.embedder?.provider === id ? (spec.embedder?.model ?? "") : "";
     const next = { provider: id, model };
-    onChange({ ...spec, embedder: next });
+    onChange({ ...spec, embedder: next, embedderCleared: false });
     setHint.mutate(next, {
       onSuccess: () => toastSuccess("Embedder hint saved"),
       onError: (e) => toastError((e as Error).message),
