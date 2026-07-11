@@ -68,6 +68,18 @@ test("the home route shows the brand and the empty bench", async () => {
   expect(await screen.findByText(/no collection selected/i)).toBeInTheDocument();
 });
 
+test("first run with zero collections shows the hero with create, import, and the seed pointer", async () => {
+  mockHappyPath();
+  vi.spyOn(api, "listCollections").mockResolvedValue([]);
+  renderApp("/");
+  expect(await screen.findByText("no collections yet")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /new collection/i })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /import/i })).toBeInTheDocument();
+  expect(screen.getByText(/seed_demo\.py/)).toBeInTheDocument();
+  // the hero replaces the no-collection-selected bench, it does not stack under it
+  expect(screen.queryByText(/no collection selected/i)).not.toBeInTheDocument();
+});
+
 test("selecting a collection navigates to its records tab", async () => {
   mockHappyPath();
   const { history } = renderApp("/");

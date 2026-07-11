@@ -1119,10 +1119,6 @@ p.guard[data-level="warn"] {
   font-size: var(--t-xs);
   color: var(--ink-muted);
 }
-.results-empty {
-  padding: var(--sp-3);
-  font-size: var(--t-sm);
-}
 
 .hit-list {
   list-style: none;
@@ -1826,6 +1822,11 @@ p.guard[data-level="warn"] {
   gap: var(--sp-2);
   padding: var(--sp-6) var(--sp-4);
   text-align: center;
+}
+/* No global <p> margin reset exists, so the hint paragraph would otherwise add
+   UA margins on top of the flex gap (.empty-bench does the same for its own). */
+.empty-state p {
+  margin: 0;
 }
 .empty-state .empty-actions {
   display: flex;

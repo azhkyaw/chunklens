@@ -13,6 +13,7 @@ import { evaluateGuards, defaultQueryMode } from "../retrieval/guards";
 import { interpretQueryError } from "../retrieval/errorInterpret";
 import { newQuerySpec, serializeSpec, specErrors, vectorError, type QuerySpec } from "./querySpec";
 import { consumeReplay, recordQuery, subscribeReplay } from "../../lib/queryHistory";
+import { EmptyState } from "../../ui/EmptyState";
 import { Skeleton } from "../../ui/Skeleton";
 
 export function SingleQuery({ name }: { name: string }) {
@@ -117,7 +118,12 @@ export function SingleQuery({ name }: { name: string }) {
         <Skeleton label="Running query" rows={5} className="skeleton-hits" />
       ) : run.data ? (
         <ResultsPanel hits={run.data.hits} metric={metric} keys={keyNames} latencyMs={run.data.ms} />
-      ) : null}
+      ) : run.error ? null : ( // the error alert above already explains the empty results area
+        <EmptyState
+          title="no query yet"
+          hint="type a query and press Run - results appear here, scored and ranked"
+        />
+      )}
     </div>
   );
 }

@@ -16,6 +16,7 @@ import { ImportPanel } from "./features/io/ImportPanel";
 import { runExport } from "./features/io/exportRun";
 import { StatusBar } from "./StatusBar";
 import { ThemeToggle } from "./ThemeToggle";
+import { EmptyState } from "./ui/EmptyState";
 import { Modal } from "./ui/Modal";
 import { MenuButton } from "./ui/MenuButton";
 import { InspectorShell } from "./ui/InspectorShell";
@@ -265,14 +266,31 @@ export function App() {
         </SelectionProvider>
       ) : (
         <main className="main">
+          {/* The redirect arm stays first: URL canonicalization must win over
+              any empty state, or a bare /c/name would render a bench instead
+              of redirecting. */}
           {redirect ? (
             <Redirect to={redirect} replace />
+          ) : collections && collections.length === 0 ? (
+            <EmptyState
+              className="empty-bench"
+              title="no collections yet"
+              hint="create a collection, import a JSON export, or seed demo data"
+            >
+              <button type="button" className="btn-primary" onClick={() => setShowCreate(true)}>
+                New collection
+              </button>
+              <button type="button" onClick={() => setShowImport(true)}>
+                Import
+              </button>
+              <code className="empty-cmd">uv run python scripts/seed_demo.py</code>
+            </EmptyState>
           ) : (
-            <div className="empty-bench">
-              <span className="empty-mark" aria-hidden="true" />
-              <p className="empty-title">No collection selected</p>
-              <p className="muted">Pick a collection from the rail to inspect its records and debug retrieval.</p>
-            </div>
+            <EmptyState
+              className="empty-bench"
+              title="No collection selected"
+              hint="Pick a collection from the rail to inspect its records and debug retrieval."
+            />
           )}
         </main>
       )}

@@ -48,6 +48,13 @@ test("renders record ids and document text", async () => {
   expect(screen.getByText("alpha doc")).toBeInTheDocument();
 });
 
+test("an empty collection shows the designed empty state instead of a bare table", async () => {
+  vi.spyOn(api, "getRecords").mockResolvedValue({ items: [], limit: 25, offset: 0, total: 0 });
+  renderTable();
+  expect(await screen.findByText("no records")).toBeInTheDocument();
+  expect(screen.queryByRole("grid")).not.toBeInTheDocument();
+});
+
 test("clicking a row selects it and writes sel to the URL", async () => {
   vi.spyOn(api, "getRecords").mockResolvedValue(PAGE_1);
   const { history } = renderTable();

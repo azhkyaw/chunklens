@@ -31,6 +31,29 @@ test("runs a query and shows scored ranked hits", async () => {
   expect(screen.getByText("0.91")).toBeInTheDocument();          // cosine similarity
 });
 
+test("shows the no-query-yet idle state before the first run", async () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
+  render(wrap(<SingleQuery name="docs" />));
+  expect(await screen.findByText("no query yet")).toBeInTheDocument();
+});
+
+test("the idle state does not sit under a failed run's error alert", async () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
+  vi.spyOn(api, "query").mockRejectedValue(new Error("boom"));
+  render(wrap(<SingleQuery name="docs" />));
+  await userEvent.type(screen.getByLabelText(/query text/i), "alpha");
+  expect(screen.getByText("no query yet")).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: /^run$/i }));
+  await screen.findByRole("alert");
+  // an error already explains the empty results area - the idle prompt must
+  // not sit underneath it as if nothing had been run
+  expect(screen.queryByText("no query yet")).not.toBeInTheDocument();
+});
+
 test("shows a results skeleton while the query runs", async () => {
   vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
   vi.spyOn(api, "listEmbedders").mockResolvedValue([]);

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { QueryHit } from "../../api/types";
 import { useSelection } from "../../lib/selection";
+import { EmptyState } from "../../ui/EmptyState";
 import { interpretScore, barFractions } from "./scoring";
 import { groupBySource } from "./provenance";
 import { HitRow } from "./HitRow";
@@ -18,7 +19,23 @@ export function ResultsPanel({
 }) {
   const [groupKey, setGroupKey] = useState("");
   const { selection, select } = useSelection();
-  if (hits.length === 0) return <p className="muted results-empty">0 hits · nothing matched. Try broadening the query or relaxing filters.</p>;
+  // Zero hits keeps the header: the latency readout is part of the answer
+  // ("nothing matched, in 38 ms"), so it must survive an empty result set.
+  if (hits.length === 0) {
+    return (
+      <div className="results">
+        <div className="results-head">
+          <span className="results-count">
+            0 hits{latencyMs != null ? ` · ${latencyMs} ms` : ""}
+          </span>
+        </div>
+        <EmptyState
+          title="nothing matched"
+          hint="broaden the query, relax filters, or check the embedder"
+        />
+      </div>
+    );
+  }
 
   const label = interpretScore(hits[0].distance, metric).label;
   const fractions = barFractions(hits.map((h) => h.distance), metric);

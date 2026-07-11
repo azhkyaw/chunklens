@@ -5,6 +5,7 @@ import type { ScalarMetadata } from "../../api/types";
 import { useSelection, type Selection } from "../../lib/selection";
 import { copyText } from "../../lib/copy";
 import { recordGetAsJs, recordGetAsPython } from "../../lib/copyAsCode";
+import { EmptyState } from "../../ui/EmptyState";
 import { toastSuccess } from "../../ui/toast";
 import { MetadataEditor, parseScalarMetadata } from "../collections/MetadataEditor";
 import { MetadataTable } from "../retrieval/MetadataTable";
@@ -18,7 +19,13 @@ export function Inspector({ collection }: { collection: string }) {
   const [raw, setRaw] = useState(false);
 
   if (!selection) {
-    return <p className="inspector-idle muted">Select a row to inspect it here.</p>;
+    return (
+      <EmptyState
+        className="inspector-idle"
+        title="nothing selected"
+        hint="select a row · j/k to navigate, i toggles this pane"
+      />
+    );
   }
 
   if (selection.kind === "source") {

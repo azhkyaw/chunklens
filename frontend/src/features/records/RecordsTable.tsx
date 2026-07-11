@@ -5,6 +5,7 @@ import type { RecordRow } from "../../api/types";
 import { useSelection } from "../../lib/selection";
 import { focusSelected, nextIndex } from "../../lib/selectionMove";
 import { useShortcut } from "../../lib/shortcuts";
+import { EmptyState } from "../../ui/EmptyState";
 import { Skeleton } from "../../ui/Skeleton";
 import { RecordsByDocument } from "./RecordsByDocument";
 
@@ -99,6 +100,11 @@ export function RecordsTable({ name }: { name: string }) {
         <Skeleton label="Loading records" rows={6} className="skeleton-table" />
       ) : error ? (
         <p role="alert">Failed to load records.</p>
+      ) : data!.total === 0 ? (
+        <EmptyState
+          title="no records"
+          hint="this collection is empty - add records from your app or import a JSON export"
+        />
       ) : (
         <>
           <div className="table-scroll">

@@ -67,7 +67,8 @@ const HIT: Selection = {
 
 test("nothing selected shows the idle state", () => {
   renderInspector();
-  expect(screen.getByText(/select a row/i)).toBeInTheDocument();
+  expect(screen.getByText("nothing selected")).toBeInTheDocument();
+  expect(screen.getByText(/select a row · j\/k to navigate/)).toBeInTheDocument();
 });
 
 test("a selected record shows id, document, metadata, and the embedding preview", async () => {
