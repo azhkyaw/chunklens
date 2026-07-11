@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useImportCollection } from "../../api/hooks";
 import type { ExportFile } from "../../api/types";
+import { toastSuccess } from "../../ui/toast";
 
 export function ImportPanel({ onImported }: { onImported: (name: string) => void }) {
   const qc = useQueryClient();
@@ -36,6 +37,7 @@ export function ImportPanel({ onImported }: { onImported: (name: string) => void
       {
         onSuccess: () => {
           qc.invalidateQueries({ queryKey: ["collections"] });
+          toastSuccess(`Imported ${name}`);
           onImported(name);
         },
         onError: (e) => setError((e as Error).message),

@@ -4,6 +4,13 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, expect, test, vi } from "vitest";
 import { ImportPanel } from "./ImportPanel";
 import { api } from "../../api/client";
+import { toastSuccess } from "../../ui/toast";
+
+vi.mock("../../ui/toast", () => ({
+  AppToaster: () => null,
+  toastSuccess: vi.fn(),
+  toastError: vi.fn(),
+}));
 
 afterEach(() => vi.restoreAllMocks());
 function wrap(ui: React.ReactNode) {
@@ -31,6 +38,7 @@ test("parses a file, prefills the name, and imports", async () => {
   await userEvent.click(screen.getByRole("button", { name: /^import$/i }));
   await waitFor(() => expect(api.importCollection).toHaveBeenCalled());
   expect(onImported).toHaveBeenCalledWith("imp");
+  expect(toastSuccess).toHaveBeenCalledWith("Imported imp");
 });
 
 test("shows an error when the file is not JSON", async () => {

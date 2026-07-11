@@ -6,6 +6,13 @@ import { afterEach, expect, test, vi } from "vitest";
 import { api } from "../../api/client";
 import { SelectionProvider, useSelection, type Selection } from "../../lib/selection";
 import { Inspector } from "./Inspector";
+import { toastSuccess } from "../../ui/toast";
+
+vi.mock("../../ui/toast", () => ({
+  AppToaster: () => null,
+  toastSuccess: vi.fn(),
+  toastError: vi.fn(),
+}));
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -81,6 +88,7 @@ test("metadata edits save from the inspector", async () => {
   await waitFor(() => expect(upd).toHaveBeenCalledWith("docs", "r1", { metadata: { lang: "de" } }));
   // The inspector reflects the saved metadata without a reselect.
   expect(await screen.findByText("de")).toBeInTheDocument();
+  expect(toastSuccess).toHaveBeenCalledWith("Metadata saved");
 });
 
 test("invalid metadata JSON shows an error and does not save", async () => {

@@ -4,6 +4,13 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, expect, test, vi } from "vitest";
 import { CollectionCreate } from "./CollectionCreate";
 import { api } from "../../api/client";
+import { toastSuccess } from "../../ui/toast";
+
+vi.mock("../../ui/toast", () => ({
+  AppToaster: () => null,
+  toastSuccess: vi.fn(),
+  toastError: vi.fn(),
+}));
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -28,4 +35,5 @@ test("submits the create form with metric and EF", async () => {
     name: "made", distance_metric: "cosine", embedding_function: "none",
   });
   await waitFor(() => expect(onCreated).toHaveBeenCalledWith("made"));
+  expect(toastSuccess).toHaveBeenCalledWith("Created made");
 });

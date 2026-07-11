@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useCollectionDetails, useDeleteCollection, useUpdateCollection } from "../../api/hooks";
 import { MetadataEditor, parseScalarMetadata } from "./MetadataEditor";
 import { Modal } from "../../ui/Modal";
+import { toastSuccess } from "../../ui/toast";
 
 export function CollectionManage({
   name,
@@ -44,7 +45,13 @@ export function CollectionManage({
       setError((err as Error).message);
       return;
     }
-    update.mutate({ metadata }, { onError: (e) => setError((e as Error).message) });
+    update.mutate(
+      { metadata },
+      {
+        onSuccess: () => toastSuccess("Collection metadata saved"),
+        onError: (e) => setError((e as Error).message),
+      },
+    );
   }
 
   function rename() {
@@ -55,6 +62,7 @@ export function CollectionManage({
         {
           onSuccess: () => {
             setOpen(false);
+            toastSuccess(`Renamed to ${newName}`);
             onRenamed(newName);
           },
           onError: (e) => setError((e as Error).message),
@@ -93,7 +101,12 @@ export function CollectionManage({
                 type="button"
                 className="btn-danger"
                 disabled={confirm !== name || del.isPending}
-                onClick={() => del.mutate(name, { onSuccess: onDeleted })}
+                onClick={() =>
+                  del.mutate(name, {
+                    onSuccess: () => { toastSuccess(`Deleted ${name}`); onDeleted(); },
+                    onError: (e) => setError((e as Error).message),
+                  })
+                }
               >
                 Delete
               </button>

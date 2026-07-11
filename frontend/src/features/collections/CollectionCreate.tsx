@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useCreateCollection } from "../../api/hooks";
 import type { DistanceMetric } from "../../api/types";
+import { toastSuccess } from "../../ui/toast";
 import { MetadataEditor, parseScalarMetadata } from "./MetadataEditor";
 
 export function CollectionCreate({ onCreated }: { onCreated: (name: string) => void }) {
@@ -24,7 +25,7 @@ export function CollectionCreate({ onCreated }: { onCreated: (name: string) => v
     create.mutate(
       { name, distance_metric: metric, embedding_function: ef, metadata },
       {
-        onSuccess: (d) => onCreated(d.name),
+        onSuccess: (d) => { toastSuccess(`Created ${d.name}`); onCreated(d.name); },
         onError: (err) => setError((err as Error).message),
       },
     );

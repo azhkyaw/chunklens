@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useRecord, useUpdateRecordMetadata } from "../../api/hooks";
 import type { ScalarMetadata } from "../../api/types";
 import { useSelection, type Selection } from "../../lib/selection";
+import { toastSuccess } from "../../ui/toast";
 import { MetadataEditor, parseScalarMetadata } from "../collections/MetadataEditor";
 import { MetadataTable } from "../retrieval/MetadataTable";
 import { interpretScore } from "../retrieval/scoring";
@@ -116,6 +117,7 @@ function MetadataSection({
           qc.invalidateQueries({ queryKey: ["source-records", collection] });
           qc.invalidateQueries({ queryKey: ["record", collection, record.id] });
           setEditing(false);
+          toastSuccess("Metadata saved");
           onSaved(saved.metadata ?? null);
         },
         onError: (err) => setError((err as Error).message),

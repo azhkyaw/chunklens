@@ -4,6 +4,7 @@ import {
   useClearCollectionEmbedder, useSetCollectionEmbedder, useSetEmbedderKey,
 } from "../../api/hooks";
 import type { CollectionDetails, EmbedderInfo } from "../../api/types";
+import { toastError, toastSuccess } from "../../ui/toast";
 import type { QuerySpec } from "./querySpec";
 
 // Advisory model suggestions per provider for the free-text Model field. chromadb's EF
@@ -49,19 +50,30 @@ export function EmbedderPicker({
   function pickProvider(id: string) {
     if (!id) {
       onChange({ ...spec, embedder: null });
-      clearHint.mutate();
+      clearHint.mutate(undefined, {
+        onSuccess: () => toastSuccess("Embedder hint cleared"),
+        onError: (e) => toastError((e as Error).message),
+      });
       return;
     }
     const model = spec.embedder?.provider === id ? (spec.embedder?.model ?? "") : "";
     const next = { provider: id, model };
     onChange({ ...spec, embedder: next });
-    setHint.mutate(next);
+    setHint.mutate(next, {
+      onSuccess: () => toastSuccess("Embedder hint saved"),
+      onError: (e) => toastError((e as Error).message),
+    });
   }
   function editModel(model: string) {
     if (spec.embedder) onChange({ ...spec, embedder: { ...spec.embedder, model } });
   }
   function saveModel() {
-    if (spec.embedder?.provider) setHint.mutate(spec.embedder);
+    if (spec.embedder?.provider) {
+      setHint.mutate(spec.embedder, {
+        onSuccess: () => toastSuccess("Embedder hint saved"),
+        onError: (e) => toastError((e as Error).message),
+      });
+    }
   }
 
   return (
@@ -93,8 +105,14 @@ export function EmbedderPicker({
           <label className="field" style={{ flex: 1 }}>API key
             <input type="password" value={keyInput} onChange={(e) => setKeyInput(e.target.value)} /></label>
           <button type="button" className="btn-secondary" disabled={!keyInput || setKey.isPending}
-            onClick={() => setKey.mutate({ provider: selected!.id, token: keyInput },
-              { onSuccess: () => { setKeyInput(""); qc.invalidateQueries({ queryKey: ["embedders"] }); } })}>
+            onClick={() => setKey.mutate({ provider: selected!.id, token: keyInput }, {
+              onSuccess: () => {
+                setKeyInput("");
+                qc.invalidateQueries({ queryKey: ["embedders"] });
+                toastSuccess("API key set");
+              },
+              onError: (e) => toastError((e as Error).message),
+            })}>
             Set key
           </button>
         </div>

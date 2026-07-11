@@ -1,9 +1,16 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, expect, test, vi } from "vitest";
 import { CollectionManage } from "./CollectionManage";
 import { api } from "../../api/client";
+import { toastSuccess } from "../../ui/toast";
+
+vi.mock("../../ui/toast", () => ({
+  AppToaster: () => null,
+  toastSuccess: vi.fn(),
+  toastError: vi.fn(),
+}));
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -34,4 +41,42 @@ test("opens a modal and gates delete on typing the collection name", async () =>
   await userEvent.click(deleteBtn);
   await waitFor(() => expect(del).toHaveBeenCalledWith("docs"));
   await waitFor(() => expect(onDeleted).toHaveBeenCalled());
+  expect(toastSuccess).toHaveBeenCalledWith("Deleted docs");
+});
+
+test("renaming toasts success", async () => {
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
+  const upd = vi.spyOn(api, "updateCollection").mockResolvedValue({ ...DETAILS, name: "newname" });
+  const onRenamed = vi.fn();
+  render(wrap(<CollectionManage name="docs" onRenamed={onRenamed} onDeleted={() => {}} />));
+  await userEvent.click(screen.getByRole("button", { name: /^manage$/i }));
+  const input = screen.getByLabelText(/^rename$/i);
+  await userEvent.clear(input);
+  await userEvent.type(input, "newname");
+  await userEvent.click(screen.getByRole("button", { name: /^save name$/i }));
+  await waitFor(() => expect(upd).toHaveBeenCalledWith("docs", { name: "newname" }));
+  await waitFor(() => expect(onRenamed).toHaveBeenCalledWith("newname"));
+  expect(toastSuccess).toHaveBeenCalledWith("Renamed to newname");
+});
+
+test("saving collection metadata toasts success", async () => {
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
+  const upd = vi.spyOn(api, "updateCollection").mockResolvedValue(DETAILS);
+  render(wrap(<CollectionManage name="docs" onRenamed={() => {}} onDeleted={() => {}} />));
+  await userEvent.click(screen.getByRole("button", { name: /^manage$/i }));
+  const box = await screen.findByRole("textbox", { name: /collection metadata/i });
+  fireEvent.change(box, { target: { value: '{"a":1}' } });
+  await userEvent.click(screen.getByRole("button", { name: /^save metadata$/i }));
+  await waitFor(() => expect(upd).toHaveBeenCalledWith("docs", { metadata: { a: 1 } }));
+  expect(toastSuccess).toHaveBeenCalledWith("Collection metadata saved");
+});
+
+test("a failed delete shows an inline error", async () => {
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
+  vi.spyOn(api, "deleteCollection").mockRejectedValue(new Error("cannot delete"));
+  render(wrap(<CollectionManage name="docs" onRenamed={() => {}} onDeleted={() => {}} />));
+  await userEvent.click(screen.getByRole("button", { name: /^manage$/i }));
+  await userEvent.type(screen.getByLabelText(/type the name/i), "docs");
+  await userEvent.click(screen.getByRole("button", { name: /^delete$/i }));
+  expect(await screen.findByRole("alert")).toHaveTextContent(/cannot delete/i);
 });
