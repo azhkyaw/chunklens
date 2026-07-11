@@ -59,7 +59,7 @@ test("selecting a collection navigates to its records tab", async () => {
   mockHappyPath();
   const { history } = renderApp("/");
   await userEvent.click(await screen.findByRole("button", { name: /^demo\b/ }));
-  expect(await screen.findByRole("table")).toBeInTheDocument();
+  expect(await screen.findByRole("grid")).toBeInTheDocument();
   expect(screen.getByRole("tab", { name: /^records$/i })).toHaveAttribute("aria-selected", "true");
   expect(history[history.length - 1]).toBe("/c/demo/records");
 });
@@ -69,7 +69,7 @@ test("a deep link to the query tab restores it", async () => {
   renderApp("/c/demo/query");
   expect(await screen.findByLabelText(/query text/i)).toBeInTheDocument();
   expect(screen.getByRole("tab", { name: /^query$/i })).toHaveAttribute("aria-selected", "true");
-  expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  expect(screen.queryByRole("grid")).not.toBeInTheDocument();
 });
 
 test("a deep link to the compare tab restores it", async () => {
@@ -82,10 +82,10 @@ test("a deep link to the compare tab restores it", async () => {
 test("the view tabs switch between records, query, and compare", async () => {
   mockHappyPath();
   renderApp("/c/demo/records");
-  expect(await screen.findByRole("table")).toBeInTheDocument();
+  expect(await screen.findByRole("grid")).toBeInTheDocument();
   await userEvent.click(screen.getByRole("tab", { name: /^query$/i }));
   expect(await screen.findByLabelText(/query text/i)).toBeInTheDocument();
-  expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  expect(screen.queryByRole("grid")).not.toBeInTheDocument();
   await userEvent.click(screen.getByRole("tab", { name: /^compare$/i }));
   expect(await screen.findByRole("button", { name: /run both/i })).toBeInTheDocument();
 });
@@ -93,14 +93,14 @@ test("the view tabs switch between records, query, and compare", async () => {
 test("a bare collection path redirects to its records tab", async () => {
   mockHappyPath();
   const { history } = renderApp("/c/demo");
-  expect(await screen.findByRole("table")).toBeInTheDocument();
+  expect(await screen.findByRole("grid")).toBeInTheDocument();
   await waitFor(() => expect(history[history.length - 1]).toBe("/c/demo/records"));
 });
 
 test("an unknown tab redirects to records", async () => {
   mockHappyPath();
   const { history } = renderApp("/c/demo/bogus");
-  expect(await screen.findByRole("table")).toBeInTheDocument();
+  expect(await screen.findByRole("grid")).toBeInTheDocument();
   await waitFor(() => expect(history[history.length - 1]).toBe("/c/demo/records"));
 });
 

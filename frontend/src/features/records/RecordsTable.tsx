@@ -1,56 +1,49 @@
 import { useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useRecords, useUpdateRecordMetadata } from "../../api/hooks";
-import { MetadataEditor, parseScalarMetadata } from "../collections/MetadataEditor";
+import { useSearchParams } from "wouter";
+import { useRecords } from "../../api/hooks";
+import type { RecordRow } from "../../api/types";
+import { useSelection } from "../../lib/selection";
 import { RecordsByDocument } from "./RecordsByDocument";
 
 const PAGE = 25;
 
 export function RecordsTable({ name }: { name: string }) {
   const [view, setView] = useState<"flat" | "doc">("flat");
-  const [offset, setOffset] = useState(0);
+  const [params, setParams] = useSearchParams();
+  const rawOffset = Number(params.get("offset") ?? "0");
+  // Snap to a page boundary and reject garbage so a hand-edited URL cannot
+  // produce a misaligned or negative page.
+  const offset =
+    Number.isFinite(rawOffset) && rawOffset > 0 ? Math.floor(rawOffset / PAGE) * PAGE : 0;
   const { data, isLoading, error } = useRecords(name, PAGE, offset);
-  const qc = useQueryClient();
-  const update = useUpdateRecordMetadata(name);
-  const [editId, setEditId] = useState<string | null>(null);
-  const [metaText, setMetaText] = useState("");
-  const [editError, setEditError] = useState<string | null>(null);
+  const { selection, select } = useSelection();
+  const selParam = params.get("sel");
 
-  // Close the edit modal on Escape (only while it is open)
+  // Restore a deep-linked selection once its row is on the loaded page.
   useEffect(() => {
-    if (!editId) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setEditId(null);
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [editId]);
+    if (!selParam || selection) return;
+    const row = data?.items.find((r) => r.id === selParam);
+    if (row) select({ kind: "record", record: row });
+  }, [data, selParam, selection, select]);
 
-  function startEdit(id: string, metadata: unknown) {
-    setEditId(id);
-    setMetaText(JSON.stringify(metadata ?? {}, null, 2));
-    setEditError(null);
+  function selectRow(record: RecordRow) {
+    select({ kind: "record", record });
+    // replace: selection churn should not pollute browser history
+    setParams(
+      (prev) => {
+        prev.set("sel", record.id);
+        return prev;
+      },
+      { replace: true },
+    );
   }
 
-  function save() {
-    setEditError(null);
-    let metadata;
-    try {
-      metadata = parseScalarMetadata(metaText);
-    } catch (err) {
-      setEditError((err as Error).message);
-      return;
-    }
-    update.mutate(
-      { id: editId as string, metadata },
-      {
-        onSuccess: () => {
-          qc.invalidateQueries({ queryKey: ["records", name] });
-          setEditId(null);
-        },
-        onError: (err) => setEditError((err as Error).message),
-      },
-    );
+  function goTo(nextOffset: number) {
+    setParams((prev) => {
+      if (nextOffset <= 0) prev.delete("offset");
+      else prev.set("offset", String(nextOffset));
+      return prev;
+    });
   }
 
   return (
@@ -74,46 +67,43 @@ export function RecordsTable({ name }: { name: string }) {
       ) : (
         <>
           <div className="table-scroll">
-            <table className="records-table">
+            <table className="records-table" role="grid" aria-label="Records">
               <thead>
-                <tr><th>ID</th><th>Document</th><th>Metadata</th><th></th></tr>
+                <tr><th>ID</th><th>Document</th><th>Metadata</th></tr>
               </thead>
               <tbody>
-                {data!.items.map((r) => (
-                  <tr key={r.id}>
-                    <td className="cell-id">{r.id}</td>
-                    <td className="cell-doc">{r.document}</td>
-                    <td className="cell-meta"><code>{JSON.stringify(r.metadata)}</code></td>
-                    <td className="cell-actions">
-                      <button type="button" className="btn-sm" onClick={() => startEdit(r.id, r.metadata)}>Edit</button>
-                    </td>
-                  </tr>
-                ))}
+                {data!.items.map((r) => {
+                  const isSelected =
+                    selection?.kind === "record" && selection.record.id === r.id;
+                  return (
+                    <tr
+                      key={r.id}
+                      tabIndex={0}
+                      aria-selected={isSelected}
+                      onClick={() => selectRow(r)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          selectRow(r);
+                        }
+                      }}
+                    >
+                      <td className="cell-id">{r.id}</td>
+                      <td className="cell-doc">{r.document}</td>
+                      <td className="cell-meta"><code>{JSON.stringify(r.metadata)}</code></td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
 
-          {editId && (
-            <div className="modal-overlay"
-                 onClick={(e) => { if (e.target === e.currentTarget) setEditId(null); }}>
-              <div role="dialog" aria-modal="true" aria-label="Edit record metadata" className="panel record-edit">
-                <p className="muted">Editing <strong className="mono">{editId}</strong></p>
-                <MetadataEditor value={metaText} onChange={setMetaText} label="Record metadata (JSON)" autoFocus />
-                <div className="form-actions">
-                  <button type="button" className="btn-primary" onClick={save} disabled={update.isPending}>Save</button>
-                  <button type="button" onClick={() => setEditId(null)}>Cancel</button>
-                </div>
-                {editError && <p role="alert">{editError}</p>}
-              </div>
-            </div>
-          )}
-
           <div className="pager">
-            <button disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - PAGE))}>Prev</button>
+            <button disabled={offset === 0} onClick={() => goTo(Math.max(0, offset - PAGE))}>Prev</button>
             <span className="pager-status">
               {data!.total === 0 ? 0 : offset + 1}–{Math.min(offset + PAGE, data!.total)} of {data!.total}
             </span>
-            <button disabled={offset + PAGE >= data!.total} onClick={() => setOffset(offset + PAGE)}>Next</button>
+            <button disabled={offset + PAGE >= data!.total} onClick={() => goTo(offset + PAGE)}>Next</button>
           </div>
         </>
       )}

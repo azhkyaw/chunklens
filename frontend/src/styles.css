@@ -867,11 +867,19 @@ p[role="alert"] {
   font-size: var(--t-xs);
 }
 
-.record-edit {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
-  max-width: 560px;
+.records-table tbody tr {
+  cursor: pointer;
+}
+.records-table tbody tr:hover {
+  background: var(--surface-2);
+}
+.records-table tbody tr:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+}
+.records-table tbody tr[aria-selected="true"] {
+  background: var(--accent-weak);
+  box-shadow: inset 2px 0 0 var(--accent);
 }
 
 .pager {
@@ -1319,12 +1327,6 @@ p.guard[data-level="warn"] {
   display: grid;
   place-items: center;
   padding: var(--sp-4);
-}
-.modal-overlay .record-edit {
-  width: min(560px, 96vw);
-  max-height: 90vh;
-  overflow: auto;
-  box-shadow: var(--shadow-2); /* a true overlay floats; inline .panel stays flat */
 }
 /* Shared modal card rendered by ui/Modal - hosts any form surface */
 .modal-card {
