@@ -9,7 +9,7 @@
 
 A local-first inspector and retrieval debugger for ChromaDB.
 
-> Status: `0.1.0`, published on PyPI. Early but functional. Install it with `pipx install chunklens` (see [Install](#install-packaged)) or run from source.
+> Status: `0.2.0`. Early but functional. Install it with `pipx install chunklens` (see [Install](#install-packaged)) or run from source.
 
 ChunkLens runs entirely on your machine. A small FastAPI backend wraps the official `chromadb` client and serves a React UI. It binds to `127.0.0.1` only and sends no telemetry. The one outbound request it can make is the one you ask for: embedding a query through a provider you choose. Any API key you enter stays in memory for the session and is never written to disk.
 
@@ -27,6 +27,10 @@ Working with a vector database usually means writing throwaway scripts to answer
 - Compare two queries side by side to see how their results differ.
 - Query collections that use a non-default embedding function. ChunkLens detects the provider (OpenAI, Cohere, Voyage, Jina, Ollama, or sentence-transformers) and embeds your query text with it, using a key you provide for that session.
 - Import and export a collection as a single portable JSON file.
+- A keyboard-first workbench: command palette (Ctrl/Cmd-K), single-key navigation (j/k, /, ?), and a persistent inspector pane for the selected record or hit.
+- Copy any query or record as a runnable chromadb snippet (Python or JS), view raw JSON everywhere, and copy stored vectors.
+- Client-measured query latency, session query history with palette re-run, dark and light themes, and a compact density mode.
+- Deep-linkable URLs: refresh, back/forward, and shared links restore the exact collection, tab, page, and selection.
 
 ## Install (packaged)
 
@@ -56,7 +60,7 @@ To build and install from source instead, for development or to try an unrelease
 
 ```bash
 uv run --project backend python scripts/build_release.py   # builds the UI + wheel into backend/dist/
-pipx install backend/dist/chunklens-0.1.0-py3-none-any.whl
+pipx install backend/dist/chunklens-0.2.0-py3-none-any.whl
 ```
 
 ## Requirements
