@@ -343,6 +343,10 @@ def add_records(client, name: str, records: list[ExportRecord]) -> int:
         raise ValueError(
             "Collection has no embedding function, so every record must include an embedding."
         )
+    if ef != "none" and records and not use_embeddings and any(r.document is None for r in records):
+        raise ValueError(
+            "Records without embeddings need a document for the collection's embedding function to embed."
+        )
     if use_embeddings:
         dims = {len(r.embedding) for r in records}
         if len(dims) > 1:

@@ -44,7 +44,7 @@ class QueryRequest(BaseModel):
     query_text: Optional[str] = None
     query_embedding: Optional[list[float]] = None
     embedder: Optional[EmbedderSpec] = None
-    n_results: int = 10
+    n_results: int = Field(default=10, ge=1, le=1000)
     where: Optional[dict[str, Any]] = None
     where_document: Optional[dict[str, Any]] = None
 

@@ -1,3 +1,5 @@
+import pytest
+
 from chunklens import connection
 
 
@@ -286,3 +288,24 @@ def test_get_record_detail_missing_record_is_404(api):
 def test_get_record_detail_missing_collection_is_404(api):
     res = api.get("/api/collections/nope/records/a")
     assert res.status_code == 404
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "/api/collections/docs/records?limit=0",
+        "/api/collections/docs/records?limit=100000",
+        "/api/collections/docs/records?offset=-1",
+        "/api/collections/docs/metadata-keys?sample=0",
+        "/api/collections/docs/sources?key=lang&cap=0",
+    ],
+)
+def test_out_of_range_params_are_422(api, url):
+    assert api.get(url).status_code == 422
+
+
+def test_query_n_results_bounds(api):
+    bad = {"query_embedding": [1.0, 0.0], "n_results": 0}
+    assert api.post("/api/collections/docs/query", json=bad).status_code == 422
+    huge = {"query_embedding": [1.0, 0.0], "n_results": 10**9}
+    assert api.post("/api/collections/docs/query", json=huge).status_code == 422

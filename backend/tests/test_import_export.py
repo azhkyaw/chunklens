@@ -61,6 +61,14 @@ def test_add_records_mixed_embedding_presence_raises():
         ])
 
 
+def test_add_records_default_ef_without_document_raises(chroma):
+    col_name = "default-ef-import"
+    chroma.create_collection(col_name)
+    records = [ExportRecord(id="x", document=None, metadata=None, embedding=None)]
+    with pytest.raises(ValueError, match="need a document"):
+        chroma_service.add_records(chroma, col_name, records)
+
+
 def test_export_none_ef_forces_embeddings():
     client = _fresh_client()
     chroma_service.create_collection(client, "io_exp", distance_metric="cosine", embedding_function="none")

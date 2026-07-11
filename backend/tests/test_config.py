@@ -28,6 +28,15 @@ def test_load_corrupt_returns_defaults(tmp_path, monkeypatch):
     assert config.load_config() == ConnectionConfig()
 
 
+def test_corrupt_config_warns_and_falls_back(tmp_path, monkeypatch, caplog):
+    monkeypatch.setenv("CHUNKLENS_HOME", str(tmp_path))
+    (tmp_path / "config.json").write_text("{not json", encoding="utf-8")
+    with caplog.at_level("WARNING", logger="chunklens.config"):
+        cfg = config.load_config()
+    assert cfg == ConnectionConfig()
+    assert any("config" in r.message.lower() for r in caplog.records)
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason="0600 perms are a POSIX guarantee")
 def test_save_sets_0600_perms(tmp_path, monkeypatch):
     monkeypatch.setenv("CHUNKLENS_HOME", str(tmp_path))

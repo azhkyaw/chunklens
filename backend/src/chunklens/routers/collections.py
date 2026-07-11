@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from .. import chroma_service
 from .. import embedder_hints
@@ -33,7 +33,12 @@ def list_collections(client=Depends(get_client)):
 
 
 @router.get("/{name}/records", response_model=RecordsPage)
-def get_records(name: str, limit: int = 50, offset: int = 0, client=Depends(get_client)):
+def get_records(
+    name: str,
+    limit: int = Query(50, ge=1, le=1000),
+    offset: int = Query(0, ge=0),
+    client=Depends(get_client),
+):
     try:
         return chroma_service.get_records(client, name, limit=limit, offset=offset)
     except NotFound as exc:
@@ -49,7 +54,7 @@ def get_record(name: str, record_id: str, client=Depends(get_client)):
 
 
 @router.get("/{name}/sources", response_model=SourceList)
-def list_sources(name: str, key: str, cap: int = 10000, client=Depends(get_client)):
+def list_sources(name: str, key: str, cap: int = Query(10000, ge=1, le=100000), client=Depends(get_client)):
     try:
         return chroma_service.list_sources(client, name, key, cap=cap)
     except NotFound as exc:
@@ -58,7 +63,12 @@ def list_sources(name: str, key: str, cap: int = 10000, client=Depends(get_clien
 
 @router.get("/{name}/source-records", response_model=RecordsPage)
 def get_source_records(
-    name: str, key: str, value: str, limit: int = 50, offset: int = 0, client=Depends(get_client),
+    name: str,
+    key: str,
+    value: str,
+    limit: int = Query(50, ge=1, le=1000),
+    offset: int = Query(0, ge=0),
+    client=Depends(get_client),
 ):
     try:
         return chroma_service.get_records(client, name, limit=limit, offset=offset, where={key: {"$eq": value}})
@@ -163,7 +173,7 @@ def update_record_metadata(
 
 
 @router.get("/{name}/metadata-keys", response_model=MetadataKeysResponse)
-def metadata_keys(name: str, sample: int = 200, client=Depends(get_client)):
+def metadata_keys(name: str, sample: int = Query(200, ge=1, le=10000), client=Depends(get_client)):
     try:
         return chroma_service.sample_metadata_keys(client, name, sample=sample)
     except NotFound as exc:

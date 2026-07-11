@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import stat
 from pathlib import Path
 
 from .schemas import ConnectionConfig
+
+logger = logging.getLogger(__name__)
 
 
 def config_dir() -> Path:
@@ -23,6 +26,9 @@ def load_config() -> ConnectionConfig:
     try:
         return ConnectionConfig(**json.loads(path.read_text(encoding="utf-8")))
     except Exception:
+        logger.warning(
+            "Ignoring unreadable config at %s; falling back to defaults.", path, exc_info=True
+        )
         return ConnectionConfig()
 
 
