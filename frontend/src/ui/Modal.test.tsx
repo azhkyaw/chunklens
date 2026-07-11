@@ -80,16 +80,14 @@ test("restores focus to the previously focused element on close", async () => {
 function InertHarness() {
   const [open, setOpen] = useState(true);
   return (
-    <>
-      <div className="app">
-        <button>background</button>
-      </div>
+    <div className="app">
+      <button>background</button>
       {open && (
         <Modal label="Thing" onClose={() => setOpen(false)}>
           <p>content</p>
         </Modal>
       )}
-    </>
+    </div>
   );
 }
 
