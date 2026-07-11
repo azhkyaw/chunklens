@@ -6,6 +6,7 @@ import { CollectionsList } from "./features/collections/CollectionsList";
 import { CollectionCreate } from "./features/collections/CollectionCreate";
 import { CollectionDetails } from "./features/collections/CollectionDetails";
 import { CollectionManage } from "./features/collections/CollectionManage";
+import { ConnectionBanner } from "./features/connection/ConnectionBanner";
 import { ConnectionForm } from "./features/connection/ConnectionForm";
 import { ConnectionStatus } from "./features/connection/ConnectionStatus";
 import { CompareQuery } from "./features/query/CompareQuery";
@@ -187,6 +188,9 @@ export function App() {
             <ConnectionStatus onOpen={() => setShowConn(true)} />
           </div>
         </div>
+        {/* Inside the header (not a new grid row) so the app shell layout is
+            untouched when the banner appears and disappears. */}
+        <ConnectionBanner onOpenSettings={() => setShowConn(true)} />
         {showConn && (
           <Modal label="Connection settings" onClose={() => setShowConn(false)}>
             <ConnectionForm

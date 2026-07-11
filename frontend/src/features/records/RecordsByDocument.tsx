@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMetadataKeys, useSources } from "../../api/hooks";
 import { useSelection } from "../../lib/selection";
+import { ErrorState } from "../../ui/ErrorState";
 import { Skeleton } from "../../ui/Skeleton";
 import { PROVENANCE_KEYS } from "../retrieval/provenance";
 import { DocChunks } from "./DocChunks";
@@ -18,7 +19,7 @@ export function RecordsByDocument({ name }: { name: string }) {
   const [picked, setPicked] = useState<string | null>(null);
   const key = picked ?? autoKey;
 
-  const { data, isLoading, error } = useSources(name, key || null);
+  const { data, isLoading, error, refetch } = useSources(name, key || null);
   const [open, setOpen] = useState<string | null>(null);
   const { select } = useSelection();
 
@@ -35,7 +36,7 @@ export function RecordsByDocument({ name }: { name: string }) {
       </label>
 
       {isLoading && <Skeleton label="Scanning documents" rows={4} className="skeleton-table" />}
-      {error && <p role="alert">Failed to list documents.</p>}
+      {error && <ErrorState message="Failed to list documents." onRetry={() => refetch()} />}
       {data && (
         <>
           {data.scanned < data.total && (

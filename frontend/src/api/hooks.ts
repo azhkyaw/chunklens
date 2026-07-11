@@ -48,7 +48,15 @@ export const useConnection = () =>
   useQuery({ queryKey: ["connection"], queryFn: api.getConnection });
 
 export const useConnectionStatus = () =>
-  useQuery({ queryKey: ["connection", "status"], queryFn: () => api.testConnection() });
+  useQuery({
+    queryKey: ["connection", "status"],
+    queryFn: () => api.testConnection(),
+    // Poll only while down so the banner clears itself when the server comes
+    // back; a healthy connection is never re-checked in the background (an
+    // unconditional interval would have every consumer of this shared query
+    // hammering the backend forever).
+    refetchInterval: (query) => (query.state.data && !query.state.data.ok ? 5000 : false),
+  });
 
 export const useSaveConnection = () =>
   useMutation({ mutationFn: (body: ConnectionInput) => api.saveConnection(body) });

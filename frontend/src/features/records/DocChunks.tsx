@@ -2,16 +2,17 @@ import { useState } from "react";
 import { useSourceRecords } from "../../api/hooks";
 import type { RecordRow } from "../../api/types";
 import { useSelection } from "../../lib/selection";
+import { ErrorState } from "../../ui/ErrorState";
 import { Skeleton } from "../../ui/Skeleton";
 
 const PAGE = 25;
 
 export function DocChunks({ name, sourceKey, value }: { name: string; sourceKey: string; value: string }) {
   const [offset, setOffset] = useState(0);
-  const { data, isLoading, error } = useSourceRecords(name, sourceKey, value, PAGE, offset);
+  const { data, isLoading, error, refetch } = useSourceRecords(name, sourceKey, value, PAGE, offset);
   const { selection, select } = useSelection();
 
-  if (error) return <p role="alert">Failed to load chunks.</p>;
+  if (error) return <ErrorState message="Failed to load chunks." onRetry={() => refetch()} />;
   // Covers both an in-flight fetch and a disabled query (TanStack v5 leaves
   // isLoading false and error null when a query is disabled and never fetched).
   if (isLoading || !data) return <Skeleton label="Loading chunks" rows={3} className="skeleton-table" />;

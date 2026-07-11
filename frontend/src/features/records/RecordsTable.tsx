@@ -6,6 +6,7 @@ import { useSelection } from "../../lib/selection";
 import { focusSelected, nextIndex } from "../../lib/selectionMove";
 import { useShortcut } from "../../lib/shortcuts";
 import { EmptyState } from "../../ui/EmptyState";
+import { ErrorState } from "../../ui/ErrorState";
 import { Skeleton } from "../../ui/Skeleton";
 import { RecordsByDocument } from "./RecordsByDocument";
 
@@ -19,7 +20,7 @@ export function RecordsTable({ name }: { name: string }) {
   // produce a misaligned or negative page.
   const offset =
     Number.isFinite(rawOffset) && rawOffset > 0 ? Math.floor(rawOffset / PAGE) * PAGE : 0;
-  const { data, isLoading, error } = useRecords(name, PAGE, offset);
+  const { data, isLoading, error, refetch } = useRecords(name, PAGE, offset);
   const { selection, select } = useSelection();
   const selParam = params.get("sel");
   const tbodyRef = useRef<HTMLTableSectionElement>(null);
@@ -99,7 +100,7 @@ export function RecordsTable({ name }: { name: string }) {
       ) : isLoading ? (
         <Skeleton label="Loading records" rows={6} className="skeleton-table" />
       ) : error ? (
-        <p role="alert">Failed to load records.</p>
+        <ErrorState message="Failed to load records." onRetry={() => refetch()} />
       ) : data!.total === 0 ? (
         <EmptyState
           title="no records"

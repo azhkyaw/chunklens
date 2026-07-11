@@ -19,9 +19,13 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.error) {
       return (
         <div role="alert" className="error-boundary">
+          <span className="empty-mark" aria-hidden="true" />
+          <p className="eyebrow">ChunkLens</p>
           <h1>Something went wrong.</h1>
           <p className="muted">{this.state.error.message}</p>
-          <button type="button" onClick={() => window.location.reload()}>Reload</button>
+          <button type="button" className="btn-primary" onClick={() => window.location.reload()}>
+            Reload
+          </button>
         </div>
       );
     }

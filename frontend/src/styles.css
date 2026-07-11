@@ -641,7 +641,8 @@ p[role="alert"] {
   padding: 4px 10px;
 }
 .conn-status .led,
-.statusbar-conn .led {
+.statusbar-conn .led,
+.conn-banner .led {
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -1872,6 +1873,33 @@ p.guard[data-level="warn"] {
 }
 .conn-banner .led {
   background: var(--danger);
+}
+
+/* The last-resort crash screen: the boundary replaces the whole app, so it
+   paints its own background and typography rather than inheriting a shell
+   that no longer exists. */
+.error-boundary {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  padding: var(--sp-6);
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  text-align: center;
+}
+.error-boundary h1 {
+  margin: 0;
+  font-size: var(--t-lg);
+  font-weight: 600;
+}
+.error-boundary p {
+  margin: 0;
+  max-width: 60ch;
+  text-align: center;
 }
 
 /* Inline busy affordance for primary mutation buttons */
