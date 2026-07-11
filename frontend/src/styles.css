@@ -810,6 +810,16 @@ p[role="alert"] {
   color: var(--ink);
 }
 
+.details-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.details-actions .btn-sm[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .manage-body {
   display: flex;
   flex-direction: column;
