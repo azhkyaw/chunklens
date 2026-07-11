@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, createEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
 import { useState } from "react";
@@ -92,7 +92,9 @@ test("Tab closes the menu and returns focus to the trigger", async () => {
   const trigger = screen.getByRole("button", { name: /add collection/i });
   await userEvent.click(trigger);
   const item = screen.getByRole("menuitem", { name: /new collection/i });
-  fireEvent.keyDown(item, { key: "Tab" });
+  const ev = createEvent.keyDown(item, { key: "Tab" });
+  fireEvent(item, ev);
   expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   expect(trigger).toHaveFocus();
+  expect(ev.defaultPrevented).toBe(false);
 });

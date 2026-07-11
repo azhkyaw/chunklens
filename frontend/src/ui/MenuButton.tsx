@@ -35,6 +35,7 @@ export function MenuButton({
       setOpen(false);
       trigger.current?.focus();
     } else if (e.key === "Tab") {
+      // Do NOT preventDefault - the browser must continue the tab sequence from the refocused trigger.
       setOpen(false);
       trigger.current?.focus();
     } else if (e.key === "ArrowDown") {
