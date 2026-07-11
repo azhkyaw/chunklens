@@ -218,6 +218,23 @@ test("the topbar hint button opens the palette", async () => {
   expect(await screen.findByRole("dialog", { name: /command palette/i })).toBeInTheDocument();
 });
 
+test("palette -> New collection -> close returns focus to the live palette hint, not body", async () => {
+  mockHappyPath();
+  renderApp("/");
+  const hint = await screen.findByRole("button", { name: /open command palette/i });
+  await userEvent.click(hint);
+  const dialog = await screen.findByRole("dialog", { name: /command palette/i });
+  await userEvent.click(within(dialog).getByText("New collection"));
+
+  const modal = await screen.findByRole("dialog", { name: /new collection/i });
+  expect(screen.queryByRole("dialog", { name: /command palette/i })).not.toBeInTheDocument();
+  await userEvent.keyboard("{Escape}");
+  await waitFor(() => expect(modal).not.toBeInTheDocument());
+
+  expect(document.activeElement).not.toBe(document.body);
+  expect(hint).toHaveFocus();
+});
+
 test("the palette opens the manage modal for the selected collection", async () => {
   mockHappyPath();
   renderApp("/c/demo/records");

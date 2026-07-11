@@ -283,6 +283,42 @@ test("with no initialFocus, StrictMode still leaves the dialog focused on open a
   await waitFor(() => expect(opener).toHaveFocus());
 });
 
+function DetachedRestoreHarness() {
+  const [showOpener, setShowOpener] = useState(true);
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="app">
+      <button className="palette-hint">palette hint</button>
+      {showOpener && <button onClick={() => setOpen(true)}>Open</button>}
+      {open && (
+        <Modal label="Test dialog" onClose={() => setOpen(false)}>
+          <button onClick={() => setShowOpener(false)}>Detach opener</button>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+test("falls back to a live anchor when the restore target is removed from the DOM while open", async () => {
+  // Reproduces the palette -> modal-opening-command chain: the restore
+  // target (here, the Open button; in the app, the palette's opener) can be
+  // unmounted while the modal it opened is still up. Calling .focus() on a
+  // detached node is a silent no-op, so without a fallback focus falls to
+  // <body>.
+  render(<DetachedRestoreHarness />);
+  const opener = screen.getByRole("button", { name: "Open" });
+  await userEvent.click(opener);
+  screen.getByRole("dialog");
+
+  await userEvent.click(screen.getByRole("button", { name: "Detach opener" }));
+  expect(screen.queryByRole("button", { name: "Open" })).not.toBeInTheDocument();
+
+  fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+
+  await waitFor(() => expect(document.querySelector(".palette-hint")).toHaveFocus());
+  expect(document.activeElement).not.toBe(document.body);
+});
+
 test("the inert counter stays balanced when the shell unmounts with a modal still open", async () => {
   // Reproduces a full-tree unmount while a modal is still open (e.g. RTL's
   // afterEach on a test that forgot to close its modal, a parent remount,

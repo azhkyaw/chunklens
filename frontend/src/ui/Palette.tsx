@@ -44,11 +44,22 @@ export function Palette({
                   value={c.label}
                   keywords={c.keywords}
                   onSelect={() => {
-                    // Close first: the Modal cleanup refocuses the opener, and
-                    // any modal run() opens then captures that as its restore
-                    // target (the Task 2 focus chain).
+                    // React 18 batches onClose()'s state update and whatever
+                    // c.run() triggers into ONE commit if both run
+                    // synchronously here - so a modal opened by c.run() would
+                    // capture its focus-restore target (Modal.tsx's
+                    // restoreTo, read during render) while the palette's own
+                    // <input> is still the live document.activeElement, not
+                    // the palette's opener. That target is detached moments
+                    // later in the same commit, so closing the new modal
+                    // would call .focus() on a dead node.
+                    // Deferring c.run() to a microtask lets this component
+                    // actually unmount first (its own Modal cleanup restores
+                    // focus to the opener), so any modal opened by the
+                    // command mounts in a LATER commit and captures that
+                    // now-focused, still-live opener as its restore target.
                     onClose();
-                    c.run();
+                    queueMicrotask(() => c.run());
                   }}
                 >
                   {c.label}

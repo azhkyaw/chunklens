@@ -59,7 +59,14 @@ export function Modal({
     return () => {
       // Un-inert first so the restore target is focusable again.
       setShellInert(false);
-      restoreTo.current?.focus();
+      // The restore target can be gone by the time this runs (e.g. a
+      // command run from the palette navigated away and unmounted the
+      // opener, or CollectionManage's onDeleted navigated home). Calling
+      // .focus() on a detached node is a silent no-op, which would leave
+      // focus on <body>. Fall back to the always-present topbar
+      // palette-hint button so focus never gets lost.
+      if (restoreTo.current?.isConnected) restoreTo.current.focus();
+      else document.querySelector<HTMLElement>(".palette-hint")?.focus();
     };
   }, []);
 
