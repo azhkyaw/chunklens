@@ -1,3 +1,4 @@
+import { createRef } from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
@@ -32,4 +33,16 @@ test("collapsed shell hides children and shows a reopen strip", async () => {
   expect(reopen).toHaveAttribute("aria-expanded", "false");
   await userEvent.click(reopen);
   expect(onToggle).toHaveBeenCalledTimes(1);
+});
+
+test("the open pane accepts a paneRef and is programmatically focusable", () => {
+  const ref = createRef<HTMLElement>();
+  render(
+    <InspectorShell open onToggle={() => {}} paneRef={ref}>
+      <p>body</p>
+    </InspectorShell>,
+  );
+  expect(ref.current).not.toBeNull();
+  ref.current!.focus();
+  expect(ref.current).toHaveFocus();
 });

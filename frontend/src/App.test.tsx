@@ -277,3 +277,49 @@ test("? opens the shortcuts cheat sheet", async () => {
   fireEvent.keyDown(window, { key: "?" });
   expect(await screen.findByRole("dialog", { name: /keyboard shortcuts/i })).toBeInTheDocument();
 });
+
+test("] and [ cycle the main tabs", async () => {
+  mockHappyPath();
+  const { history } = renderApp("/c/demo/records");
+  await screen.findByRole("grid");
+  fireEvent.keyDown(window, { key: "]" });
+  await waitFor(() => expect(history[history.length - 1]).toBe("/c/demo/query"));
+  fireEvent.keyDown(window, { key: "[" });
+  await waitFor(() => expect(history[history.length - 1]).toBe("/c/demo/records"));
+});
+
+test("i toggles the inspector", async () => {
+  mockHappyPath();
+  renderApp("/c/demo/records");
+  await screen.findByRole("complementary", { name: /inspector/i });
+  fireEvent.keyDown(window, { key: "i" });
+  expect(screen.queryByRole("complementary", { name: /inspector/i })).not.toBeInTheDocument();
+  fireEvent.keyDown(window, { key: "i" });
+  expect(await screen.findByRole("complementary", { name: /inspector/i })).toBeInTheDocument();
+});
+
+test("g then c focuses the collections rail", async () => {
+  mockHappyPath();
+  renderApp("/");
+  const item = await screen.findByRole("button", { name: /^demo\b/ });
+  fireEvent.keyDown(window, { key: "g" });
+  fireEvent.keyDown(window, { key: "c" });
+  expect(item).toHaveFocus();
+});
+
+test("Enter focuses the inspector pane", async () => {
+  mockHappyPath();
+  renderApp("/c/demo/records");
+  const pane = await screen.findByRole("complementary", { name: /inspector/i });
+  fireEvent.keyDown(window, { key: "Enter" });
+  expect(pane).toHaveFocus();
+});
+
+test("Escape blurs a focused input", async () => {
+  mockHappyPath();
+  renderApp("/c/demo/query");
+  const input = await screen.findByLabelText(/query text/i);
+  input.focus();
+  fireEvent.keyDown(input, { key: "Escape" });
+  expect(input).not.toHaveFocus();
+});

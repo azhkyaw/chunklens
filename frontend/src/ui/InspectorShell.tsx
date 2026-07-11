@@ -1,3 +1,4 @@
+import type React from "react";
 import type { ReactNode } from "react";
 
 // The inspector frame: an open pane with an eyebrow header and close button,
@@ -5,10 +6,12 @@ import type { ReactNode } from "react";
 export function InspectorShell({
   open,
   onToggle,
+  paneRef,
   children,
 }: {
   open: boolean;
   onToggle: () => void;
+  paneRef?: React.Ref<HTMLElement>;
   children: ReactNode;
 }) {
   if (!open) {
@@ -27,7 +30,7 @@ export function InspectorShell({
     );
   }
   return (
-    <aside className="inspector" aria-label="Inspector">
+    <aside className="inspector" aria-label="Inspector" ref={paneRef} tabIndex={-1}>
       <div className="inspector-head">
         <p className="eyebrow">Inspector</p>
         <button

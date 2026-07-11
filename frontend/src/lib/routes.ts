@@ -16,3 +16,8 @@ export function isCollectionTab(value: string): value is CollectionTab {
 export function collectionPath(name: string, tab: CollectionTab = "records"): string {
   return `/c/${encodeURIComponent(name)}/${tab}`;
 }
+
+export function adjacentTab(tab: CollectionTab, delta: 1 | -1): CollectionTab {
+  const i = COLLECTION_TABS.indexOf(tab);
+  return COLLECTION_TABS[(i + delta + COLLECTION_TABS.length) % COLLECTION_TABS.length];
+}

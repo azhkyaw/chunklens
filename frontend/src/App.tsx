@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Redirect, useLocation, useRoute } from "wouter";
 import { useCollections } from "./api/hooks";
@@ -27,6 +27,7 @@ import { SelectionProvider } from "./lib/selection";
 import { getInspectorOpen, setInspectorOpen, cycleThemePref } from "./lib/prefs";
 import { useShortcut, isMac } from "./lib/shortcuts";
 import {
+  adjacentTab,
   COLLECTION_TABS,
   TAB_LABELS,
   collectionPath,
@@ -55,6 +56,7 @@ export function App() {
     setInspectorOpen(next);
     setInspectorOpenState(next);
   }
+  const inspectorPane = useRef<HTMLElement>(null);
   const qc = useQueryClient();
   const { data: collections } = useCollections();
 
@@ -75,6 +77,35 @@ export function App() {
         : null;
   const tab: CollectionTab =
     onTab && tabParams && isCollectionTab(tabParams.tab) ? tabParams.tab : "records";
+
+  useShortcut("i", toggleInspector);
+  useShortcut("[", () => {
+    if (selected) navigate(collectionPath(selected, adjacentTab(tab, -1)));
+  });
+  useShortcut("]", () => {
+    if (selected) navigate(collectionPath(selected, adjacentTab(tab, 1)));
+  });
+  useShortcut("g c", () => {
+    const item =
+      document.querySelector<HTMLElement>('.rail-item[aria-pressed="true"]') ??
+      document.querySelector<HTMLElement>(".rail-item");
+    item?.focus();
+  });
+  useShortcut("enter", (e) => {
+    // Buttons, links, tabs, and menu items own their Enter; rows do not, so
+    // Enter on a focused row selects it (row handler) AND lands here.
+    const t = e.target instanceof Element ? e.target : null;
+    if (t?.closest("button, a, summary, [role='tab'], [role='menuitem']")) return;
+    inspectorPane.current?.focus();
+  });
+  useShortcut(
+    "escape",
+    (e) => {
+      const t = e.target instanceof HTMLElement ? e.target : null;
+      if (t?.matches("input, textarea, select")) t.blur();
+    },
+    { inInputs: true },
+  );
 
   // URL canonicalization, rendered as the main content so the shell stays
   // mounted during the (replace) redirect: bare /c/name -> its records tab,
@@ -204,7 +235,7 @@ export function App() {
               onManageChange={(open) => setManageFor(open ? selected : null)}
             />
           </main>
-          <InspectorShell open={inspectorOpen} onToggle={toggleInspector}>
+          <InspectorShell open={inspectorOpen} onToggle={toggleInspector} paneRef={inspectorPane}>
             <Inspector collection={selected} />
           </InspectorShell>
         </SelectionProvider>

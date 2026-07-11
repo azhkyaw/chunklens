@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { COLLECTION_TABS, collectionPath, isCollectionTab } from "./routes";
+import { adjacentTab, COLLECTION_TABS, collectionPath, isCollectionTab } from "./routes";
 
 test("collectionPath defaults to the records tab", () => {
   expect(collectionPath("demo")).toBe("/c/demo/records");
@@ -17,4 +17,10 @@ test("isCollectionTab accepts exactly the known tabs", () => {
   for (const t of COLLECTION_TABS) expect(isCollectionTab(t)).toBe(true);
   expect(isCollectionTab("bogus")).toBe(false);
   expect(isCollectionTab("")).toBe(false);
+});
+
+test("adjacentTab steps through tabs and wraps", () => {
+  expect(adjacentTab("records", 1)).toBe("query");
+  expect(adjacentTab("compare", 1)).toBe("records");
+  expect(adjacentTab("records", -1)).toBe("compare");
 });
