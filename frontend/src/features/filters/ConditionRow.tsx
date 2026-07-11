@@ -78,9 +78,18 @@ export function ConditionRow({
     const known = inf && inf.types.length === 1 ? chromaTypeToValueType(inf.types[0]) : undefined;
     // Same rule from the other direction: adopt the sampled type for the newly
     // picked key, unless the row is on a comparison, which needs num regardless.
+    //
+    // Rewrite the value ONLY when the type actually changes. This runs on every
+    // keystroke in the field box, so an unconditional rewrite would clear a value
+    // the user already typed - and on a comparison row it would then fail
+    // validation ("value required") and silently disable Run while they were
+    // doing nothing more than renaming the key.
     const next = isComparisonOp ? "number" : known;
-    if (next) onChange({ field, valueType: next, value: isArrayOp ? [] : coerce("", next) });
-    else onChange({ field });
+    if (next && next !== currentValueType) {
+      onChange({ field, valueType: next, value: isArrayOp ? [] : coerce("", next) });
+    } else {
+      onChange({ field });
+    }
   }
 
   return (

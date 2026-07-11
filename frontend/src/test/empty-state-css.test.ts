@@ -37,7 +37,11 @@ test("the bench variant contributes only its placement", () => {
   expect(Object.keys(declarations(".empty-bench")).sort()).toEqual(["margin", "max-width"]);
 });
 
-test("no empty-state variant re-declares a property the base already sets", () => {
+test("the bench variant adds to the base rather than restating it", () => {
+  // Scoped to .empty-bench on purpose. .rail-empty DOES restate padding, and
+  // legitimately so: the rail is narrow, so it deliberately overrides the base's
+  // roomier padding. That override is safe only because it is declared after the
+  // base at equal specificity, which the next test is what actually guards.
   const base = declarations(".empty-state");
   const bench = Object.keys(declarations(".empty-bench")).filter((p) => p in base);
   expect(bench, ".empty-bench must not restate .empty-state").toEqual([]);

@@ -61,12 +61,27 @@ test("a locked key on a non-comparison operator still hides the value type selec
 
 test("picking a locked key while on a comparison operator keeps the num type", () => {
   const onChange = vi.fn();
-  const node = { ...newMetaCondition(), operator: "$gt" as const, valueType: "number" as const, value: 5 };
+  // The row is on a string type (whatever the sample said) and the user is on a
+  // comparison, so picking the key must upgrade it to num, not adopt str.
+  const node = { ...newMetaCondition(), operator: "$gt" as const, valueType: "string" as const, value: "" };
   render(<ConditionRow node={node} keys={[{ key: "page", types: ["str"] }]} onChange={onChange} onRemove={() => {}} />);
   // one change event, not keystrokes: the field is controlled by `node`, which
   // this test holds still, so typing would never build up the whole key name
   fireEvent.change(screen.getByLabelText("field"), { target: { value: "page" } });
   expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ field: "page", valueType: "number" }));
+});
+
+test("renaming the field on a comparison row does not wipe a value already typed", () => {
+  // setField runs on EVERY keystroke in the field box. Rewriting the value when
+  // the type has not actually changed would clear what the user typed and flip
+  // the row to a value required error, silently disabling Run while they were
+  // doing nothing more than renaming the key.
+  const onChange = vi.fn();
+  const node = { ...newMetaCondition(), field: "page", operator: "$gt" as const, valueType: "number" as const, value: 5 };
+  render(<ConditionRow node={node} keys={[{ key: "page", types: ["str"] }]} onChange={onChange} onRemove={() => {}} />);
+  fireEvent.change(screen.getByLabelText("field"), { target: { value: "pages" } });
+  expect(onChange).toHaveBeenLastCalledWith({ field: "pages" });
+  expect(onChange.mock.calls[0][0]).not.toHaveProperty("value");
 });
 
 test("each row gets its own datalist id", () => {
