@@ -66,6 +66,15 @@ const PAIRS: Array<[string, string, number]> = [
   ["accent-ink", "accent-btn", 4.5],
   // accent as a non-text indicator (rails, focus rings, LED): 3.0
   ["accent", "surface", 3.0],
+
+  // Post-Cp1 pairings (inspector, selection fills, banners, chips):
+  ["signal", "surface-inset", 4.5], // score text on inset code/JSON blocks
+  ["signal", "surface-raised", 4.5], // score text on the selected row fill
+  ["danger", "surface-raised", 4.5], // error text inside a selected context
+  ["warn-ink", "surface", 4.5], // inline warnings outside their banner
+  ["ink", "accent-weak", 4.5], // text on amber-tinted chips and banners
+  ["accent", "surface-raised", 3.0], // selection rail edge on the selection fill
+  ["danger", "surface-inset", 4.5], // per-panel errors over recessed surfaces
 ];
 
 describe.each([
