@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { expect, test, vi } from "vitest";
@@ -75,4 +75,34 @@ test("restores focus to the previously focused element on close", async () => {
   await userEvent.click(opener);
   await userEvent.click(screen.getByRole("button", { name: "Close" }));
   expect(opener).toHaveFocus();
+});
+
+function InertHarness() {
+  const [open, setOpen] = useState(true);
+  return (
+    <>
+      <div className="app">
+        <button>background</button>
+      </div>
+      {open && (
+        <Modal label="Thing" onClose={() => setOpen(false)}>
+          <p>content</p>
+        </Modal>
+      )}
+    </>
+  );
+}
+
+test("the app shell is inert while a modal is open and restored on close", async () => {
+  render(<InertHarness />);
+  const app = document.querySelector(".app")!;
+  expect(app).toHaveAttribute("inert");
+  fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+  await waitFor(() => expect(app).not.toHaveAttribute("inert"));
+});
+
+test("the dialog renders outside the app shell (portal)", () => {
+  render(<InertHarness />);
+  const app = document.querySelector(".app")!;
+  expect(app.contains(screen.getByRole("dialog"))).toBe(false);
 });

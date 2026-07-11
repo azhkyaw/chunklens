@@ -1,7 +1,20 @@
 import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+// Reference-counted so stacked overlays (palette opening a modal) keep the
+// shell inert until the last one closes. React 18 has no inert JSX prop, so
+// the attribute is set imperatively.
+let inertCount = 0;
+function setShellInert(on: boolean) {
+  const shell = document.querySelector(".app");
+  if (!shell) return;
+  inertCount = Math.max(0, inertCount + (on ? 1 : -1));
+  if (inertCount > 0) shell.setAttribute("inert", "");
+  else shell.removeAttribute("inert");
+}
 
 /**
  * Focus-trapped modal dialog. Focus starts on the dialog itself (so the
@@ -22,7 +35,12 @@ export function Modal({
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     ref.current?.focus();
-    return () => previous?.focus();
+    setShellInert(true);
+    return () => {
+      // Un-inert first so the restore target is focusable again.
+      setShellInert(false);
+      previous?.focus();
+    };
   }, []);
 
   function onKeyDown(e: React.KeyboardEvent) {
@@ -51,7 +69,7 @@ export function Modal({
     }
   }
 
-  return (
+  return createPortal(
     <div
       className="modal-overlay"
       onClick={(e) => {
@@ -69,6 +87,7 @@ export function Modal({
       >
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
