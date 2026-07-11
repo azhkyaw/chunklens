@@ -8,6 +8,7 @@ import { App } from "./App";
 import { api } from "./api/client";
 import { getHistory, recordQuery, clearHistory } from "./lib/queryHistory";
 import { newQuerySpec } from "./features/query/querySpec";
+import * as latencyModule from "./lib/latency";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -15,6 +16,13 @@ afterEach(() => {
   localStorage.clear();
   delete document.documentElement.dataset.density;
   clearHistory();
+  // Not latencyModule.setLastLatency(null) here: StatusBar's still-mounted
+  // useSyncExternalStore subscription (from whichever test just ran) picks
+  // up a call made outside of React's render/commit cycle and React logs an
+  // act() warning for it - harmless, but noisy. No other test in this file
+  // depends on latency starting at null, so it is left alone; each test that
+  // cares about it (see the connection-switch test) asserts through the app's
+  // own act()-wrapped code path instead of poking the store directly.
 });
 
 const CONN = {
@@ -144,6 +152,13 @@ test("switching collections resets records paging state", async () => {
 test("switching the connection clears caches and returns home", async () => {
   mockHappyPath();
   vi.spyOn(api, "saveConnection").mockResolvedValue({ ...CONN, host: "otherhost" });
+  // Spy on (not manually call) the real setter: this exercises the app's own
+  // onSaved handler through a normal, act()-wrapped userEvent interaction,
+  // rather than poking the external store's live subscribers directly from
+  // test code (which is a documented source of act() timing noise when a
+  // full App tree - with several already-mounted useSyncExternalStore /
+  // effect-driven consumers - is involved; see StatusBar.tsx / lib/latency.ts).
+  const setLatencySpy = vi.spyOn(latencyModule, "setLastLatency");
   const { qc, history } = renderApp("/c/demo/records");
   expect(await screen.findByRole("heading", { name: "demo", level: 2 })).toBeInTheDocument();
   // Seed a per-collection cache entry the old onSaved forgot to clear (L-5).
@@ -156,6 +171,11 @@ test("switching the connection clears caches and returns home", async () => {
   expect(await screen.findByText(/no collection selected/i)).toBeInTheDocument();
   expect(history[history.length - 1]).toBe("/");
   expect(qc.getQueryData(["sources", "demo", "lang"])).toBeUndefined();
+  // The latency reading from the OLD server must not survive a connection
+  // switch either - the status bar would otherwise go on reporting it as if
+  // it came from the new server.
+  expect(setLatencySpy).toHaveBeenCalledWith(null);
+  expect(screen.queryByText(/last query/i)).not.toBeInTheDocument();
 });
 
 test("the rail add menu opens New and Import as modals", async () => {

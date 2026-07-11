@@ -213,18 +213,25 @@ test("raw JSON shows a failure alert and the partial payload when the full recor
   expect(pre.textContent).not.toContain('"embedding"');
 });
 
-test("raw JSON of a hit shows the query hit payload without a fetch", async () => {
+test("raw JSON of a hit shows the query hit payload without a fetch of its own", async () => {
   stubClipboard();
   vi.spyOn(api, "getConnection").mockResolvedValue(CONN);
   const getRecord = vi.spyOn(api, "getRecord").mockResolvedValue({ id: "h1", document: "beta doc", metadata: null, embedding: null });
   renderInspector(HIT);
-  await userEvent.click(await screen.findByRole("button", { name: /^raw json$/i }));
+  // A hit starts in the pretty view, whose EmbeddingBlock fetches the full
+  // record by id for EITHER a record or a hit selection (it is the source of
+  // the embedding preview, unrelated to raw/pretty). Let that settle first so
+  // it is not mistaken for a fetch caused by the raw view itself.
+  await waitFor(() => expect(getRecord).toHaveBeenCalledTimes(1));
+  getRecord.mockClear();
+  await userEvent.click(screen.getByRole("button", { name: /^raw json$/i }));
   const pre = await screen.findByTestId("inspector-raw");
   expect(pre.textContent).toContain('"distance": 0.2');
-  // the raw hit view is the query response payload; only the (still-mounted)
-  // embedding block may fetch, never the raw view itself for hits
+  // a hit's raw view is exactly the query response payload (selection.hit) -
+  // raw and pretty are exclusive branches (EmbeddingBlock unmounts once raw
+  // is on), so toggling to raw causes no fetch of its own.
   expect(pre.textContent).not.toContain('"embedding"');
-  void getRecord; // fetch count is covered by the record test above
+  expect(getRecord).not.toHaveBeenCalled();
 });
 
 test("copy JSON copies the raw payload", async () => {

@@ -26,6 +26,7 @@ import { ShortcutsHelp } from "./ui/ShortcutsHelp";
 import { SelectionProvider } from "./lib/selection";
 import { getInspectorOpen, setInspectorOpen, cycleThemePref, toggleDensity } from "./lib/prefs";
 import { clearHistory, getHistory, requestReplay } from "./lib/queryHistory";
+import { setLastLatency } from "./lib/latency";
 import { useShortcut, isMac } from "./lib/shortcuts";
 import {
   adjacentTab,
@@ -198,6 +199,10 @@ export function App() {
                 qc.removeQueries({ queryKey: ["sources"] });
                 qc.removeQueries({ queryKey: ["source-records"] });
                 clearHistory();
+                // The previous server's latency reading must not survive a
+                // connection switch - the status bar would otherwise keep
+                // reporting it as if it came from the new server.
+                setLastLatency(null);
                 setShowConn(false);
                 navigate("/");
               }}
