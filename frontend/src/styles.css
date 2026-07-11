@@ -1848,6 +1848,9 @@ p.guard[data-level="warn"] {
 .error-state {
   display: flex;
   align-items: center;
+  /* wrap: the card also renders inside the ~240px collections rail, where the
+     message plus the Retry button does not fit on one line */
+  flex-wrap: wrap;
   gap: var(--sp-3);
   padding: var(--sp-3);
   border: 1px solid var(--danger-border);
@@ -1865,7 +1868,8 @@ p.guard[data-level="warn"] {
   align-items: center;
   gap: var(--sp-3);
   padding: var(--sp-2) var(--sp-4);
-  border-bottom: 1px solid var(--danger-border);
+  /* no border-bottom: the banner sits directly under .topbar, which already
+     draws one - the danger background is separation enough */
   background: var(--danger-bg);
   color: var(--danger);
   font-family: var(--font-mono);
@@ -1899,7 +1903,6 @@ p.guard[data-level="warn"] {
 .error-boundary p {
   margin: 0;
   max-width: 60ch;
-  text-align: center;
 }
 
 /* Inline busy affordance for primary mutation buttons */

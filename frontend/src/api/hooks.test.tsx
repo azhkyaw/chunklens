@@ -1,17 +1,21 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
 import { api } from "./client";
-import { useRunQuery } from "./hooks";
+import { useConnectionStatus, useRunQuery } from "./hooks";
 import { getLastLatency, setLastLatency } from "../lib/latency";
 
 afterEach(() => {
   vi.restoreAllMocks();
+  // Belt and braces: no test may leak fake timers into the next one.
+  vi.useRealTimers();
   setLastLatency(null);
 });
 
 function wrapper({ children }: { children: React.ReactNode }) {
-  const qc = new QueryClient();
+  // retry: false - a rejected fetch must land in the error state at once
+  // instead of burning three backoff-delayed attempts.
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return <QueryClientProvider client={qc}>{children}</QueryClientProvider>;
 }
 
@@ -32,4 +36,71 @@ test("a failed query does not touch the published latency", async () => {
   result.current.mutate({ query_text: "x" });
   await waitFor(() => expect(result.current.isError).toBe(true));
   expect(getLastLatency()).toBe(before);
+});
+
+// useConnectionStatus's refetchInterval is a predicate, and the difference
+// between it and a plain `refetchInterval: 5000` is invisible to every other
+// test in the suite - so pin BOTH directions. This app is local-first with no
+// background network: a healthy connection must never be re-probed (three
+// mounted consumers share this query), while a down one must keep probing or
+// the banner can never clear itself.
+
+test("useConnectionStatus does not poll while the connection is healthy", async () => {
+  vi.useFakeTimers();
+  try {
+    const spy = vi
+      .spyOn(api, "testConnection")
+      .mockResolvedValue({ ok: true, error: null, heartbeat_ns: 1 });
+    const { result } = renderHook(() => useConnectionStatus(), { wrapper });
+    // Ten seconds of wall clock - two turns of the 5s interval, if one existed.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(10_000);
+    });
+    expect(result.current.data).toEqual({ ok: true, error: null, heartbeat_ns: 1 });
+    expect(spy).toHaveBeenCalledTimes(1);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+test("useConnectionStatus polls while the connection is down", async () => {
+  vi.useFakeTimers();
+  try {
+    const spy = vi
+      .spyOn(api, "testConnection")
+      .mockResolvedValue({ ok: false, error: "refused", heartbeat_ns: null });
+    renderHook(() => useConnectionStatus(), { wrapper });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(spy).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5_100);
+    });
+    expect(spy.mock.calls.length).toBeGreaterThan(1);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+test("useConnectionStatus polls while the status check itself is failing", async () => {
+  vi.useFakeTimers();
+  try {
+    // The chunklens backend is gone, so the fetch rejects. v5 keeps the last
+    // successful `data`, so the predicate has to look at the error state too -
+    // otherwise the UI would never re-probe and could never self-heal.
+    const spy = vi.spyOn(api, "testConnection").mockRejectedValue(new Error("network"));
+    const { result } = renderHook(() => useConnectionStatus(), { wrapper });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(result.current.isError).toBe(true);
+    expect(spy).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5_100);
+    });
+    expect(spy.mock.calls.length).toBeGreaterThan(1);
+  } finally {
+    vi.useRealTimers();
+  }
 });

@@ -8,8 +8,17 @@ import { getLastLatency, subscribeLatency } from "./lib/latency";
  */
 export function StatusBar({ collection }: { collection: string | null }) {
   const { data: info } = useConnection();
-  const { data: status, isLoading } = useConnectionStatus();
-  const state = isLoading ? "checking" : status?.ok ? "connected" : "disconnected";
+  const { data: status, isLoading, isError } = useConnectionStatus();
+  // isError first: a failed status check keeps the last successful `data` in
+  // TanStack v5, so `status?.ok` would still read true and the LED would stay
+  // green while the backend is unreachable.
+  const state = isError
+    ? "disconnected"
+    : isLoading
+      ? "checking"
+      : status?.ok
+        ? "connected"
+        : "disconnected";
   const { data: details } = useCollectionDetails(collection);
   const lastMs = useSyncExternalStore(subscribeLatency, getLastLatency);
   return (

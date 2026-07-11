@@ -12,7 +12,9 @@ afterEach(() => vi.restoreAllMocks());
 
 function renderTable(path = "/c/docs/records") {
   const { hook, history } = memoryLocation({ path, record: true });
-  const qc = new QueryClient();
+  // retry: false - a rejected fetch must surface as an error immediately
+  // instead of burning three backoff-delayed attempts (and the test's timeout).
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={qc}>
       <Router hook={hook}>
@@ -53,6 +55,18 @@ test("an empty collection shows the designed empty state instead of a bare table
   renderTable();
   expect(await screen.findByText("no records")).toBeInTheDocument();
   expect(screen.queryByRole("grid")).not.toBeInTheDocument();
+});
+
+test("a failed records load offers a retry that actually refetches", async () => {
+  const spy = vi
+    .spyOn(api, "getRecords")
+    .mockRejectedValueOnce(new Error("boom"))
+    .mockResolvedValueOnce(PAGE_1);
+  renderTable();
+  await screen.findByRole("alert");
+  await userEvent.click(screen.getByRole("button", { name: /retry/i }));
+  expect(await screen.findByText("alpha doc")).toBeInTheDocument();
+  expect(spy).toHaveBeenCalledTimes(2);
 });
 
 test("clicking a row selects it and writes sel to the URL", async () => {

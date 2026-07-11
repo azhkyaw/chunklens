@@ -19,8 +19,11 @@ function SelectionProbe() {
 }
 
 function wrap(ui: React.ReactNode) {
+  // retry: false - a rejected fetch must surface as an error immediately
+  // instead of burning three backoff-delayed attempts (and the test's timeout).
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={qc}>
       <SelectionProvider resetKey="docs/records">
         {ui}
         <SelectionProbe />
@@ -49,6 +52,23 @@ test("auto-detects a string provenance key and lists documents with counts", asy
   await waitFor(() => expect(screen.getByText("a.pdf")).toBeInTheDocument());
   expect(screen.getByText(/3 chunks/)).toBeInTheDocument();
   expect(srcSpy).toHaveBeenCalledWith("docs", "source"); // chose the string provenance key, not int "page"
+});
+
+test("a failed document scan offers a retry that actually refetches", async () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({
+    keys: [{ key: "source", types: ["string"] }], sampled: 1, total: 1,
+  });
+  const spy = vi
+    .spyOn(api, "listSources")
+    .mockRejectedValueOnce(new Error("boom"))
+    .mockResolvedValueOnce({
+      key: "source", sources: [{ value: "a.pdf", count: 1 }], scanned: 1, total: 1,
+    });
+  render(wrap(<RecordsByDocument name="docs" />));
+  await screen.findByRole("alert");
+  await userEvent.click(screen.getByRole("button", { name: /retry/i }));
+  expect(await screen.findByText("a.pdf")).toBeInTheDocument();
+  expect(spy).toHaveBeenCalledTimes(2);
 });
 
 test("expanding a document fetches and shows its chunks", async () => {

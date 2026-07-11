@@ -19,8 +19,11 @@ function SelectionProbe() {
 }
 
 function wrap(ui: React.ReactNode) {
+  // retry: false - a rejected fetch must surface as an error immediately
+  // instead of burning three backoff-delayed attempts (and the test's timeout).
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={qc}>
       <SelectionProvider resetKey="docs/records">
         {ui}
         <SelectionProbe />
@@ -47,6 +50,21 @@ test("fetches and renders the chunks for a source value", async () => {
   await waitFor(() => expect(screen.getByText("c1")).toBeInTheDocument());
   expect(screen.getByText("chunk one")).toBeInTheDocument();
   expect(spy).toHaveBeenCalledWith("docs", "source", "a.pdf", 25, 0);
+});
+
+test("a failed chunk load offers a retry that actually refetches", async () => {
+  const spy = vi
+    .spyOn(api, "getSourceRecords")
+    .mockRejectedValueOnce(new Error("boom"))
+    .mockResolvedValueOnce({
+      items: [{ id: "c1", document: "chunk one", metadata: { source: "a.pdf" } }],
+      limit: 25, offset: 0, total: 1,
+    });
+  render(wrap(<DocChunks name="docs" sourceKey="source" value="a.pdf" />));
+  await screen.findByRole("alert");
+  await userEvent.click(screen.getByRole("button", { name: /retry/i }));
+  expect(await screen.findByText("chunk one")).toBeInTheDocument();
+  expect(spy).toHaveBeenCalledTimes(2);
 });
 
 test("clicking a chunk row selects that record", async () => {

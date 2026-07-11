@@ -40,6 +40,37 @@ test("shows the connection address and settles on connected", async () => {
   );
 });
 
+test("the LED drops to disconnected when a later check fails, instead of staying stale-green", async () => {
+  vi.spyOn(api, "getConnection").mockResolvedValue({
+    host: "localhost", port: 8000, ssl: false,
+    tenant: "default_tenant", database: "default_database",
+    auth_mode: "none", has_token: false,
+  });
+  const probe = vi.spyOn(api, "testConnection").mockResolvedValue({ ok: true });
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={qc}>
+      <StatusBar collection={null} />
+    </QueryClientProvider>,
+  );
+  await waitFor(() =>
+    expect(document.querySelector('.statusbar-conn[data-state="connected"]')).toBeInTheDocument(),
+  );
+  // Now the backend dies and the next check rejects. TanStack v5 KEEPS the last
+  // successful data ({ ok: true }), so a component reading only `status?.ok`
+  // would hold a green "connected" LED over a dead server forever.
+  probe.mockRejectedValue(new Error("network"));
+  await act(async () => {
+    await qc.refetchQueries({ queryKey: ["connection", "status"] });
+  });
+  await waitFor(() =>
+    expect(
+      document.querySelector('.statusbar-conn[data-state="disconnected"]'),
+    ).toBeInTheDocument(),
+  );
+  expect(document.querySelector('.statusbar-conn[data-state="connected"]')).toBeNull();
+});
+
 test("shows collection stats when a collection is open", async () => {
   renderBar("demo");
   expect(await screen.findByText("3 records · 384 dims · l2")).toBeInTheDocument();

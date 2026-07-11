@@ -51,11 +51,17 @@ export const useConnectionStatus = () =>
   useQuery({
     queryKey: ["connection", "status"],
     queryFn: () => api.testConnection(),
-    // Poll only while down so the banner clears itself when the server comes
-    // back; a healthy connection is never re-checked in the background (an
+    // Poll only while the connection is known bad, so the banner clears itself
+    // when the server comes back. Two ways to be bad: the backend answered
+    // "chroma is unreachable" (data.ok === false), or the check itself failed
+    // (status === "error" - the chunklens backend is gone). The second case
+    // needs its own test because v5 KEEPS the last successful `data` on a
+    // failed refetch, so `data.ok` alone would still read true and nothing
+    // would ever poll again. Healthy or in-flight schedules nothing: an
     // unconditional interval would have every consumer of this shared query
-    // hammering the backend forever).
-    refetchInterval: (query) => (query.state.data && !query.state.data.ok ? 5000 : false),
+    // hammering the backend forever.
+    refetchInterval: (query) =>
+      query.state.status === "error" || (query.state.data && !query.state.data.ok) ? 5000 : false,
   });
 
 export const useSaveConnection = () =>

@@ -3,9 +3,18 @@ import { useConnection, useConnectionStatus } from "../../api/hooks";
 /** Topbar connection pill: LED + state + address + tenant. Opens settings. */
 export function ConnectionStatus({ onOpen }: { onOpen: () => void }) {
   const { data: info } = useConnection();
-  const { data: status, isLoading } = useConnectionStatus();
-  const state = isLoading ? "checking" : status?.ok ? "connected" : "disconnected";
-  const label = isLoading ? "checking…" : status?.ok ? "connected" : "disconnected";
+  const { data: status, isLoading, isError } = useConnectionStatus();
+  // isError first: a failed status check keeps the last successful `data` in
+  // TanStack v5, so `status?.ok` would still read true and the pill would say
+  // "connected" while the backend is unreachable.
+  const state = isError
+    ? "disconnected"
+    : isLoading
+      ? "checking"
+      : status?.ok
+        ? "connected"
+        : "disconnected";
+  const label = state === "checking" ? "checking…" : state;
   return (
     <button
       type="button"
