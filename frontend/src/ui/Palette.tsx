@@ -85,7 +85,7 @@ export function Palette({
       <Command label="Command palette" className="palette" filter={paletteFilter}>
         <Command.Input ref={inputRef} placeholder="Type a command or collection..." />
         <Command.List>
-          {loading && <Command.Loading>Loading collections…</Command.Loading>}
+          {loading && <Command.Loading label="Loading collections">Loading collections…</Command.Loading>}
           <Command.Empty>No matching commands.</Command.Empty>
           {groups.map((g) => (
             <Command.Group key={g.name} heading={g.name}>

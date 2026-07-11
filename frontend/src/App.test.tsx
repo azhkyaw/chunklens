@@ -248,6 +248,22 @@ test("ctrl+k opens the palette and picking a collection navigates to it", async 
   expect(screen.queryByRole("dialog", { name: /command palette/i })).not.toBeInTheDocument();
 });
 
+// Pins the ONLY production wiring of the boot-race fix: App must actually
+// pass loading={collectionsLoading} to <Palette>. Palette's own unit tests
+// only prove the guard works when `loading` is true - nothing else proves
+// the app ever passes true. Without this test, deleting that one prop
+// leaves tsc and the rest of the suite green while silently reintroducing
+// the bug (a stalled collections fetch letting Enter run the wrong command).
+test("the palette shows a loading row while collections are still fetching (pins the App -> Palette loading wire)", async () => {
+  vi.spyOn(api, "listCollections").mockReturnValue(new Promise(() => {}));
+  vi.spyOn(api, "getConnection").mockResolvedValue(CONN);
+  vi.spyOn(api, "testConnection").mockResolvedValue({ ok: true });
+  renderApp("/");
+  fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+  const dialog = await screen.findByRole("dialog", { name: /command palette/i });
+  expect(within(dialog).getByText(/loading collections/i)).toBeInTheDocument();
+});
+
 test("the topbar hint button opens the palette", async () => {
   mockHappyPath();
   renderApp("/");

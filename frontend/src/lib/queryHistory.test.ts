@@ -72,6 +72,25 @@ test("getHistory hands out copies - mutating a returned spec cannot corrupt the 
   expect(getHistory("docs")[0].spec.text).toBe("hello");
 });
 
+test("getHistory's copy is deep - mutating a NESTED filter-tree node cannot corrupt the ring", () => {
+  // A shallow { ...spec } clone would still alias whereTree (spread only
+  // copies top-level keys), so this must reach into a child of the tree,
+  // not just a top-level field, to actually pin the deep clone.
+  const base = { ...newQuerySpec(), text: "hello" };
+  const withFilter: QuerySpec = {
+    ...base,
+    whereTree: addChild(base.whereTree, base.whereTree.id, {
+      ...newMetaCondition(), field: "lang", operator: "$eq" as const, value: "en",
+    }),
+  };
+  recordQuery("docs", withFilter);
+  const [first] = getHistory("docs");
+  const nested = first.spec.whereTree.children[0] as { value: unknown };
+  nested.value = "MUTATED";
+  const nestedAgain = getHistory("docs")[0].spec.whereTree.children[0] as { value: unknown };
+  expect(nestedAgain.value).toBe("en");
+});
+
 test("labels truncate long text and name vector queries", () => {
   const long = "x".repeat(60);
   expect(historyLabel(spec(long))).toBe(`${"x".repeat(47)}… · n=10`);

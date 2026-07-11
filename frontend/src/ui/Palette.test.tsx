@@ -100,6 +100,10 @@ test("while collections load, selection is suppressed and a loading row shows", 
     />,
   );
   expect(screen.getByText(/loading collections/i)).toBeInTheDocument();
+  // cmdk hides the loading row's text node from the accessibility tree and
+  // exposes role="progressbar" instead - its accessible name comes from the
+  // label prop, not the visible text, so pin that separately.
+  expect(screen.getByRole("progressbar", { name: /loading collections/i })).toBeInTheDocument();
   await userEvent.keyboard("theme");
   await userEvent.keyboard("{Enter}");
   expect(run).not.toHaveBeenCalled();

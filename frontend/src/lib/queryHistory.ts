@@ -45,8 +45,12 @@ export function getHistory(collection: string): HistoryEntry[] {
   // (a caller mutating it, e.g. .sort()/.push(), would corrupt the internal
   // ring state) and never the internal StoredEntry (whose `key` field is a
   // dedupe implementation detail, not part of the documented shape). The
-  // spec is deep-cloned too: replay consumers hold and edit it as form
-  // state, and a shared reference would let those edits rewrite history.
+  // spec is deep-cloned too: the module's contract is that getHistory hands
+  // out copies - any caller, for any reason, may keep and mutate one without
+  // that mutation ever reaching the ring. (requestReplay already makes its
+  // own clone before handing a spec to SingleQuery, so this is not patching
+  // a reachable bug on that path; it is what keeps the contract true in
+  // general, including for callers this module cannot foresee.)
   return (rings.get(collection) ?? []).map(({ spec, label }) => ({
     spec: structuredClone(spec),
     label,
