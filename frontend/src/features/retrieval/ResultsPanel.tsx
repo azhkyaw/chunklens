@@ -6,7 +6,7 @@ import { groupBySource } from "./provenance";
 import { HitRow } from "./HitRow";
 
 export function ResultsPanel({
-  hits, metric, keys = [], annotations, side, deltas,
+  hits, metric, keys = [], annotations, side, deltas, latencyMs,
 }: {
   hits: QueryHit[];
   metric: string;
@@ -14,6 +14,7 @@ export function ResultsPanel({
   annotations?: Map<string, React.ReactNode>;
   side?: "A" | "B";
   deltas?: Map<string, number | null>;
+  latencyMs?: number;
 }) {
   const [groupKey, setGroupKey] = useState("");
   const { selection, select } = useSelection();
@@ -42,7 +43,9 @@ export function ResultsPanel({
   return (
     <div className="results">
       <div className="results-head">
-        <span className="results-count">{hits.length} hits · {label}</span>
+        <span className="results-count">
+          {hits.length} hits{latencyMs != null ? ` · ${latencyMs} ms` : ""} · {label}
+        </span>
         {keys.length > 0 && (
           <label className="results-groupby">group by{" "}
             <select value={groupKey} onChange={(e) => setGroupKey(e.target.value)}>

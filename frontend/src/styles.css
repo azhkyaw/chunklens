@@ -1707,6 +1707,11 @@ p.guard[data-level="warn"] {
   color: var(--ink-muted);
 }
 
+.statusbar-latency {
+  font-family: var(--font-mono);
+  color: var(--ink-muted);
+}
+
 .statusbar-hints {
   font-family: var(--font-mono);
   color: var(--ink-faint);

@@ -54,3 +54,8 @@ test("clicking a hit selects it with rank, metric, side, and delta", async () =>
   expect(screen.getByTestId("probe")).toHaveTextContent("b:2:B:1");
   expect(screen.getByRole("option", { name: /beta/ })).toHaveAttribute("aria-selected", "true");
 });
+
+test("shows the query latency in the results header when provided", () => {
+  render(wrap(<ResultsPanel hits={hits} metric="cosine" latencyMs={38} />));
+  expect(screen.getByText(/3 hits · 38 ms · similarity/)).toBeInTheDocument();
+});

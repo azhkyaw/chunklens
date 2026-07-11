@@ -61,7 +61,9 @@ export function CompareQuery({ name }: { name: string }) {
       </div>
       {runA.error && <p role="alert">Query A failed - {interpretQueryError((runA.error as Error).message, { details })}</p>}
       {runB.error && <p role="alert">Query B failed - {interpretQueryError((runB.error as Error).message, { details })}</p>}
-      {runA.data && runB.data && <CompareView a={runA.data} b={runB.data} metric={metric} />}
+      {runA.data && runB.data && (
+        <CompareView a={runA.data} b={runB.data} metric={metric} aMs={runA.data.ms} bMs={runB.data.ms} />
+      )}
     </div>
   );
 }

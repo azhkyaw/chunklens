@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
 import { api } from "./api/client";
+import { setLastLatency } from "./lib/latency";
 import { StatusBar } from "./StatusBar";
 
 afterEach(() => vi.restoreAllMocks());
@@ -49,4 +50,17 @@ test("omits stats when no collection is open", async () => {
 test("shows the keyboard hints", () => {
   renderBar(null);
   expect(screen.getByText(/j\/k navigate · \? shortcuts/i)).toBeInTheDocument();
+});
+
+test("shows the last query latency once one is recorded", async () => {
+  setLastLatency(38);
+  renderBar(null);
+  expect(await screen.findByText(/last query 38 ms/)).toBeInTheDocument();
+});
+
+test("shows no latency before any query has run", async () => {
+  setLastLatency(null);
+  renderBar(null);
+  expect(await screen.findByText("localhost:8000")).toBeInTheDocument();
+  expect(screen.queryByText(/last query/)).not.toBeInTheDocument();
 });

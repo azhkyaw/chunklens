@@ -6,7 +6,9 @@ import { useShortcut } from "../../lib/shortcuts";
 import { ResultsPanel } from "./ResultsPanel";
 import { compareResults, type CompareRow } from "./compareResults";
 
-export function CompareView({ a, b, metric }: { a: QueryResult; b: QueryResult; metric: string }) {
+export function CompareView({ a, b, metric, aMs, bMs }: {
+  a: QueryResult; b: QueryResult; metric: string; aMs?: number; bMs?: number;
+}) {
   const { selection, select } = useSelection();
   const rows = compareResults(a.hits, b.hits);
   const colARef = useRef<HTMLDivElement>(null);
@@ -65,8 +67,8 @@ export function CompareView({ a, b, metric }: { a: QueryResult; b: QueryResult; 
 
   return (
     <div className="compare-view">
-      <div className="compare-col" ref={colARef}><h4>Query A</h4><ResultsPanel hits={a.hits} metric={metric} annotations={annA} side="A" deltas={deltas} /></div>
-      <div className="compare-col" ref={colBRef}><h4>Query B</h4><ResultsPanel hits={b.hits} metric={metric} annotations={annB} side="B" deltas={deltas} /></div>
+      <div className="compare-col" ref={colARef}><h4>Query A</h4><ResultsPanel hits={a.hits} metric={metric} annotations={annA} side="A" deltas={deltas} latencyMs={aMs} /></div>
+      <div className="compare-col" ref={colBRef}><h4>Query B</h4><ResultsPanel hits={b.hits} metric={metric} annotations={annB} side="B" deltas={deltas} latencyMs={bMs} /></div>
     </div>
   );
 }

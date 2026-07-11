@@ -80,7 +80,7 @@ export function SingleQuery({ name }: { name: string }) {
       </div>
       {errors.length > 0 && <p role="alert">Fix filter errors: {errors.map((e) => e.message).join("; ")}</p>}
       {run.error && <p role="alert">Query failed - {interpretQueryError((run.error as Error).message, { details })}</p>}
-      {run.data && <ResultsPanel hits={run.data.hits} metric={metric} keys={keyNames} />}
+      {run.data && <ResultsPanel hits={run.data.hits} metric={metric} keys={keyNames} latencyMs={run.data.ms} />}
     </div>
   );
 }
