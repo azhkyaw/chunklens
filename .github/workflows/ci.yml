@@ -43,6 +43,7 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
@@ -64,6 +65,12 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ hashFiles('frontend/package-lock.json') }}
+      # The key only stays valid because chromadb is pinned exactly and that
+      # version hardcodes both the default model's URL and its checksum. If
+      # the pinned chromadb version ever changes and it defaults to a
+      # different model, bump the key suffix (e.g. -v2) - otherwise this
+      # still hits, the checksum check fails, and the model silently
+      # re-downloads on every run instead of coming from the cache.
       - name: Cache the default embedding model
         uses: actions/cache@v4
         with:
@@ -98,6 +105,16 @@ jobs:
           exit 1
       - run: npm run e2e
         working-directory: frontend
+      # Traces (screenshots, DOM snapshots, network/console logs) for any
+      # failed test land under frontend/test-results. Uploading them is the
+      # only way to debug a failure that only reproduces in this browser, on
+      # this machine, since none of the developers work on Linux day to day.
+      - name: Upload Playwright traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: frontend/test-results
       - name: Dump server logs on failure
         if: failure()
-        run: tail -n 200 /tmp/chroma.log /tmp/chunklens.log
+        run: tail -n 200 /tmp/chroma.log /tmp/chunklens.log || true
