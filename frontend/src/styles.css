@@ -1560,6 +1560,66 @@ p.guard[data-level="warn"] {
 }
 
 /* ============================================================================
+   22. Command palette - cmdk inside the modal shell
+   ========================================================================= */
+
+.palette {
+  width: min(560px, 90vw);
+}
+
+.palette [cmdk-input] {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--surface-inset);
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+}
+
+.palette [cmdk-input]:focus {
+  border-color: var(--accent);
+}
+
+.palette [cmdk-list] {
+  max-height: 320px;
+  overflow-y: auto;
+  margin-top: 8px;
+}
+
+.palette [cmdk-group-heading] {
+  padding: 8px 4px 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.palette [cmdk-item] {
+  padding: 7px 8px;
+  border-left: 2px solid transparent;
+  border-radius: 2px;
+  font-size: 13px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.palette [cmdk-item][data-selected='true'] {
+  background: var(--surface-raised);
+  border-left-color: var(--accent);
+}
+
+.palette [cmdk-empty] {
+  padding: 12px 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+/* ============================================================================
    23. Toasts - mutation confirmations in the instrument voice
    ========================================================================= */
 
