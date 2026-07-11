@@ -110,11 +110,12 @@ jobs:
       # only way to debug a failure that only reproduces in this browser, on
       # this machine, since none of the developers work on Linux day to day.
       - name: Upload Playwright traces on failure
-        if: failure()
+        if: failure() || cancelled()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-traces
           path: frontend/test-results
+          if-no-files-found: ignore
       - name: Dump server logs on failure
-        if: failure()
+        if: failure() || cancelled()
         run: tail -n 200 /tmp/chroma.log /tmp/chunklens.log || true
