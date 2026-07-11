@@ -43,7 +43,7 @@ export function CollectionManage({
   }, [name]);
   useEffect(() => {
     // Reseed from the server only while the user has not touched the editor;
-    // a focus-refetch must not eat a half-written edit. (audit M-3)
+    // a focus-refetch must not eat a half-written edit.
     //
     // `metaDirty` is a dependency, so this also re-runs the moment the flag
     // clears (save-success, close). `data` must therefore be fresh whenever we

@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 
 /**
- * Designed empty state in the instrument voice: block mark, terse title,
- * muted hint, optional action row. Every "nothing here" surface in the app
- * renders through this so the voice stays uniform.
+ * The app's one empty state: block mark, terse title, muted hint, optional
+ * action row. Every "nothing here" surface renders through this, so a user who
+ * has learned to read one has learned to read all of them.
  */
 export function EmptyState({
   title,

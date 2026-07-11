@@ -67,7 +67,7 @@ const PAIRS: Array<[string, string, number]> = [
   // accent as a non-text indicator (rails, focus rings, LED): 3.0
   ["accent", "surface", 3.0],
 
-  // Post-Cp1 pairings (inspector, selection fills, banners, chips):
+  // Pairings introduced by the inspector, selection fills, banners, and chips:
   ["signal", "surface-inset", 4.5], // score text on inset code/JSON blocks
   ["signal", "surface-raised", 4.5], // score text on the selected row fill
   ["danger", "surface-raised", 4.5], // error text inside a selected context
@@ -80,7 +80,7 @@ const PAIRS: Array<[string, string, number]> = [
 describe.each([
   ["dark (flagship, :root default)", ":root {"],
   ["light (day shift)", ':root[data-theme="light"]'],
-])("Instrument tokens: %s", (_name, selector) => {
+])("color tokens: %s", (_name, selector) => {
   const t = block(selector);
 
   it("defines every token the pairs reference", () => {

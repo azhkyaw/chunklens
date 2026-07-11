@@ -111,7 +111,7 @@ test("a failed delete shows an inline error", async () => {
   expect(await screen.findByRole("alert")).toHaveTextContent(/cannot delete/i);
 });
 
-// audit M-3: the hydration effect re-seeds `metaText` from `data` on every new
+// The hydration effect re-seeds `metaText` from `data` on every new
 // object reference. A background refetch (refetchOnWindowFocus is on by
 // default) landing while the user is mid-edit would silently wipe what they
 // typed.
@@ -148,7 +148,7 @@ test("a details refetch does not clobber an in-progress metadata edit", async ()
   expect(editor).toHaveValue('{"draft":1}');
 });
 
-// audit M-3 follow-up: clearing the dirty flag on save re-runs the reseed
+// Clearing the dirty flag on save re-runs the reseed
 // effect, so the cache MUST already hold the saved details by then. Otherwise
 // the editor reverts to the pre-save metadata the moment the toast fires, and a
 // second Save click PUTs that stale value, destroying the metadata server-side.
@@ -167,7 +167,7 @@ test("a successful metadata save leaves the saved metadata in the editor", async
   expect(qc.getQueryData(["collection", "docs"])).toEqual(saved);
 });
 
-// audit M-3 follow-up: a rename swaps the `name` prop without remounting, so an
+// A rename swaps the `name` prop without remounting, so an
 // abandoned metadata edit (and its dirty flag) would otherwise ride along and
 // pin the editor to the OLD collection's text - which "Save metadata" would
 // then write onto the renamed collection.

@@ -9,7 +9,7 @@ export interface QuerySpec {
   embedder: EmbedderSpec | null;
   // true once the user explicitly picked "- none -"; distinguishes "cleared
   // on purpose" from "not chosen yet" so the prefill effect stops re-applying
-  // the hint after its own invalidation refetch. (audit M-4)
+  // the hint after its own invalidation refetch.
   embedderCleared: boolean;
   nResults: number;
   whereTree: GroupNode;

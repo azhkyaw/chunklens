@@ -19,7 +19,7 @@ export function ConnectionForm({ onSaved }: { onSaved?: () => void }) {
   // inside a modal that remounts on every open, so this is once-per-open;
   // gating on a ref (not object identity) means a background refetch - e.g.
   // refetchOnWindowFocus after the user alt-tabs to copy a token - can never
-  // wipe in-progress edits. (audit M-3)
+  // wipe in-progress edits.
   const seeded = useRef(false);
   useEffect(() => {
     if (!info || seeded.current) return;

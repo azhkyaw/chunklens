@@ -119,7 +119,7 @@ test("metadata edits save from the inspector", async () => {
   expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["records", "docs"] });
   expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["source-records", "docs"] });
   expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["record", "docs", "r1"] });
-  // metadata-keys and sources are both derived from record metadata (audit L-5):
+  // metadata-keys and sources are both derived from record metadata:
   // an edit can add a new key or move the record between by-document groups.
   expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["metadata-keys", "docs"] });
   expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["sources", "docs"] });

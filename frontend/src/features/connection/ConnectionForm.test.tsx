@@ -56,7 +56,7 @@ test("Test button shows a result", async () => {
   expect(await screen.findByText(/connection ok/i)).toBeInTheDocument();
 });
 
-// audit M-3: refetchOnWindowFocus is on by default, so alt-tabbing to a
+// refetchOnWindowFocus is on by default, so alt-tabbing to a
 // password manager and back can land a background refetch mid-edit. The old
 // hydration effect re-seeded on every new `info` object, wiping whatever the
 // user had just typed.

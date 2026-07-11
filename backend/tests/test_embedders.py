@@ -9,7 +9,7 @@ from chunklens.embedders import InvalidProvider, MissingDependency, MissingKey, 
 @pytest.fixture(autouse=True)
 def _clean_session_keys():
     # A mid-test failure must never leak a session key into a later test,
-    # where it could unlock a real provider call. (audit L-6)
+    # where it could unlock a real provider call.
     E._session_keys.clear()
     yield
     E._session_keys.clear()

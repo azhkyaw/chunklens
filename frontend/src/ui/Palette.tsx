@@ -99,7 +99,7 @@ export function Palette({
                     // collection name ranks some unrelated command first - Enter
                     // would run the WRONG command. Suppress selection entirely
                     // during the sub-second load; the Loading row above tells the
-                    // user why. (Cp5 follow-up)
+                    // user why.
                     if (loading) return;
                     // React 18 batches onClose()'s state update and whatever
                     // c.run() triggers into ONE commit if both run

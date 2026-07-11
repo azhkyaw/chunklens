@@ -20,7 +20,7 @@ test("serializeSpec builds a QueryRequest, reusing filterSerialize", () => {
   expect(body.query_text).toBe("hello");
   expect(body.n_results).toBe(10);
   expect(body.where).toEqual({ lang: { $eq: "en" } });
-  // embedderCleared is a UI-only fact (audit M-4); it must never leak into the API request.
+  // embedderCleared is a UI-only fact; it must never leak into the API request.
   expect(body).not.toHaveProperty("embedderCleared");
 });
 
