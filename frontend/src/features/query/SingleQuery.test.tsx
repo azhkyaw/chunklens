@@ -4,11 +4,12 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, expect, test, vi } from "vitest";
 import { SingleQuery } from "./SingleQuery";
 import { api } from "../../api/client";
+import { SelectionProvider } from "../../lib/selection";
 
 afterEach(() => vi.restoreAllMocks());
 function wrap(ui: React.ReactNode) {
   const qc = new QueryClient();
-  return <QueryClientProvider client={qc}>{ui}</QueryClientProvider>;
+  return <QueryClientProvider client={qc}><SelectionProvider resetKey="docs/query">{ui}</SelectionProvider></QueryClientProvider>;
 }
 // dim 384 => default-EF collection stays in Text mode under the smart default
 const DETAILS = { name: "docs", count: 1, dimensionality: 384, distance_metric: "cosine", embedding_function: "default", metadata: {} };

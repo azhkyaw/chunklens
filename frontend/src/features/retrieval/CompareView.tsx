@@ -6,18 +6,20 @@ export function CompareView({ a, b, metric }: { a: QueryResult; b: QueryResult; 
   const rows = compareResults(a.hits, b.hits);
   const annA = new Map<string, React.ReactNode>();
   const annB = new Map<string, React.ReactNode>();
+  const deltas = new Map<string, number | null>();
   for (const r of rows) {
     if (r.membership === "onlyA") annA.set(r.id, <span className="tag-only"> · only A</span>);
     else if (r.membership === "onlyB") annB.set(r.id, <span className="tag-only"> · only B</span>);
     else {
+      deltas.set(r.id, r.delta ?? null);
       annA.set(r.id, <span className="tag-shared"> · ●</span>);   // shared marker on A
       annB.set(r.id, deltaBadge(r));                              // A->B rank movement, shown once (on B)
     }
   }
   return (
     <div className="compare-view">
-      <div className="compare-col"><h4>Query A</h4><ResultsPanel hits={a.hits} metric={metric} annotations={annA} /></div>
-      <div className="compare-col"><h4>Query B</h4><ResultsPanel hits={b.hits} metric={metric} annotations={annB} /></div>
+      <div className="compare-col"><h4>Query A</h4><ResultsPanel hits={a.hits} metric={metric} annotations={annA} side="A" deltas={deltas} /></div>
+      <div className="compare-col"><h4>Query B</h4><ResultsPanel hits={b.hits} metric={metric} annotations={annB} side="B" deltas={deltas} /></div>
     </div>
   );
 }

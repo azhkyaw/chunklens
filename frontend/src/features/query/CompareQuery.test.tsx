@@ -4,11 +4,12 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, expect, test, vi } from "vitest";
 import { CompareQuery } from "./CompareQuery";
 import { api } from "../../api/client";
+import { SelectionProvider } from "../../lib/selection";
 
 afterEach(() => vi.restoreAllMocks());
 function wrap(ui: React.ReactNode) {
   const qc = new QueryClient();
-  return <QueryClientProvider client={qc}>{ui}</QueryClientProvider>;
+  return <QueryClientProvider client={qc}><SelectionProvider resetKey="docs/query">{ui}</SelectionProvider></QueryClientProvider>;
 }
 const DETAILS = { name: "docs", count: 2, dimensionality: 384, distance_metric: "cosine", embedding_function: "default", metadata: {} };
 

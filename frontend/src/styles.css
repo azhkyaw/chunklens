@@ -1155,15 +1155,6 @@ p.guard[data-level="warn"] {
 .hit-head:hover:not(:disabled) {
   background: var(--surface-2);
 }
-.hit-head::after {
-  content: "▸";
-  flex: none;
-  color: var(--ink-faint);
-  transition: transform 0.12s ease;
-}
-.hit-head[aria-expanded="true"]::after {
-  transform: rotate(90deg);
-}
 .hit-rank {
   flex: none;
   width: 2.4em;
@@ -1199,20 +1190,9 @@ p.guard[data-level="warn"] {
   font-size: var(--t-xs);
   color: var(--ink-muted);
 }
-.hit-body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-  padding: var(--sp-2) 10px 10px;
-  border-top: 1px solid var(--line);
-}
-.hit-doc {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: var(--t-xs);
-  line-height: 1.6;
-  white-space: pre-wrap;
-  word-break: break-word;
+.hit[aria-selected="true"] {
+  background: var(--accent-weak);
+  box-shadow: inset 2px 0 0 var(--accent);
 }
 
 /* The signature: a calibrated score bar whose teal fill rides the score.
