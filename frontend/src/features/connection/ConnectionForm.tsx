@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useConnection, useSaveConnection, useTestConnection } from "../../api/hooks";
 import type { ConnectionInput } from "../../api/types";
 
@@ -15,8 +15,15 @@ export function ConnectionForm({ onSaved }: { onSaved?: () => void }) {
   const [authMode, setAuthMode] = useState<"none" | "token">("none");
   const [token, setToken] = useState("");
 
+  // Seed the fields from the server exactly once per mount. The form lives
+  // inside a modal that remounts on every open, so this is once-per-open;
+  // gating on a ref (not object identity) means a background refetch - e.g.
+  // refetchOnWindowFocus after the user alt-tabs to copy a token - can never
+  // wipe in-progress edits. (audit M-3)
+  const seeded = useRef(false);
   useEffect(() => {
-    if (!info) return;
+    if (!info || seeded.current) return;
+    seeded.current = true;
     setHost(info.host);
     setPort(info.port);
     setSsl(info.ssl);

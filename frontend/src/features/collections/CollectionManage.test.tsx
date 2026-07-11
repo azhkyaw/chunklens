@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, expect, test, vi } from "vitest";
@@ -15,17 +15,18 @@ vi.mock("../../ui/toast", () => ({
 
 afterEach(() => vi.restoreAllMocks());
 
-function wrap(ui: React.ReactNode) {
-  const qc = new QueryClient();
-  return <QueryClientProvider client={qc}>{ui}</QueryClientProvider>;
-}
-
 const DETAILS = {
   name: "docs", count: 3, dimensionality: 384,
   distance_metric: "l2", embedding_function: "default", metadata: {},
 };
 
-function renderManage(props: { name: string; onRenamed?: (n: string) => void; onDeleted?: () => void }) {
+function renderManage(props: {
+  name: string;
+  onRenamed?: (n: string) => void;
+  onDeleted?: () => void;
+  qc?: QueryClient;
+}) {
+  const qc = props.qc ?? new QueryClient();
   function Harness() {
     const [open, setOpen] = useState(false);
     return (
@@ -38,7 +39,12 @@ function renderManage(props: { name: string; onRenamed?: (n: string) => void; on
       />
     );
   }
-  return render(wrap(<Harness />));
+  render(
+    <QueryClientProvider client={qc}>
+      <Harness />
+    </QueryClientProvider>,
+  );
+  return qc;
 }
 
 test("opens a modal and gates delete on typing the collection name", async () => {
@@ -96,4 +102,37 @@ test("a failed delete shows an inline error", async () => {
   await userEvent.type(screen.getByLabelText(/type the name/i), "docs");
   await userEvent.click(screen.getByRole("button", { name: /^delete$/i }));
   expect(await screen.findByRole("alert")).toHaveTextContent(/cannot delete/i);
+});
+
+// audit M-3: the old hydration effect re-seeds `metaText` from `data` on
+// every new object reference, even when the content is unchanged. That means
+// a background refetch (refetchOnWindowFocus is on by default) landing while
+// the user is mid-edit silently wipes what they typed.
+//
+// structuralSharing defaults to true, so `setQueryData(key, {...DETAILS})`
+// would otherwise be deduped by TanStack Query and never actually change
+// `data`'s identity (see query-core's replaceEqualDeep), making this test
+// pass for the wrong reason. Disabling it lets us push a genuinely new
+// reference through - the identity a real refetch's raw result has before
+// structural sharing dedupes it, i.e. exactly what the old effect reacted to.
+test("a details refetch does not clobber an in-progress metadata edit", async () => {
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
+  const qc = new QueryClient({
+    defaultOptions: { queries: { retry: false, structuralSharing: false } },
+  });
+  renderManage({ name: "docs", qc });
+  await userEvent.click(screen.getByRole("button", { name: /^manage$/i }));
+  const editor = await screen.findByLabelText(/collection metadata/i);
+  await userEvent.clear(editor);
+  await userEvent.type(editor, "{{");
+  // simulate a background refetch landing: same content, new object identity.
+  // notifyManager schedules observer notifications via a real setTimeout(0)
+  // (see query-core's timeoutManager), so the update must be flushed past
+  // that macrotask - a synchronous act() would let this assertion pass for
+  // the wrong reason (the re-render simply hasn't happened yet).
+  await act(async () => {
+    qc.setQueryData(["collection", "docs"], { ...DETAILS });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+  expect(editor).not.toHaveValue(JSON.stringify(DETAILS.metadata ?? {}, null, 2));
 });

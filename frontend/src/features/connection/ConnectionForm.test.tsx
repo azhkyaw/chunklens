@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, expect, test, vi } from "vitest";
 import { ConnectionForm } from "./ConnectionForm";
@@ -54,4 +54,43 @@ test("Test button shows a result", async () => {
   render(wrap(<ConnectionForm />));
   await userEvent.click(screen.getByRole("button", { name: /test/i }));
   expect(await screen.findByText(/connection ok/i)).toBeInTheDocument();
+});
+
+// audit M-3: refetchOnWindowFocus is on by default, so alt-tabbing to a
+// password manager and back can land a background refetch mid-edit. The old
+// hydration effect re-seeds on every new `info` object, even when its content
+// is unchanged, wiping whatever the user had just typed.
+//
+// structuralSharing defaults to true, so a plain `setQueryData(key,
+// {...sameContent})` would be deduped by TanStack Query itself and never
+// actually change `info`'s identity (see query-core's replaceEqualDeep) -
+// that would make this test pass for the wrong reason on both old and new
+// code. Disabling structuralSharing here lets us push a genuinely new
+// reference through, which is what a real refetch's queryFn result is
+// BEFORE structural sharing dedupes it - i.e. exactly the identity the old
+// effect (keyed on `[info]`) would react to.
+test("a background refetch does not clobber in-progress edits", async () => {
+  vi.spyOn(api, "getConnection").mockResolvedValue(INFO);
+  const qc = new QueryClient({
+    defaultOptions: { queries: { retry: false, structuralSharing: false } },
+  });
+  render(
+    <QueryClientProvider client={qc}>
+      <ConnectionForm />
+    </QueryClientProvider>,
+  );
+  const host = await screen.findByLabelText(/host/i);
+  await waitFor(() => expect(host).toHaveValue("localhost"));
+  await userEvent.clear(host);
+  await userEvent.type(host, "otherhost");
+  // simulate a focus-refetch landing: same content, new object identity.
+  // notifyManager schedules observer notifications via a real setTimeout(0)
+  // (see query-core's timeoutManager), so the update must be flushed past
+  // that macrotask - a synchronous act() would let this assertion pass for
+  // the wrong reason (the re-render simply hasn't happened yet).
+  await act(async () => {
+    qc.setQueryData(["connection"], { ...INFO });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+  expect(host).toHaveValue("otherhost");
 });

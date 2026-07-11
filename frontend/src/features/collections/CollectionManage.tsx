@@ -23,6 +23,7 @@ export function CollectionManage({
 
   const [newName, setNewName] = useState(name);
   const [metaText, setMetaText] = useState("");
+  const [metaDirty, setMetaDirty] = useState(false);
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -31,12 +32,15 @@ export function CollectionManage({
     setConfirm("");
   }, [name]);
   useEffect(() => {
-    if (data) setMetaText(JSON.stringify(data.metadata ?? {}, null, 2));
-  }, [data]);
+    // Reseed from the server only while the user has not touched the editor;
+    // a focus-refetch must not eat a half-written edit. (audit M-3)
+    if (data && !metaDirty) setMetaText(JSON.stringify(data.metadata ?? {}, null, 2));
+  }, [data, metaDirty]);
 
   function close() {
     onOpenChange(false);
     setError(null);
+    setMetaDirty(false);
   }
 
   function saveMeta() {
@@ -51,7 +55,10 @@ export function CollectionManage({
     update.mutate(
       { metadata },
       {
-        onSuccess: () => toastSuccess("Collection metadata saved"),
+        onSuccess: () => {
+          setMetaDirty(false);
+          toastSuccess("Collection metadata saved");
+        },
         onError: (e) => setError((e as Error).message),
       },
     );
@@ -89,7 +96,11 @@ export function CollectionManage({
             </div>
 
             <div>
-              <MetadataEditor value={metaText} onChange={setMetaText} label="Collection metadata (JSON)" />
+              <MetadataEditor
+                value={metaText}
+                onChange={(v) => { setMetaDirty(true); setMetaText(v); }}
+                label="Collection metadata (JSON)"
+              />
               <div className="form-actions">
                 <button type="button" onClick={saveMeta} disabled={update.isPending}>Save metadata</button>
               </div>
