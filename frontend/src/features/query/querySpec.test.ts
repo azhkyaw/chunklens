@@ -12,6 +12,9 @@ test("newQuerySpec has sane defaults", () => {
 test("serializeSpec builds a QueryRequest, reusing filterSerialize", () => {
   const s = newQuerySpec();
   s.text = "hello";
+  // set explicitly (rather than relying on newQuerySpec's default of false) so this
+  // assertion is a real guard against a future spread-based serializeSpec, not a tautology.
+  s.embedderCleared = true;
   s.whereTree = addChild(s.whereTree, s.whereTree.id, { ...newMetaCondition(), field: "lang", operator: "$eq", value: "en" });
   const body = serializeSpec(s);
   expect(body.query_text).toBe("hello");

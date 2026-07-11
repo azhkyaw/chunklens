@@ -37,6 +37,18 @@ test("picking a provider sets the spec and persists the hint", async () => {
   expect(toastSuccess).toHaveBeenCalledWith("Embedder hint saved");
 });
 
+test("choosing a provider after clearing resets embedderCleared so the picker is not stuck on none", async () => {
+  const setSpy = vi.spyOn(api, "setCollectionEmbedder").mockResolvedValue(undefined);
+  const onChange = vi.fn();
+  const spec: QuerySpec = { ...newQuerySpec(), mode: "text", embedderCleared: true };
+  render(wrap(<EmbedderPicker name="docs" details={DET} embedders={EMB} spec={spec} onChange={onChange} />));
+  await userEvent.selectOptions(screen.getByLabelText(/embed query with/i), "openai");
+  expect(onChange).toHaveBeenCalledWith(
+    expect.objectContaining({ embedder: { provider: "openai", model: "" }, embedderCleared: false }),
+  );
+  await waitFor(() => expect(setSpy).toHaveBeenCalledWith("docs", { provider: "openai", model: "" }));
+});
+
 test("choosing - none - clears the spec and the hint", async () => {
   const clearSpy = vi.spyOn(api, "clearCollectionEmbedder").mockResolvedValue(undefined);
   const onChange = vi.fn();
