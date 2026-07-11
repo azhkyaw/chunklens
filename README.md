@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://pypi.org/project/chunklens/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-![ChunkLens: a text query returning ranked, scored results with per-hit provenance](assets/demo.gif)
+![ChunkLens: browsing a collection, running a text query, and reading a scored hit in the inspector pane](assets/demo.gif)
 
 A local-first inspector and retrieval debugger for ChromaDB.
 
@@ -31,6 +31,10 @@ Working with a vector database usually means writing throwaway scripts to answer
 - Copy any query or record as a runnable chromadb snippet (Python or JS), view raw JSON everywhere, and copy stored vectors.
 - Client-measured query latency, session query history with palette re-run, dark and light themes, and a compact density mode.
 - Deep-linkable URLs: refresh, back/forward, and shared links restore the exact collection, tab, page, and selection.
+
+| Records and the inspector | Scored query results |
+| --- | --- |
+| ![Browsing records, with the selected record open in the inspector pane](assets/records-inspector.png) | ![A text query returning ranked, scored hits with the query latency](assets/query-results.png) |
 
 ## Install (packaged)
 
