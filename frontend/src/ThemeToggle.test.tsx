@@ -1,6 +1,7 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
+import { setThemePref } from "./lib/prefs";
 import { ThemeToggle } from "./ThemeToggle";
 
 afterEach(() => {
@@ -39,5 +40,11 @@ describe("ThemeToggle", () => {
     localStorage.setItem("chunklens:theme", "dark");
     render(<ThemeToggle />);
     expect(screen.getByRole("button", { name: "Theme: dark" })).toBeInTheDocument();
+  });
+
+  it("the toggle reflects a theme change made elsewhere (palette)", async () => {
+    render(<ThemeToggle />);
+    act(() => setThemePref("dark"));
+    expect(screen.getByRole("button", { name: /theme: dark/i })).toBeInTheDocument();
   });
 });

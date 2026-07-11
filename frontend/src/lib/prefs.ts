@@ -5,6 +5,8 @@ export type ThemePref = "system" | "light" | "dark";
 
 const KEY = "chunklens:theme";
 
+const themeListeners = new Set<() => void>();
+
 export function getThemePref(): ThemePref {
   const v = localStorage.getItem(KEY);
   return v === "light" || v === "dark" ? v : "system";
@@ -17,6 +19,20 @@ export function setThemePref(pref: ThemePref): void {
     localStorage.setItem(KEY, pref);
   }
   applyTheme();
+  themeListeners.forEach((fn) => fn());
+}
+
+export function subscribeTheme(fn: () => void): () => void {
+  themeListeners.add(fn);
+  return () => {
+    themeListeners.delete(fn);
+  };
+}
+
+const THEME_ORDER: ThemePref[] = ["system", "light", "dark"];
+
+export function cycleThemePref(): void {
+  setThemePref(THEME_ORDER[(THEME_ORDER.indexOf(getThemePref()) + 1) % THEME_ORDER.length]);
 }
 
 function systemPrefersLight(): boolean {

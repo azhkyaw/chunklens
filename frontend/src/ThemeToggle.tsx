@@ -1,25 +1,17 @@
-import { useState } from "react";
-import { getThemePref, setThemePref, type ThemePref } from "./lib/prefs";
+import { useSyncExternalStore } from "react";
+import { cycleThemePref, getThemePref, subscribeTheme } from "./lib/prefs";
 
-const ORDER: ThemePref[] = ["system", "light", "dark"];
-const GLYPH: Record<ThemePref, string> = { system: "◐", light: "○", dark: "●" };
+const GLYPH = { system: "◐", light: "○", dark: "●" } as const;
 
 export function ThemeToggle() {
-  const [pref, setPref] = useState<ThemePref>(getThemePref);
-
-  function cycle() {
-    const next = ORDER[(ORDER.indexOf(pref) + 1) % ORDER.length];
-    setThemePref(next);
-    setPref(next);
-  }
-
+  const pref = useSyncExternalStore(subscribeTheme, getThemePref);
   return (
     <button
       type="button"
       className="theme-toggle"
       aria-label={`Theme: ${pref}`}
       title={`Theme: ${pref} (click to change)`}
-      onClick={cycle}
+      onClick={cycleThemePref}
     >
       <span aria-hidden="true">{GLYPH[pref]}</span>
     </button>

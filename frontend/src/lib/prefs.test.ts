@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, test, vi } from "vitest";
-import { getInspectorOpen, getThemePref, initTheme, setInspectorOpen, setThemePref } from "./prefs";
+import { cycleThemePref, getInspectorOpen, getThemePref, initTheme, setInspectorOpen, setThemePref, subscribeTheme } from "./prefs";
 
 type Listener = (e: { matches: boolean }) => void;
 
@@ -95,4 +95,24 @@ test("inspector open defaults to true and persists a close for the session", () 
   setInspectorOpen(true);
   expect(getInspectorOpen()).toBe(true);
   expect(sessionStorage.getItem("chunklens:inspector-open")).toBeNull();
+});
+
+test("cycleThemePref walks system -> light -> dark -> system", () => {
+  setThemePref("system");
+  cycleThemePref();
+  expect(getThemePref()).toBe("light");
+  cycleThemePref();
+  expect(getThemePref()).toBe("dark");
+  cycleThemePref();
+  expect(getThemePref()).toBe("system");
+});
+
+test("subscribeTheme notifies on change and unsubscribes cleanly", () => {
+  const fn = vi.fn();
+  const off = subscribeTheme(fn);
+  setThemePref("dark");
+  expect(fn).toHaveBeenCalledTimes(1);
+  off();
+  setThemePref("light");
+  expect(fn).toHaveBeenCalledTimes(1);
 });
