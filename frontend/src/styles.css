@@ -549,7 +549,8 @@ code {
   color: var(--ink-muted);
   padding: var(--sp-6) 0;
 }
-.empty-bench .empty-title {
+.empty-bench .empty-title,
+.empty-state .empty-title {
   margin: 0;
   font-size: var(--t-md);
   font-weight: 600;
@@ -1766,4 +1767,124 @@ p.guard[data-level="warn"] {
 
 [data-density="compact"] .hit + .hit {
   margin-top: 3px;
+}
+
+/* ============================================================================
+   26. States - skeletons, empty states, per-panel errors, connection banner
+   ========================================================================= */
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3) 0;
+}
+.skeleton-row {
+  height: 14px;
+  border-radius: var(--r-sm);
+  background: linear-gradient(
+    90deg,
+    var(--surface-inset) 25%,
+    var(--surface-raised) 50%,
+    var(--surface-inset) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.2s linear infinite;
+}
+@keyframes skeleton-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-row {
+    animation: none;
+  }
+}
+/* Variant heights approximate the rows they replace (comfortable density) */
+.skeleton-rail {
+  padding: var(--sp-2);
+}
+.skeleton-rail .skeleton-row {
+  height: 28px;
+}
+.skeleton-table .skeleton-row {
+  height: 34px;
+}
+.skeleton-hits .skeleton-row {
+  height: 56px;
+}
+.skeleton-plate .skeleton-row {
+  height: 18px;
+  max-width: 480px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: var(--sp-6) var(--sp-4);
+  text-align: center;
+}
+.empty-state .empty-actions {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+  align-items: center;
+}
+.empty-state .empty-cmd {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  color: var(--ink-muted);
+  background: var(--surface-inset);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 2px 6px;
+}
+
+.error-state {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--danger-border);
+  background: var(--danger-bg);
+  border-radius: var(--r-md);
+  color: var(--danger);
+  font-size: var(--t-sm);
+}
+.error-state p {
+  margin: 0;
+}
+
+.conn-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4);
+  border-bottom: 1px solid var(--danger-border);
+  background: var(--danger-bg);
+  color: var(--danger);
+  font-family: var(--font-mono);
+  font-size: var(--t-sm);
+}
+.conn-banner .led {
+  background: var(--danger);
+}
+
+/* Inline busy affordance for primary mutation buttons */
+button[aria-busy="true"] {
+  opacity: 0.7;
+  animation: busy-pulse 1.2s ease-in-out infinite;
+}
+@keyframes busy-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  button[aria-busy="true"] {
+    animation: none;
+  }
 }

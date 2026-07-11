@@ -30,3 +30,7 @@ export function toastSuccess(message: string): void {
 export function toastError(message: string): void {
   toast.error(message);
 }
+
+export function toastInfo(message: string): void {
+  toast(message);
+}
