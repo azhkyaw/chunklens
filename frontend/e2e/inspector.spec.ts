@@ -28,8 +28,11 @@ test("a sel deep link restores the selection after reload", async ({ page }) => 
   await page.goto(`/c/demo/records?sel=${encodeURIComponent(id)}`);
   const inspector = page.getByRole("complementary", { name: /inspector/i });
   await expect(inspector.getByText(id, { exact: true })).toBeVisible();
+  // The deep-linked id is the first data row (captured as nth(1) above), so assert
+  // aria-selected on that row directly. Matching by a raw-id regex would match every
+  // row when the id is a single letter like "a" (present in alpha/gamma/Metadata).
   await expect(
-    page.getByRole("grid", { name: /records/i }).getByRole("row", { name: new RegExp(id) }),
+    page.getByRole("grid", { name: /records/i }).getByRole("row").nth(1),
   ).toHaveAttribute("aria-selected", "true");
 });
 

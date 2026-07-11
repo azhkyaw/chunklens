@@ -13,8 +13,12 @@ test("the embedder picker appears for a non-default collection", async ({ page }
   await dialog.getByRole("button", { name: /^create$/i }).click();
   await expect(page.getByRole("heading", { name })).toBeVisible();
 
-  // Open the Query view and switch to Text mode (none-EF defaults to Vector).
+  // Open the Query view and switch to Text mode. A none-EF collection defaults to
+  // Vector once details+embedders load (a one-time effect in SingleQuery); wait for
+  // that default to settle BEFORE clicking Text, else the async effect fires after our
+  // click and resets the mode back to Vector.
   await page.getByRole("tab", { name: /^query$/i }).click();
+  await expect(page.getByRole("tab", { name: /^vector$/i })).toHaveAttribute("aria-selected", "true");
   await page.getByRole("tab", { name: /^text$/i }).click();
 
   // The manual embedder picker is visible (we do NOT pick one - no embedding happens).
