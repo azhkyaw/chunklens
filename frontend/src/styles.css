@@ -1835,6 +1835,18 @@ p.guard[data-level="warn"] {
   gap: var(--sp-2);
   margin-top: var(--sp-2);
   align-items: center;
+  /* The action row is narrower than its content on the empty bench (two
+     buttons plus a note), so let it stack instead of overflowing. */
+  flex-wrap: wrap;
+  justify-content: center;
+}
+/* A footnote riding in the action row: always on its own line, never mistaken
+   for a button. */
+.empty-state .empty-note {
+  flex-basis: 100%;
+  font-size: var(--t-xs);
+  line-height: 1.6;
+  color: var(--ink-muted);
 }
 .empty-state .empty-cmd {
   font-family: var(--font-mono);

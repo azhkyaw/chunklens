@@ -77,7 +77,14 @@ test("first run with zero collections shows the hero with create, import, and th
   expect(await screen.findByText("no collections yet")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: /new collection/i })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: /import/i })).toBeInTheDocument();
-  expect(screen.getByText(/seed_demo\.py/)).toBeInTheDocument();
+  // The seed pointer names the script and where it runs from, and says plainly
+  // that it only exists in a source checkout. It must NOT read as a runnable
+  // one-liner: there is no root pyproject for `uv run` to resolve, and a PyPI
+  // install has no scripts/ directory at all.
+  expect(screen.getByText("scripts/seed_demo.py")).toBeInTheDocument();
+  expect(screen.getByText("backend/")).toBeInTheDocument();
+  expect(screen.getByText(/source checkout/i)).toBeInTheDocument();
+  expect(screen.queryByText(/uv run/)).not.toBeInTheDocument();
   // the hero replaces the no-collection-selected bench, it does not stack under it
   expect(screen.queryByText(/no collection selected/i)).not.toBeInTheDocument();
 });

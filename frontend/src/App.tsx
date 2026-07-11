@@ -312,7 +312,17 @@ export function App() {
               <button type="button" onClick={() => setShowImport(true)}>
                 Import
               </button>
-              <code className="empty-cmd">uv run python scripts/seed_demo.py</code>
+              {/* A pointer, not a command. This hero cannot know how the app was
+                  installed: a PyPI install has no scripts/ directory at all, and
+                  even in a checkout there is no root pyproject, so a bare
+                  `uv run ...` from the repo root resolves no environment. Name
+                  the script and the directory it is run from, and let the README
+                  carry the exact invocation. */}
+              <p className="empty-note">
+                source checkout · seed demo data with{" "}
+                <code className="empty-cmd">scripts/seed_demo.py</code> · run it from{" "}
+                <code className="empty-cmd">backend/</code>
+              </p>
             </EmptyState>
           ) : (
             <EmptyState
