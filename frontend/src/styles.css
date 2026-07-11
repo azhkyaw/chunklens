@@ -1560,6 +1560,38 @@ p.guard[data-level="warn"] {
 }
 
 /* ============================================================================
+   21. Kbd + palette hint - keyboard furniture
+   ========================================================================= */
+
+.kbd {
+  display: inline-block;
+  min-width: 18px;
+  padding: 1px 5px;
+  background: var(--surface-inset);
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--ink-muted);
+  text-align: center;
+}
+
+.palette-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 6px;
+  background: transparent;
+  border: none;
+}
+
+.palette-hint:hover .kbd {
+  color: var(--ink);
+  border-color: var(--accent);
+}
+
+/* ============================================================================
    22. Command palette - cmdk inside the modal shell
    ========================================================================= */
 

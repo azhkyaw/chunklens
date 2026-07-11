@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Redirect, useLocation, useRoute } from "wouter";
+import { useCollections } from "./api/hooks";
 import { CollectionsList } from "./features/collections/CollectionsList";
 import { CollectionCreate } from "./features/collections/CollectionCreate";
 import { CollectionDetails } from "./features/collections/CollectionDetails";
@@ -12,14 +13,18 @@ import { SingleQuery } from "./features/query/SingleQuery";
 import { RecordsTable } from "./features/records/RecordsTable";
 import { ExportButton } from "./features/io/ExportButton";
 import { ImportPanel } from "./features/io/ImportPanel";
+import { runExport } from "./features/io/exportRun";
 import { StatusBar } from "./StatusBar";
 import { ThemeToggle } from "./ThemeToggle";
 import { Modal } from "./ui/Modal";
 import { MenuButton } from "./ui/MenuButton";
 import { InspectorShell } from "./ui/InspectorShell";
 import { Inspector } from "./features/inspector/Inspector";
+import { Kbd } from "./ui/Kbd";
+import { Palette, type PaletteCommand } from "./ui/Palette";
 import { SelectionProvider } from "./lib/selection";
-import { getInspectorOpen, setInspectorOpen } from "./lib/prefs";
+import { getInspectorOpen, setInspectorOpen, cycleThemePref } from "./lib/prefs";
+import { useShortcut, isMac } from "./lib/shortcuts";
 import {
   COLLECTION_TABS,
   TAB_LABELS,
@@ -35,6 +40,8 @@ export function App() {
   const [showConn, setShowConn] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showPalette, setShowPalette] = useState(false);
+  const [showManage, setShowManage] = useState(false);
   const [inspectorOpen, setInspectorOpenState] = useState(getInspectorOpen);
   function toggleInspector() {
     const next = !inspectorOpen;
@@ -42,6 +49,12 @@ export function App() {
     setInspectorOpenState(next);
   }
   const qc = useQueryClient();
+  const { data: collections } = useCollections();
+
+  useShortcut("mod+k", (e) => {
+    e.preventDefault();
+    setShowPalette((s) => !s);
+  });
 
   // Chroma collection names are [a-zA-Z0-9._-], so decode is a no-op today;
   // it stays correct if the charset ever widens.
@@ -67,6 +80,31 @@ export function App() {
     qc.invalidateQueries({ queryKey: ["collections"] });
   }
 
+  const commands: PaletteCommand[] = [
+    ...(collections ?? []).map((c) => ({
+      group: "Collections",
+      label: c.name,
+      run: () => navigate(collectionPath(c.name)),
+    })),
+    ...(selected
+      ? COLLECTION_TABS.map((t) => ({
+          group: "Navigation",
+          label: `Go to ${TAB_LABELS[t]}`,
+          run: () => navigate(collectionPath(selected, t)),
+        }))
+      : []),
+    { group: "Actions", label: "New collection", keywords: ["create"], run: () => setShowCreate(true) },
+    { group: "Actions", label: "Import collection", run: () => setShowImport(true) },
+    ...(selected
+      ? [
+          { group: "Actions", label: "Export collection", run: () => void runExport(selected, false) },
+          { group: "Actions", label: "Manage collection", keywords: ["rename", "delete"], run: () => setShowManage(true) },
+        ]
+      : []),
+    { group: "Actions", label: "Connection settings", run: () => setShowConn(true) },
+    { group: "Actions", label: "Toggle theme", keywords: ["dark", "light"], run: cycleThemePref },
+  ];
+
   return (
     <div className="app">
       <header className="topbar">
@@ -76,6 +114,15 @@ export function App() {
             <span>ChunkLens</span>
           </h1>
           <div className="topbar-conn">
+            <button
+              type="button"
+              className="palette-hint"
+              aria-label="Open command palette"
+              onClick={() => setShowPalette(true)}
+            >
+              <Kbd>{isMac() ? "⌘" : "Ctrl"}</Kbd>
+              <Kbd>K</Kbd>
+            </button>
             <ThemeToggle />
             <ConnectionStatus onOpen={() => setShowConn(true)} />
           </div>
@@ -98,6 +145,7 @@ export function App() {
             />
           </Modal>
         )}
+        {showPalette && <Palette commands={commands} onClose={() => setShowPalette(false)} />}
       </header>
 
       <aside className="sidebar">
@@ -139,7 +187,12 @@ export function App() {
       {selected && !redirect ? (
         <SelectionProvider resetKey={`${selected}/${tab}`}>
           <main className="main">
-            <CollectionView name={selected} tab={tab} />
+            <CollectionView
+              name={selected}
+              tab={tab}
+              showManage={showManage}
+              onManageChange={setShowManage}
+            />
           </main>
           <InspectorShell open={inspectorOpen} onToggle={toggleInspector}>
             <Inspector collection={selected} />
@@ -164,7 +217,17 @@ export function App() {
   );
 }
 
-function CollectionView({ name, tab }: { name: string; tab: CollectionTab }) {
+function CollectionView({
+  name,
+  tab,
+  showManage,
+  onManageChange,
+}: {
+  name: string;
+  tab: CollectionTab;
+  showManage: boolean;
+  onManageChange: (open: boolean) => void;
+}) {
   const [, navigate] = useLocation();
   const qc = useQueryClient();
   return (
@@ -175,6 +238,8 @@ function CollectionView({ name, tab }: { name: string; tab: CollectionTab }) {
         <div className="collection-actions">
           <CollectionManage
             name={name}
+            open={showManage}
+            onOpenChange={onManageChange}
             onRenamed={(newName) => {
               qc.invalidateQueries({ queryKey: ["collections"] });
               qc.removeQueries({ queryKey: ["collection", name] });
@@ -183,6 +248,7 @@ function CollectionView({ name, tab }: { name: string; tab: CollectionTab }) {
               navigate(collectionPath(newName, tab), { replace: true });
             }}
             onDeleted={() => {
+              onManageChange(false);
               qc.invalidateQueries({ queryKey: ["collections"] });
               navigate("/");
             }}

@@ -6,10 +6,14 @@ import { toastSuccess } from "../../ui/toast";
 
 export function CollectionManage({
   name,
+  open,
+  onOpenChange,
   onRenamed,
   onDeleted,
 }: {
   name: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onRenamed: (newName: string) => void;
   onDeleted: () => void;
 }) {
@@ -17,7 +21,6 @@ export function CollectionManage({
   const update = useUpdateCollection(name);
   const del = useDeleteCollection();
 
-  const [open, setOpen] = useState(false);
   const [newName, setNewName] = useState(name);
   const [metaText, setMetaText] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -32,7 +35,7 @@ export function CollectionManage({
   }, [data]);
 
   function close() {
-    setOpen(false);
+    onOpenChange(false);
     setError(null);
   }
 
@@ -61,7 +64,7 @@ export function CollectionManage({
         { name: newName },
         {
           onSuccess: () => {
-            setOpen(false);
+            onOpenChange(false);
             toastSuccess(`Renamed to ${newName}`);
             onRenamed(newName);
           },
@@ -73,7 +76,7 @@ export function CollectionManage({
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} aria-haspopup="dialog">
+      <button type="button" onClick={() => onOpenChange(true)} aria-haspopup="dialog">
         Manage
       </button>
       {open && (

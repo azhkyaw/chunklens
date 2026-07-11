@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, expect, test, vi } from "vitest";
 import { Router } from "wouter";
@@ -10,6 +10,7 @@ import { api } from "./api/client";
 afterEach(() => {
   vi.restoreAllMocks();
   sessionStorage.clear();
+  localStorage.clear();
 });
 
 const CONN = {
@@ -197,4 +198,41 @@ test("a session-collapsed inspector starts collapsed", async () => {
   renderApp("/c/demo/records");
   expect(await screen.findByRole("button", { name: /open inspector/i })).toBeInTheDocument();
   sessionStorage.clear();
+});
+
+test("ctrl+k opens the palette and picking a collection navigates to it", async () => {
+  mockHappyPath();
+  const { history } = renderApp("/");
+  await screen.findByRole("button", { name: /^demo\b/ });
+  fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+  const dialog = await screen.findByRole("dialog", { name: /command palette/i });
+  await userEvent.click(within(dialog).getByText("demo"));
+  await waitFor(() => expect(history[history.length - 1]).toBe("/c/demo/records"));
+  expect(screen.queryByRole("dialog", { name: /command palette/i })).not.toBeInTheDocument();
+});
+
+test("the topbar hint button opens the palette", async () => {
+  mockHappyPath();
+  renderApp("/");
+  await userEvent.click(screen.getByRole("button", { name: /open command palette/i }));
+  expect(await screen.findByRole("dialog", { name: /command palette/i })).toBeInTheDocument();
+});
+
+test("the palette opens the manage modal for the selected collection", async () => {
+  mockHappyPath();
+  renderApp("/c/demo/records");
+  await screen.findByRole("grid");
+  fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+  const dialog = await screen.findByRole("dialog", { name: /command palette/i });
+  await userEvent.click(within(dialog).getByText("Manage collection"));
+  expect(await screen.findByRole("dialog", { name: /manage collection/i })).toBeInTheDocument();
+});
+
+test("the palette toggles the theme", async () => {
+  mockHappyPath();
+  renderApp("/");
+  fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+  const dialog = await screen.findByRole("dialog", { name: /command palette/i });
+  await userEvent.click(within(dialog).getByText("Toggle theme"));
+  expect(document.documentElement.dataset.theme).toBe("light");
 });
