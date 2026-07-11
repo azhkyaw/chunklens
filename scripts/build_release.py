@@ -33,6 +33,11 @@ def _run(cmd: list[str], cwd: Path | None = None) -> None:
 
 
 def main() -> None:
+    # 0. Clean dist/ so a rebuild can never leave stale artifacts for the
+    #    publish hint below to pick up. (audit L-7)
+    if DIST.exists():
+        shutil.rmtree(DIST)
+
     # 1. Build the SPA into backend/src/chunklens/web/
     _run(["npm", "--prefix", str(FRONTEND), "run", "build"])
 

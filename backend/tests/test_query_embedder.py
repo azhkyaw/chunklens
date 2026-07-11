@@ -3,6 +3,7 @@ from __future__ import annotations
 import chunklens.embedders as E
 from chunklens.app import app
 from chunklens.deps import get_embedder
+from chunklens.schemas import QueryResult
 
 
 def test_embedder_produces_query_vector(api):
@@ -50,3 +51,19 @@ def test_embedder_dim_mismatch_returns_400(api):
     )
     assert res.status_code == 400
     assert "dimension" in res.json()["detail"].lower()
+
+
+def test_query_text_alone_passes_through_to_the_service(api, monkeypatch):
+    # Third precedence rung: no query_embedding, no embedder -> query_text reaches
+    # chroma_service.query as-is, with query_embedding=None. Nothing ever embeds.
+    captured = {}
+
+    def fake_query(client, name, *, query_text, query_embedding, n_results, where, where_document):
+        captured["query_text"] = query_text
+        captured["query_embedding"] = query_embedding
+        return QueryResult(hits=[])
+
+    monkeypatch.setattr("chunklens.routers.query.chroma_service.query", fake_query)
+    resp = api.post("/api/collections/docs/query", json={"query_text": "hello"})
+    assert resp.status_code == 200
+    assert captured == {"query_text": "hello", "query_embedding": None}

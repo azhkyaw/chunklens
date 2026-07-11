@@ -24,3 +24,11 @@ def test_set_key_is_write_only(client):
 def test_set_key_unknown_provider(client):
     res = client.post("/api/embedders/nope/key", json={"token": "x"})
     assert res.status_code == 404
+
+
+def test_env_key_flag_reflects_environment(client, monkeypatch):
+    monkeypatch.setenv("CHROMA_OPENAI_API_KEY", "env-key")
+    data = client.get("/api/embedders").json()
+    openai = next(e for e in data if e["id"] == "openai")
+    assert openai["env_key"] is True
+    assert openai["key_set"] is False
