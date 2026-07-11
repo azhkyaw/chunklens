@@ -93,6 +93,10 @@ test("shows the last query latency once one is recorded", async () => {
   setLastLatency(38);
   renderBar(null);
   expect(await screen.findByText(/last query 38 ms/)).toBeInTheDocument();
+  expect(screen.getByText(/last query 38 ms/)).toHaveAttribute(
+    "title",
+    expect.stringMatching(/measured in the browser/i),
+  );
 });
 
 test("shows no latency before any query has run", async () => {

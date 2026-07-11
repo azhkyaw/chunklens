@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { useCollectionDetails, useConnection, useConnectionStatus } from "./api/hooks";
-import { getLastLatency, subscribeLatency } from "./lib/latency";
+import { getLastLatency, subscribeLatency, LATENCY_TITLE } from "./lib/latency";
 
 /**
  * Persistent instrument footer: connection LED + address on the left,
@@ -36,7 +36,11 @@ export function StatusBar({ collection }: { collection: string | null }) {
           {details.count} records · {details.dimensionality ?? "?"} dims · {details.distance_metric}
         </span>
       )}
-      {lastMs != null && <span className="statusbar-latency">last query {lastMs} ms</span>}
+      {lastMs != null && (
+        <span className="statusbar-latency" title={LATENCY_TITLE}>
+          last query {lastMs} ms
+        </span>
+      )}
       <span className="statusbar-hints">j/k navigate · ? shortcuts</span>
     </footer>
   );

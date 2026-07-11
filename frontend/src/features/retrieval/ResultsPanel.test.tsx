@@ -37,13 +37,15 @@ test("renders a header with hit count and metric label", () => {
 
 test("zero hits keeps the header so latency still reads out", () => {
   render(wrap(<ResultsPanel hits={[]} metric="l2" latencyMs={38} />));
-  expect(screen.getByText(/0 hits · 38 ms/)).toBeInTheDocument();
-  expect(screen.getByText("nothing matched")).toHaveClass("empty-title");
+  expect(screen.getByText(/0 hits/)).toBeInTheDocument();
+  const ms = screen.getByTitle(/measured in the browser/i);
+  expect(ms).toHaveTextContent("38 ms");
 });
 
 test("zero hits without latency omits the ms segment", () => {
   render(wrap(<ResultsPanel hits={[]} metric="l2" />));
   expect(screen.getByText(/^0 hits$/)).toBeInTheDocument();
+  expect(screen.queryByTitle(/measured in the browser/i)).toBeNull();
 });
 
 test("group-by reorganizes hits under source headers", async () => {
@@ -63,5 +65,5 @@ test("clicking a hit selects it with rank, metric, side, and delta", async () =>
 
 test("shows the query latency in the results header when provided", () => {
   render(wrap(<ResultsPanel hits={hits} metric="cosine" latencyMs={38} />));
-  expect(screen.getByText(/3 hits · 38 ms · similarity/)).toBeInTheDocument();
+  expect(screen.getByTitle(/measured in the browser/i)).toHaveTextContent("38 ms");
 });

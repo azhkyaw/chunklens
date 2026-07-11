@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { QueryHit } from "../../api/types";
 import { useSelection } from "../../lib/selection";
+import { LATENCY_TITLE } from "../../lib/latency";
 import { EmptyState } from "../../ui/EmptyState";
 import { interpretScore, barFractions } from "./scoring";
 import { groupBySource } from "./provenance";
@@ -26,7 +27,8 @@ export function ResultsPanel({
       <div className="results">
         <div className="results-head">
           <span className="results-count">
-            0 hits{latencyMs != null ? ` · ${latencyMs} ms` : ""}
+            0 hits
+            {latencyMs != null && <span title={LATENCY_TITLE}>{` · ${latencyMs} ms`}</span>}
           </span>
         </div>
         <EmptyState
@@ -61,7 +63,9 @@ export function ResultsPanel({
     <div className="results">
       <div className="results-head">
         <span className="results-count">
-          {hits.length} hits{latencyMs != null ? ` · ${latencyMs} ms` : ""} · {label}
+          {hits.length} hits
+          {latencyMs != null && <span title={LATENCY_TITLE}>{` · ${latencyMs} ms`}</span>}
+          {` · ${label}`}
         </span>
         {keys.length > 0 && (
           <label className="results-groupby">group by{" "}
