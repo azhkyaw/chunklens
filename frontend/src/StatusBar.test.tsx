@@ -36,6 +36,8 @@ test("shows the connection address and settles on connected", async () => {
 test("shows collection stats when a collection is open", async () => {
   renderBar("demo");
   expect(await screen.findByText("3 records · 384 dims · l2")).toBeInTheDocument();
+  // Verify hints also render alongside stats (regression test for flexbox auto-margin layout)
+  expect(screen.getByText(/j\/k navigate · \? shortcuts/i)).toBeInTheDocument();
 });
 
 test("omits stats when no collection is open", async () => {

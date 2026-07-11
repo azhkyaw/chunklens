@@ -694,9 +694,9 @@ p[role="alert"] {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
+  margin-right: auto;
 }
 .statusbar-stats {
-  margin-left: auto;
 }
 
 /* ----------------------------------------------------------------------------
@@ -1710,7 +1710,6 @@ p.guard[data-level="warn"] {
 }
 
 .statusbar-hints {
-  margin-left: auto;
   font-family: var(--font-mono);
   color: var(--ink-faint);
 }
