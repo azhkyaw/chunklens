@@ -34,6 +34,9 @@ export function MenuButton({
       e.preventDefault();
       setOpen(false);
       trigger.current?.focus();
+    } else if (e.key === "Tab") {
+      setOpen(false);
+      trigger.current?.focus();
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
       els[(i + 1) % els.length]?.focus();
@@ -63,6 +66,9 @@ export function MenuButton({
               type="button"
               role="menuitem"
               onClick={() => {
+                // Refocus the still-mounted trigger before onSelect mounts a
+                // modal, so the modal captures a live restore target (N1).
+                trigger.current?.focus();
                 setOpen(false);
                 it.onSelect();
               }}
