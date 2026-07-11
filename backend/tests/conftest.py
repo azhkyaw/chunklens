@@ -4,6 +4,7 @@ import chromadb
 import pytest
 from fastapi.testclient import TestClient
 
+import chunklens.embedders as E
 from chunklens.app import app
 from chunklens.deps import get_client
 
@@ -39,6 +40,16 @@ def api(chroma):
     app.dependency_overrides[get_client] = lambda: chroma
     yield TestClient(app, base_url="http://127.0.0.1")
     app.dependency_overrides.clear()
+
+
+@pytest.fixture(autouse=True)
+def _clean_session_keys():
+    # A mid-test failure must never leak a session key into a later test,
+    # where it could unlock a real provider call. Autouse in conftest so no
+    # test file has to remember its own manual clears.
+    E._session_keys.clear()
+    yield
+    E._session_keys.clear()
 
 
 @pytest.fixture()

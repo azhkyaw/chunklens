@@ -33,7 +33,6 @@ def test_raw_embedding_takes_precedence_over_embedder(api):
 def test_embedder_missing_key_returns_400(api, monkeypatch):
     # Real embedder (not overridden): openai needs a key; none set -> 400 before any network.
     monkeypatch.delenv("CHROMA_OPENAI_API_KEY", raising=False)
-    E._session_keys.clear()
     res = api.post(
         "/api/collections/docs/query",
         json={"query_text": "alpha", "embedder": {"provider": "openai"}, "n_results": 1},

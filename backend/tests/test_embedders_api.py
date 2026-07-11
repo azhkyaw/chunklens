@@ -11,14 +11,12 @@ def test_list_embedders_endpoint(client):
 
 
 def test_set_key_is_write_only(client):
-    E._session_keys.clear()
     res = client.post("/api/embedders/openai/key", json={"token": "super-secret"})
     assert res.status_code == 204
     listing = client.get("/api/embedders")
     info = {e["id"]: e for e in listing.json()}
     assert info["openai"]["key_set"] is True
     assert "super-secret" not in listing.text  # key is never returned
-    E._session_keys.clear()
 
 
 def test_set_key_unknown_provider(client):
@@ -32,3 +30,7 @@ def test_env_key_flag_reflects_environment(client, monkeypatch):
     openai = next(e for e in data if e["id"] == "openai")
     assert openai["env_key"] is True
     assert openai["key_set"] is False
+
+
+def test_no_session_key_leaks_between_tests():
+    assert E._session_keys == {}

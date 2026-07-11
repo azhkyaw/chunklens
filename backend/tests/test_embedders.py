@@ -6,15 +6,6 @@ import chunklens.embedders as E
 from chunklens.embedders import InvalidProvider, MissingDependency, MissingKey, ProviderError
 
 
-@pytest.fixture(autouse=True)
-def _clean_session_keys():
-    # A mid-test failure must never leak a session key into a later test,
-    # where it could unlock a real provider call.
-    E._session_keys.clear()
-    yield
-    E._session_keys.clear()
-
-
 def test_list_embedders_curated_set_and_flags():
     items = {e.id: e for e in E.list_embedders()}
     assert {"openai", "cohere", "ollama", "sentence_transformer"} <= set(items)
