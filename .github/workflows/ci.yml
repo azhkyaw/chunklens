@@ -40,3 +40,64 @@ jobs:
       - run: npm test -- --run
       # tsc -b + vite build doubles as the type-check; there is no separate lint step.
       - run: npm run build
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      # The Vite build emits the SPA into the backend package, so the server
+      # started below serves the exact bundle under test.
+      - run: npm run build
+        working-directory: frontend
+      - run: uv sync --locked
+        working-directory: backend
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ hashFiles('frontend/package-lock.json') }}
+      - name: Cache the default embedding model
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/chroma/onnx_models
+          key: chroma-onnx-model-v1
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - name: Start chroma and wait for its heartbeat
+        working-directory: backend
+        run: |
+          nohup uv run chroma run --path ../.chroma > /tmp/chroma.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:8000/api/v2/heartbeat > /dev/null && exit 0
+            sleep 1
+          done
+          echo 'chroma never came up' >&2
+          exit 1
+      - name: Seed the demo collection
+        working-directory: backend
+        run: uv run python ../scripts/seed_demo.py
+      - name: Start the app server and wait for health
+        working-directory: backend
+        env:
+          CHUNKLENS_NO_BROWSER: '1'
+        run: |
+          nohup uv run chunklens > /tmp/chunklens.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:8765/api/health > /dev/null && exit 0
+            sleep 1
+          done
+          echo 'chunklens never came up' >&2
+          exit 1
+      - run: npm run e2e
+        working-directory: frontend
+      - name: Dump server logs on failure
+        if: failure()
+        run: tail -n 200 /tmp/chroma.log /tmp/chunklens.log
