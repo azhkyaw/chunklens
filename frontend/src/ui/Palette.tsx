@@ -1,4 +1,3 @@
-import { useEffect, useRef } from "react";
 import { Command } from "cmdk";
 import { Modal } from "./Modal";
 
@@ -23,19 +22,6 @@ export function Palette({
   commands: PaletteCommand[];
   onClose: () => void;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  // React applies <input autoFocus> during the commit LAYOUT phase (native
-  // DOM autofocus emulation), which always finishes, for the whole tree,
-  // before ANY passive effect runs. Modal's own mount effect (a plain
-  // useEffect - passive) focuses the dialog itself for a11y label
-  // announcement, and therefore always runs after and wins, deterministically
-  // (not a flaky race - verified empirically). Re-assert focus on the input
-  // on the next microtask so it settles there once Modal's effect is done.
-  useEffect(() => {
-    queueMicrotask(() => inputRef.current?.focus());
-  }, []);
-
   const groups: { name: string; items: PaletteCommand[] }[] = [];
   for (const c of commands) {
     const g = groups.find((x) => x.name === c.group);
@@ -45,11 +31,7 @@ export function Palette({
   return (
     <Modal label="Command palette" onClose={onClose}>
       <Command label="Command palette" className="palette">
-        <Command.Input
-          ref={inputRef}
-          autoFocus
-          placeholder="Type a command or collection..."
-        />
+        <Command.Input autoFocus placeholder="Type a command or collection..." />
         <Command.List>
           <Command.Empty>No matching commands.</Command.Empty>
           {groups.map((g) => (

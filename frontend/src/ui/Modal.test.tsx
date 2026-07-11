@@ -183,6 +183,39 @@ test("shell stays inert until the last of two stacked modals closes", async () =
   await waitFor(() => expect(app).not.toHaveAttribute("inert"));
 });
 
+function AutofocusChildHarness() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="app">
+      <button onClick={() => setOpen(true)}>Open</button>
+      {open && (
+        <Modal label="Test dialog" onClose={() => setOpen(false)}>
+          <input placeholder="Autofocus input" autoFocus />
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+test("an autofocusing child keeps focus on open, and closing restores it to the opener", async () => {
+  render(<AutofocusChildHarness />);
+  const opener = screen.getByRole("button", { name: "Open" });
+  await userEvent.click(opener);
+
+  // Defect 2: Modal must not steal focus from a control the content already
+  // autofocused (native autoFocus applies in the layout phase, before Modal's
+  // passive effect runs).
+  const input = screen.getByPlaceholderText("Autofocus input");
+  expect(input).toHaveFocus();
+
+  fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+
+  // Defect 1: the restore target must be captured during render (before any
+  // commit can move focus into the dialog), so closing returns focus to the
+  // real opener - not to the (now-detached) autofocused child.
+  await waitFor(() => expect(opener).toHaveFocus());
+});
+
 test("the inert counter stays balanced when the shell unmounts with a modal still open", async () => {
   // Reproduces a full-tree unmount while a modal is still open (e.g. RTL's
   // afterEach on a test that forgot to close its modal, a parent remount,

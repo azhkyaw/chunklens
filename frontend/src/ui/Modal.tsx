@@ -36,14 +36,24 @@ export function Modal({
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
+  // Captured during render, not in the effect: a child's autoFocus fires in the
+  // commit (layout) phase, BEFORE passive effects, so by effect time
+  // document.activeElement could already be a control inside this dialog.
+  const restoreTo = useRef<HTMLElement | null>(null);
+  if (restoreTo.current === null) {
+    restoreTo.current = document.activeElement as HTMLElement | null;
+  }
+
   useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
-    ref.current?.focus();
+    // Only take focus ourselves if it isn't already inside the dialog - a
+    // content control (e.g. an autoFocus input) may have already claimed it
+    // during the earlier layout phase, and it should keep it.
+    if (!ref.current?.contains(document.activeElement)) ref.current?.focus();
     setShellInert(true);
     return () => {
       // Un-inert first so the restore target is focusable again.
       setShellInert(false);
-      previous?.focus();
+      restoreTo.current?.focus();
     };
   }, []);
 

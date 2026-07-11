@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
 import { Palette, type PaletteCommand } from "./Palette";
@@ -11,15 +11,13 @@ function commands(overrides: Partial<PaletteCommand> = {}): PaletteCommand[] {
   ];
 }
 
-test("renders a dialog with an autofocused input and grouped commands", async () => {
+test("renders a dialog with an autofocused input and grouped commands", () => {
   render(<Palette commands={commands()} onClose={() => {}} />);
   expect(screen.getByRole("dialog", { name: /command palette/i })).toBeInTheDocument();
-  // Modal's own mount effect focuses the dialog itself for a11y label
-  // announcement; the palette re-asserts focus onto the input a tick later
-  // (see Palette.tsx), so this settles asynchronously rather than instantly.
-  await waitFor(() => {
-    expect(screen.getByPlaceholderText(/type a command/i)).toHaveFocus();
-  });
+  // The input's native autoFocus claims focus in the layout phase; Modal's
+  // own mount effect (passive, later) sees focus already inside the dialog
+  // and does not steal it back (see Modal.tsx).
+  expect(screen.getByPlaceholderText(/type a command/i)).toHaveFocus();
   expect(screen.getByText("Collections")).toBeInTheDocument();
   expect(screen.getByText("Actions")).toBeInTheDocument();
   expect(screen.getByText("demo")).toBeInTheDocument();
