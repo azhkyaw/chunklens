@@ -14,4 +14,10 @@ test("browse records grouped by document", async ({ page }) => {
   await expect(group).toBeVisible();
   await group.click();
   await expect(page.locator(".doc-chunks .records-table tbody tr").first()).toBeVisible();
+
+  // Selecting the group also surfaced its source summary in the inspector.
+  // exact: true matches only the <dt>Chunks</dt> label, not the muted hint
+  // sentence that also contains the word "chunks" (Playwright strict mode).
+  const inspector = page.getByRole("complementary", { name: /inspector/i });
+  await expect(inspector.getByText("Chunks", { exact: true })).toBeVisible();
 });

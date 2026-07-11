@@ -4,14 +4,16 @@ test("scores a query, reveals provenance, then compares two queries", async ({ p
   await page.goto("/");
   await page.getByRole("button", { name: /^demo\b/ }).click();
 
-  // Single query: run, see scored results, expand the top hit
+  // Single query: run, see scored results, select the top hit into the inspector
   await page.getByRole("tab", { name: /^query$/i }).click();
   await page.getByLabel(/query text/i).fill("the quick brown fox");
   await page.getByRole("button", { name: /^run$/i }).click();
   await expect(page.getByText(/\d+ hits ·/)).toBeVisible();     // metric-aware results rendered
-  const results = page.locator("ol").last();                    // the results list
-  await results.getByRole("button").first().click();            // expand the top hit
-  await expect(results.getByText("lang")).toBeVisible();        // demo records carry a `lang` metadata key
+  const results = page.getByRole("listbox", { name: /^results$/i });
+  await results.getByRole("button").first().click();            // select the top hit
+  const inspector = page.getByRole("complementary", { name: /inspector/i });
+  await expect(inspector.getByText("lang")).toBeVisible();      // hit metadata shows in the inspector
+  await expect(inspector.getByText(/^#1$/)).toBeVisible();      // with its rank
 
   // Compare mode: run both, see both panels
   await page.getByRole("tab", { name: /^compare$/i }).click();
