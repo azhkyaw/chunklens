@@ -24,7 +24,7 @@ import { Kbd } from "./ui/Kbd";
 import { Palette, type PaletteCommand } from "./ui/Palette";
 import { ShortcutsHelp } from "./ui/ShortcutsHelp";
 import { SelectionProvider } from "./lib/selection";
-import { getInspectorOpen, setInspectorOpen, cycleThemePref } from "./lib/prefs";
+import { getInspectorOpen, setInspectorOpen, cycleThemePref, toggleDensity } from "./lib/prefs";
 import { useShortcut, isMac } from "./lib/shortcuts";
 import {
   adjacentTab,
@@ -143,6 +143,7 @@ export function App() {
       : []),
     { group: "Actions", label: "Connection settings", run: () => setShowConn(true) },
     { group: "Actions", label: "Toggle theme", keywords: ["dark", "light"], run: cycleThemePref },
+    { group: "Actions", label: "Toggle density", keywords: ["compact", "comfortable", "rows"], run: toggleDensity },
   ];
 
   return (

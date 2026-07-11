@@ -73,3 +73,35 @@ export function setInspectorOpen(open: boolean): void {
     sessionStorage.setItem(INSPECTOR_KEY, "0");
   }
 }
+
+// Row density for tables and results. Comfortable is the default and is
+// stored as absence; the resolved value is stamped as data-density on <html>
+// so styles.css keys compact metrics off one attribute (mirrors the theme).
+export type Density = "comfortable" | "compact";
+
+const DENSITY_KEY = "chunklens:density";
+
+export function getDensity(): Density {
+  return localStorage.getItem(DENSITY_KEY) === "compact" ? "compact" : "comfortable";
+}
+
+export function setDensity(d: Density): void {
+  if (d === "comfortable") {
+    localStorage.removeItem(DENSITY_KEY);
+  } else {
+    localStorage.setItem(DENSITY_KEY, d);
+  }
+  applyDensity();
+}
+
+export function toggleDensity(): void {
+  setDensity(getDensity() === "compact" ? "comfortable" : "compact");
+}
+
+function applyDensity(): void {
+  document.documentElement.dataset.density = getDensity();
+}
+
+export function initDensity(): void {
+  applyDensity();
+}

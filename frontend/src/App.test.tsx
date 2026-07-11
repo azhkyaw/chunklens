@@ -11,6 +11,7 @@ afterEach(() => {
   vi.restoreAllMocks();
   sessionStorage.clear();
   localStorage.clear();
+  delete document.documentElement.dataset.density;
 });
 
 const CONN = {
@@ -252,6 +253,16 @@ test("the palette toggles the theme", async () => {
   const dialog = await screen.findByRole("dialog", { name: /command palette/i });
   await userEvent.click(within(dialog).getByText("Toggle theme"));
   expect(document.documentElement.dataset.theme).toBe("light");
+});
+
+test("the palette toggles row density", async () => {
+  mockHappyPath();
+  renderApp("/c/demo/records");
+  await screen.findByRole("grid");
+  fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+  const dialog = await screen.findByRole("dialog", { name: /command palette/i });
+  await userEvent.click(within(dialog).getByText("Toggle density"));
+  await waitFor(() => expect(document.documentElement.dataset.density).toBe("compact"));
 });
 
 test("switching collections via the palette closes a manage modal left open for the old one", async () => {

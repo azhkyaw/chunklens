@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, test, vi } from "vitest";
-import { cycleThemePref, getInspectorOpen, getThemePref, initTheme, setInspectorOpen, setThemePref, subscribeTheme } from "./prefs";
+import { cycleThemePref, getDensity, getInspectorOpen, getThemePref, initDensity, initTheme, setInspectorOpen, setDensity, setThemePref, subscribeTheme, toggleDensity } from "./prefs";
 
 type Listener = (e: { matches: boolean }) => void;
 
@@ -23,6 +23,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   localStorage.clear();
   delete document.documentElement.dataset.theme;
+  delete document.documentElement.dataset.density;
 });
 
 describe("getThemePref", () => {
@@ -115,4 +116,22 @@ test("subscribeTheme notifies on change and unsubscribes cleanly", () => {
   off();
   setThemePref("light");
   expect(fn).toHaveBeenCalledTimes(1);
+});
+
+test("density defaults to comfortable, toggles to compact, and persists", () => {
+  initDensity();
+  expect(getDensity()).toBe("comfortable");
+  expect(document.documentElement.dataset.density).toBe("comfortable");
+  toggleDensity();
+  expect(getDensity()).toBe("compact");
+  expect(localStorage.getItem("chunklens:density")).toBe("compact");
+  expect(document.documentElement.dataset.density).toBe("compact");
+  toggleDensity();
+  expect(getDensity()).toBe("comfortable");
+  expect(localStorage.getItem("chunklens:density")).toBeNull();
+});
+
+test("garbage in density storage reads as comfortable", () => {
+  localStorage.setItem("chunklens:density", "banana");
+  expect(getDensity()).toBe("comfortable");
 });

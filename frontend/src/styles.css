@@ -1716,3 +1716,20 @@ p.guard[data-level="warn"] {
   font-family: var(--font-mono);
   color: var(--ink-faint);
 }
+
+/* ============================================================================
+   25. Density - compact row metrics for tables and results (palette toggle)
+   ========================================================================= */
+
+[data-density="compact"] th,
+[data-density="compact"] td {
+  padding: 3px 10px;
+}
+
+[data-density="compact"] .hit-head {
+  padding: 4px 10px;
+}
+
+[data-density="compact"] .hit + .hit {
+  margin-top: 3px;
+}

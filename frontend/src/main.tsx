@@ -11,11 +11,12 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { App } from "./App";
 import { ErrorBoundary } from "./ErrorBoundary";
-import { initTheme } from "./lib/prefs";
+import { initDensity, initTheme } from "./lib/prefs";
 import { AppToaster } from "./ui/toast";
 import "./styles.css";
 
 initTheme();
+initDensity();
 
 const queryClient = new QueryClient();
 
