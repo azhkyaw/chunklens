@@ -62,6 +62,11 @@ export const useConnectionStatus = () =>
     // hammering the backend forever.
     refetchInterval: (query) =>
       query.state.status === "error" || (query.state.data && !query.state.data.ok) ? 5000 : false,
+    // A health probe gets one quick second chance, then tells the truth. The
+    // client-wide default (3 retries, exponential backoff) would leave the LED
+    // green and the banner absent for ~7s after the backend dies.
+    retry: 1,
+    retryDelay: 250,
   });
 
 export const useSaveConnection = () =>

@@ -94,13 +94,31 @@ test("useConnectionStatus polls while the status check itself is failing", async
     await act(async () => {
       await vi.advanceTimersByTimeAsync(0);
     });
+    // Advance past the retry delay so the second attempt completes and error
+    // state is reached.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
     expect(result.current.isError).toBe(true);
-    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(2);
     await act(async () => {
       await vi.advanceTimersByTimeAsync(5_100);
     });
-    expect(spy.mock.calls.length).toBeGreaterThan(1);
+    expect(spy.mock.calls.length).toBeGreaterThan(2);
   } finally {
     vi.useRealTimers();
   }
+});
+
+test("the status check settles into error after exactly one quick retry", async () => {
+  vi.spyOn(api, "testConnection").mockRejectedValue(new Error("down"));
+  // Deliberately a DEFAULT client (no retry: false): the hook's own retry cap
+  // must govern, because production has no test-side override.
+  const qc = new QueryClient();
+  const wrapper_prod = ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+  );
+  const { result } = renderHook(() => useConnectionStatus(), { wrapper: wrapper_prod });
+  await waitFor(() => expect(result.current.isError).toBe(true), { timeout: 3000 });
+  expect(api.testConnection).toHaveBeenCalledTimes(2);
 });
