@@ -22,9 +22,11 @@ function parse(spec: string): Step[] {
 export function isEditable(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
   // jsdom does not implement isContentEditable, so check the attribute.
+  // The attribute is editable if present and not explicitly set to "false".
+  const contentEditableAttr = target.getAttribute("contenteditable");
   return (
     target.matches("input, textarea, select") ||
-    target.getAttribute("contenteditable") === "true"
+    (contentEditableAttr !== null && contentEditableAttr !== "false")
   );
 }
 

@@ -96,3 +96,46 @@ test("the listener is removed on unmount", () => {
   fireEvent.keyDown(window, { key: "j" });
   expect(fire).not.toHaveBeenCalled();
 });
+
+test("single keys are suppressed while focus is in a bare contenteditable", () => {
+  const fire = vi.fn();
+  render(
+    <>
+      <Probe spec="j" onFire={fire} />
+      <div tabIndex={0} aria-label="editable" />
+    </>,
+  );
+  const editable = screen.getByLabelText("editable");
+  editable.setAttribute("contenteditable", "");
+  editable.focus();
+  fireEvent.keyDown(editable, { key: "j" });
+  expect(fire).not.toHaveBeenCalled();
+});
+
+test("single keys are suppressed while focus is in contenteditable=true", () => {
+  const fire = vi.fn();
+  render(
+    <>
+      <Probe spec="j" onFire={fire} />
+      <div contentEditable="true" tabIndex={0} aria-label="editable-true" />
+    </>,
+  );
+  const editable = screen.getByLabelText("editable-true");
+  editable.focus();
+  fireEvent.keyDown(editable, { key: "j" });
+  expect(fire).not.toHaveBeenCalled();
+});
+
+test("single keys fire when contenteditable=false", () => {
+  const fire = vi.fn();
+  render(
+    <>
+      <Probe spec="j" onFire={fire} />
+      <div contentEditable="false" tabIndex={0} aria-label="editable-false" />
+    </>,
+  );
+  const notEditable = screen.getByLabelText("editable-false");
+  notEditable.focus();
+  fireEvent.keyDown(notEditable, { key: "j" });
+  expect(fire).toHaveBeenCalledTimes(1);
+});
