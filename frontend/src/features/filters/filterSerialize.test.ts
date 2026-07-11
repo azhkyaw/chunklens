@@ -43,13 +43,27 @@ test("validate flags incomplete leaves", () => {
 
 test("validate flags empty $in, non-numeric comparison, empty doc text, bad regex", () => {
   expect(validate(meta("t", "$in", [])).map((e) => e.message)).toContain("add at least one value");
-  expect(validate(meta("y", "$gt", "abc")).map((e) => e.message)).toContain("expects a number");
+  expect(validate(meta("y", "$gt", NaN, "number")).map((e) => e.message)).toContain("expects a number");
   expect(validate({ ...newDocCondition(), text: "" }).map((e) => e.message)).toContain("text required");
   expect(validate({ ...newDocCondition(), operator: "$regex", text: "(" }).map((e) => e.message)).toContain("invalid regular expression");
+});
+
+test("comparison operators demand the num value type", () => {
+  expect(validate(meta("page", "$gt", "5", "string")).map((e) => e.message)).toContain("comparisons need the num value type");
+});
+
+test("numeric in-lists reject values that did not parse", () => {
+  expect(validate(meta("page", "$in", [1, NaN], "number")).map((e) => e.message)).toContain("every value must be a number");
 });
 
 test("a fully-specified tree validates clean", () => {
   let root = newGroup();
   root = addChild(root, root.id, meta("lang", "$eq", "en"));
   expect(validate(root)).toEqual([]);
+});
+
+test("non-comparison operators on strings are untouched by the numeric requirement", () => {
+  expect(validate(meta("lang", "$eq", "en"))).toEqual([]);
+  expect(validate(meta("tag", "$in", ["a", "b"]))).toEqual([]);
+  expect(validate({ ...newMetaCondition(), field: "ok", operator: "$eq", value: true, valueType: "boolean" })).toEqual([]);
 });

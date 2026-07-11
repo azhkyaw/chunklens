@@ -196,6 +196,10 @@ function MetadataSection({
           qc.invalidateQueries({ queryKey: ["records", collection] });
           qc.invalidateQueries({ queryKey: ["source-records", collection] });
           qc.invalidateQueries({ queryKey: ["record", collection, record.id] });
+          // The sampled key list and the by-document grouping both derive from
+          // metadata; a metadata edit can add keys or move a record between groups.
+          qc.invalidateQueries({ queryKey: ["metadata-keys", collection] });
+          qc.invalidateQueries({ queryKey: ["sources", collection] });
           setEditing(false);
           toastSuccess("Metadata saved");
           onSaved(saved.metadata ?? null);

@@ -38,15 +38,22 @@ function walk(node: FilterNode, errors: FilterError[]): void {
     if (node.operator === "$in" || node.operator === "$nin") {
       if (!Array.isArray(node.value) || node.value.length === 0) {
         errors.push({ id: node.id, message: "add at least one value" });
+      } else if (
+        node.valueType === "number" &&
+        node.value.some((v) => typeof v === "number" && Number.isNaN(v))
+      ) {
+        errors.push({ id: node.id, message: "every value must be a number" });
       }
     } else if (node.value === "" || node.value === undefined) {
       errors.push({ id: node.id, message: "value required" });
-    } else if (
-      COMPARISON.includes(node.operator) &&
-      typeof node.value === "string" &&
-      Number.isNaN(Number(node.value))
-    ) {
-      errors.push({ id: node.id, message: "expects a number" });
+    } else if (COMPARISON.includes(node.operator)) {
+      if (node.valueType !== "number") {
+        // Chroma's $gt/$gte/$lt/$lte compare numbers; a string "5" would be
+        // sent as a string and mismatch or be rejected server-side. (audit L-4)
+        errors.push({ id: node.id, message: "comparisons need the num value type" });
+      } else if (typeof node.value === "number" && Number.isNaN(node.value)) {
+        errors.push({ id: node.id, message: "expects a number" });
+      }
     }
     return;
   }

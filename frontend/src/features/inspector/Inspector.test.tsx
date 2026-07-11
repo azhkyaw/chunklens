@@ -26,11 +26,13 @@ function Select({ to }: { to: Selection }) {
   return null;
 }
 
-function renderInspector(selection?: Selection) {
+function renderInspector(
+  selection?: Selection,
+  qc: QueryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+) {
   // retry: false - a rejected fetch (see the raw-JSON error test) must settle
   // to its error state promptly instead of burning through react-query's
   // default retry/backoff schedule and timing out the test.
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={qc}>
       <SelectionProvider resetKey="docs/records">
@@ -39,6 +41,7 @@ function renderInspector(selection?: Selection) {
       </SelectionProvider>
     </QueryClientProvider>,
   );
+  return qc;
 }
 
 const REC: Selection = {
@@ -101,7 +104,8 @@ test("metadata edits save from the inspector", async () => {
   const upd = vi.spyOn(api, "updateRecordMetadata").mockResolvedValue({
     id: "r1", document: "alpha doc", metadata: { lang: "de" },
   });
-  renderInspector(REC);
+  const qc = renderInspector(REC);
+  const invalidateSpy = vi.spyOn(qc, "invalidateQueries");
   await userEvent.click(await screen.findByRole("button", { name: /^edit$/i }));
   const box = screen.getByRole("textbox", { name: /record metadata/i });
   // fireEvent.change sets the controlled textarea value directly - robust for
@@ -112,6 +116,13 @@ test("metadata edits save from the inspector", async () => {
   // The inspector reflects the saved metadata without a reselect.
   expect(await screen.findByText("de")).toBeInTheDocument();
   expect(toastSuccess).toHaveBeenCalledWith("Metadata saved");
+  expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["records", "docs"] });
+  expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["source-records", "docs"] });
+  expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["record", "docs", "r1"] });
+  // metadata-keys and sources are both derived from record metadata (audit L-5):
+  // an edit can add a new key or move the record between by-document groups.
+  expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["metadata-keys", "docs"] });
+  expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["sources", "docs"] });
 });
 
 test("invalid metadata JSON shows an error and does not save", async () => {

@@ -11,6 +11,7 @@ const DOC_OPS: { op: DocOperator; label: string }[] = [
   { op: "$contains", label: "contains" }, { op: "$not_contains", label: "does not contain" },
   { op: "$regex", label: "matches regex" }, { op: "$not_regex", label: "does not match regex" },
 ];
+const COMPARISON_OPS = new Set(["$gt", "$gte", "$lt", "$lte"]);
 
 export function coerce(raw: string, t: ValueType): Scalar {
   if (raw === "") return "";
@@ -49,12 +50,21 @@ export function ConditionRow({
   const info = keys.find((k) => k.key === node.field);
   const singleKnown = info && info.types.length === 1 ? chromaTypeToValueType(info.types[0]) : undefined;
   const isArrayOp = node.operator === "$in" || node.operator === "$nin";
+  const currentValueType = node.valueType;
 
   function setOperator(op: MetaOperator) {
     const nowArray = op === "$in" || op === "$nin";
-    if (nowArray && !isArrayOp) return onChange({ operator: op, value: [] });
-    if (!nowArray && isArrayOp) return onChange({ operator: op, value: "" });
-    onChange({ operator: op });
+    const patch: Patch = { operator: op };
+    if (nowArray && !isArrayOp) patch.value = [];
+    if (!nowArray && isArrayOp) patch.value = "";
+    // Comparisons only make sense on numbers. When the key's type is not
+    // locked by the sample (singleKnown), flip the row to num so the value
+    // serializes as a number instead of a string. (audit L-4)
+    if (COMPARISON_OPS.has(op) && currentValueType !== "number" && !singleKnown) {
+      patch.valueType = "number";
+      patch.value = nowArray ? [] : "";
+    }
+    onChange(patch);
   }
   function setField(field: string) {
     const inf = keys.find((k) => k.key === field);
@@ -65,8 +75,8 @@ export function ConditionRow({
 
   return (
     <div role="group" aria-label="metadata condition" className="condition-row">
-      <input aria-label="field" list="meta-keys-list" value={node.field} onChange={(e) => setField(e.target.value)} />
-      <datalist id="meta-keys-list">{keys.map((k) => <option key={k.key} value={k.key} />)}</datalist>
+      <input aria-label="field" list={`meta-keys-${node.id}`} value={node.field} onChange={(e) => setField(e.target.value)} />
+      <datalist id={`meta-keys-${node.id}`}>{keys.map((k) => <option key={k.key} value={k.key} />)}</datalist>
       <select aria-label="operator" value={node.operator} onChange={(e) => setOperator(e.target.value as MetaOperator)}>
         {META_OPS.map((o) => <option key={o.op} value={o.op}>{o.label}</option>)}
       </select>
