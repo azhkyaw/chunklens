@@ -9,9 +9,13 @@ const FOCUSABLE =
 // the attribute is set imperatively.
 let inertCount = 0;
 function setShellInert(on: boolean) {
+  // Count first: React detaches the DOM (mutation phase) before useEffect
+  // cleanups run (passive phase), so on a full unmount .app is already gone.
+  // Gating the counter on the lookup would skip the decrement and leave a
+  // future shell stuck inert.
+  inertCount = Math.max(0, inertCount + (on ? 1 : -1));
   const shell = document.querySelector(".app");
   if (!shell) return;
-  inertCount = Math.max(0, inertCount + (on ? 1 : -1));
   if (inertCount > 0) shell.setAttribute("inert", "");
   else shell.removeAttribute("inert");
 }

@@ -182,3 +182,23 @@ test("shell stays inert until the last of two stacked modals closes", async () =
   fireEvent.keyDown(screen.getByRole("dialog", { name: "Outer" }), { key: "Escape" });
   await waitFor(() => expect(app).not.toHaveAttribute("inert"));
 });
+
+test("the inert counter stays balanced when the shell unmounts with a modal still open", async () => {
+  // Reproduces a full-tree unmount while a modal is still open (e.g. RTL's
+  // afterEach on a test that forgot to close its modal, a parent remount,
+  // or an HMR teardown). React removes .app in the mutation phase before
+  // the modal's effect cleanup runs in the passive phase, so the shell is
+  // already gone by the time setShellInert(false) looks for it.
+  const leaked = render(<InertHarness />);
+  expect(document.querySelector(".app")).toHaveAttribute("inert");
+  leaked.unmount();
+
+  // A fresh shell + modal, opened and closed normally, must end up
+  // un-inert. If the previous unmount skipped its decrement, this one's
+  // close only brings the count down to 1 and the shell stays stuck.
+  render(<InertHarness />);
+  const app = document.querySelector(".app")!;
+  expect(app).toHaveAttribute("inert");
+  fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+  await waitFor(() => expect(app).not.toHaveAttribute("inert"));
+});
