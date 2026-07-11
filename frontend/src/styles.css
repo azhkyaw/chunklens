@@ -1674,7 +1674,8 @@ p.guard[data-level="warn"] {
   border-left-color: var(--accent);
 }
 
-.palette [cmdk-empty] {
+.palette [cmdk-empty],
+.palette [cmdk-loading] {
   padding: 12px 8px;
   font-family: var(--font-mono);
   font-size: 12px;

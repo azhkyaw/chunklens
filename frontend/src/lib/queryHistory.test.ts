@@ -64,6 +64,14 @@ test("stored specs are snapshots, not live references", () => {
   expect(getHistory("a")[0].spec.text).toBe("hello");
 });
 
+test("getHistory hands out copies - mutating a returned spec cannot corrupt the ring", () => {
+  const s = { ...newQuerySpec(), text: "hello" };
+  recordQuery("docs", s);
+  const [first] = getHistory("docs");
+  (first.spec as { text: string }).text = "MUTATED";
+  expect(getHistory("docs")[0].spec.text).toBe("hello");
+});
+
 test("labels truncate long text and name vector queries", () => {
   const long = "x".repeat(60);
   expect(historyLabel(spec(long))).toBe(`${"x".repeat(47)}… · n=10`);

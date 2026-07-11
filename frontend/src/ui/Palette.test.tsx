@@ -82,6 +82,45 @@ test("Enter runs the highlighted command", async () => {
   expect(run).toHaveBeenCalled();
 });
 
+// Regression for the palette BOOT RACE: the Collections commands come from the
+// useCollections() query, so a palette opened before it resolves has nothing but
+// the ACTION commands to rank - typing a collection name would auto-select (and
+// Enter would RUN) some unrelated action. While loading, selection is suppressed
+// entirely: neither Enter nor a click may fire a command, and the palette must
+// stay OPEN (closing without running anything is a quieter version of the same
+// bug - the user's keystroke would vanish).
+test("while collections load, selection is suppressed and a loading row shows", async () => {
+  const run = vi.fn();
+  const onClose = vi.fn();
+  render(
+    <Palette
+      loading
+      onClose={onClose}
+      commands={[{ group: "Actions", label: "Toggle theme", run }]}
+    />,
+  );
+  expect(screen.getByText(/loading collections/i)).toBeInTheDocument();
+  await userEvent.keyboard("theme");
+  await userEvent.keyboard("{Enter}");
+  expect(run).not.toHaveBeenCalled();
+  expect(onClose).not.toHaveBeenCalled();
+});
+
+test("while collections load, clicking an item runs nothing either", async () => {
+  const run = vi.fn();
+  const onClose = vi.fn();
+  render(
+    <Palette
+      loading
+      onClose={onClose}
+      commands={[{ group: "Actions", label: "Toggle theme", run }]}
+    />,
+  );
+  await userEvent.click(screen.getByText("Toggle theme"));
+  expect(run).not.toHaveBeenCalled();
+  expect(onClose).not.toHaveBeenCalled();
+});
+
 // Regression for the palette running the WRONG command: cmdk's default filter
 // does fuzzy SUBSEQUENCE matching over value+keywords, so typing "demo" could
 // also match "Toggle density" (d,e from "density", m,o from "comfortable")

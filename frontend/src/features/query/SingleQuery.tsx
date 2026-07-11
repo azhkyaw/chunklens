@@ -105,11 +105,11 @@ export function SingleQuery({ name }: { name: string }) {
                 disabled={!ready || errors.length > 0 || blocked || run.isPending}>Run</button>
         <button type="button" className="btn-sm" disabled={!ready || errors.length > 0 || !conn}
                 onClick={() => conn && copyText(queryAsPython(conn, name, serializeSpec(spec)), "Python snippet")}>
-          Copy Python
+          Copy as Python
         </button>
         <button type="button" className="btn-sm" disabled={!ready || errors.length > 0 || !conn}
                 onClick={() => conn && copyText(queryAsJs(conn, name, serializeSpec(spec)), "JS snippet")}>
-          Copy JS
+          Copy as JS
         </button>
       </div>
       {errors.length > 0 && <p role="alert">Fix filter errors: {errors.map((e) => e.message).join("; ")}</p>}

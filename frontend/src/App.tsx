@@ -63,7 +63,7 @@ export function App() {
   }
   const inspectorPane = useRef<HTMLElement>(null);
   const qc = useQueryClient();
-  const { data: collections } = useCollections();
+  const { data: collections, isLoading: collectionsLoading } = useCollections();
 
   useEffect(() => {
     if (wasOnboarded()) return;
@@ -221,7 +221,13 @@ export function App() {
             />
           </Modal>
         )}
-        {showPalette && <Palette commands={commands} onClose={() => setShowPalette(false)} />}
+        {showPalette && (
+          <Palette
+            commands={commands}
+            loading={collectionsLoading}
+            onClose={() => setShowPalette(false)}
+          />
+        )}
         {showHelp && <ShortcutsHelp onClose={() => setShowHelp(false)} />}
       </header>
 

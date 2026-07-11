@@ -67,9 +67,11 @@ function paletteFilter(value: string, search: string, keywords: string[] = []): 
 export function Palette({
   commands,
   onClose,
+  loading = false,
 }: {
   commands: PaletteCommand[];
   onClose: () => void;
+  loading?: boolean;
 }) {
   const groups: { name: string; items: PaletteCommand[] }[] = [];
   for (const c of commands) {
@@ -83,6 +85,7 @@ export function Palette({
       <Command label="Command palette" className="palette" filter={paletteFilter}>
         <Command.Input ref={inputRef} placeholder="Type a command or collection..." />
         <Command.List>
+          {loading && <Command.Loading>Loading collections…</Command.Loading>}
           <Command.Empty>No matching commands.</Command.Empty>
           {groups.map((g) => (
             <Command.Group key={g.name} heading={g.name}>
@@ -92,6 +95,12 @@ export function Palette({
                   value={c.label}
                   keywords={c.keywords}
                   onSelect={() => {
+                    // Boot race: until the collections query resolves, typing a
+                    // collection name ranks some unrelated command first - Enter
+                    // would run the WRONG command. Suppress selection entirely
+                    // during the sub-second load; the Loading row above tells the
+                    // user why. (Cp5 follow-up)
+                    if (loading) return;
                     // React 18 batches onClose()'s state update and whatever
                     // c.run() triggers into ONE commit if both run
                     // synchronously here - so a modal opened by c.run() would

@@ -44,8 +44,13 @@ export function getHistory(collection: string): HistoryEntry[] {
   // A fresh array of plain { spec, label } objects - never the ring itself
   // (a caller mutating it, e.g. .sort()/.push(), would corrupt the internal
   // ring state) and never the internal StoredEntry (whose `key` field is a
-  // dedupe implementation detail, not part of the documented shape).
-  return (rings.get(collection) ?? []).map(({ spec, label }) => ({ spec, label }));
+  // dedupe implementation detail, not part of the documented shape). The
+  // spec is deep-cloned too: replay consumers hold and edit it as form
+  // state, and a shared reference would let those edits rewrite history.
+  return (rings.get(collection) ?? []).map(({ spec, label }) => ({
+    spec: structuredClone(spec),
+    label,
+  }));
 }
 
 // One-slot replay handoff: the palette requests, SingleQuery consumes - at

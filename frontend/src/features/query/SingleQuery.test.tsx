@@ -199,7 +199,7 @@ test("copy Python renders the current query including filters", async () => {
   await userEvent.click(screen.getAllByRole("button", { name: /add condition/i })[0]);
   await userEvent.type(screen.getByLabelText(/^field$/i), "lang");
   await userEvent.type(screen.getByLabelText(/^value$/i), "en");
-  await userEvent.click(await screen.findByRole("button", { name: /^copy python$/i }));
+  await userEvent.click(await screen.findByRole("button", { name: /^copy as python$/i }));
   await waitFor(() => expect(writeText).toHaveBeenCalled());
   const snippet = writeText.mock.calls[0][0] as string;
   expect(snippet).toContain('query_texts=["hello"]');
@@ -216,7 +216,7 @@ test("copy JS is disabled until the query is ready", async () => {
     auth_mode: "none", has_token: false,
   });
   render(wrap(<SingleQuery name="docs" />));
-  const btn = await screen.findByRole("button", { name: /^copy js$/i });
+  const btn = await screen.findByRole("button", { name: /^copy as js$/i });
   expect(btn).toBeDisabled(); // empty query text
   await userEvent.type(screen.getByLabelText(/query text/i), "hello");
   expect(btn).toBeEnabled();
@@ -240,8 +240,8 @@ test("copy buttons stay enabled while Run is disabled by a guard block", async (
   expect(screen.getByRole("alert")).toHaveTextContent(/no embedding function/i);
   // Copy is a clipboard action, not a server round-trip: a blocked query
   // (guard) is still a query worth copying out to debug elsewhere.
-  expect(await screen.findByRole("button", { name: /^copy python$/i })).toBeEnabled();
-  expect(screen.getByRole("button", { name: /^copy js$/i })).toBeEnabled();
+  expect(await screen.findByRole("button", { name: /^copy as python$/i })).toBeEnabled();
+  expect(screen.getByRole("button", { name: /^copy as js$/i })).toBeEnabled();
 });
 
 test("a successful run records the query in the session history", async () => {
