@@ -62,3 +62,11 @@ test("selecting a shared hit in column B carries side B and its rank delta", asy
   await userEvent.click(options[0]); // rank #1 in B is y
   expect(screen.getByTestId("probe")).toHaveTextContent("y:B:1");
 });
+
+test("each column reads out its own latency, scoped with within", () => {
+  render(wrap(<CompareView a={r("x", "y")} b={r("y", "z")} metric="cosine" aMs={12} bMs={34} />));
+  const colA = screen.getByText(/^query a$/i).closest(".compare-col") as HTMLElement;
+  const colB = screen.getByText(/^query b$/i).closest(".compare-col") as HTMLElement;
+  expect(within(colA).getByTitle(/measured in the browser/i)).toHaveTextContent("12 ms");
+  expect(within(colB).getByTitle(/measured in the browser/i)).toHaveTextContent("34 ms");
+});

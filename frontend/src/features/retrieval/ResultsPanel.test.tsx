@@ -40,6 +40,7 @@ test("zero hits keeps the header so latency still reads out", () => {
   expect(screen.getByText(/0 hits/)).toBeInTheDocument();
   const ms = screen.getByTitle(/measured in the browser/i);
   expect(ms).toHaveTextContent("38 ms");
+  expect(screen.getByText("nothing matched")).toHaveClass("empty-title");
 });
 
 test("zero hits without latency omits the ms segment", () => {
@@ -65,5 +66,6 @@ test("clicking a hit selects it with rank, metric, side, and delta", async () =>
 
 test("shows the query latency in the results header when provided", () => {
   render(wrap(<ResultsPanel hits={hits} metric="cosine" latencyMs={38} />));
+  expect(screen.getByText(/3 hits · similarity/)).toBeInTheDocument();
   expect(screen.getByTitle(/measured in the browser/i)).toHaveTextContent("38 ms");
 });
