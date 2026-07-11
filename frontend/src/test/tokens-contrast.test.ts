@@ -75,6 +75,7 @@ const PAIRS: Array<[string, string, number]> = [
   ["ink", "accent-weak", 4.5], // text on amber-tinted chips and banners
   ["accent", "surface-raised", 3.0], // selection rail edge on the selection fill
   ["danger", "surface-inset", 4.5], // per-panel errors over recessed surfaces
+  ["signal", "accent-weak", 4.5], // hit score text on the selected-row fill
 ];
 
 describe.each([
