@@ -12,6 +12,7 @@ import ReactDOM from "react-dom/client";
 import { App } from "./App";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { initTheme } from "./lib/prefs";
+import { AppToaster } from "./ui/toast";
 import "./styles.css";
 
 initTheme();
@@ -23,6 +24,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <App />
+        <AppToaster />
       </QueryClientProvider>
     </ErrorBoundary>
   </React.StrictMode>,
