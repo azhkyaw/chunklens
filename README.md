@@ -9,7 +9,7 @@
 
 A local-first inspector and retrieval debugger for ChromaDB.
 
-> Status: `0.2.0`. Early but functional. Install it with `pipx install chunklens` (see [Install](#install-packaged)) or run from source.
+> Status: `0.2.0`, published on PyPI. Early but functional. Install it with `pipx install chunklens` (see [Install](#install-packaged)) or run from source.
 
 ChunkLens runs entirely on your machine. A small FastAPI backend wraps the official `chromadb` client and serves a React UI. It binds to `127.0.0.1` only and sends no telemetry. The one outbound request it can make is the one you ask for: embedding a query through a provider you choose. Any API key you enter stays in memory for the session and is never written to disk.
 
