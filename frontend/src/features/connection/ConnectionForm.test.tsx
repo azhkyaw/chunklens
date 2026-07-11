@@ -58,22 +58,22 @@ test("Test button shows a result", async () => {
 
 // audit M-3: refetchOnWindowFocus is on by default, so alt-tabbing to a
 // password manager and back can land a background refetch mid-edit. The old
-// hydration effect re-seeds on every new `info` object, even when its content
-// is unchanged, wiping whatever the user had just typed.
+// hydration effect re-seeded on every new `info` object, wiping whatever the
+// user had just typed.
 //
-// structuralSharing defaults to true, so a plain `setQueryData(key,
-// {...sameContent})` would be deduped by TanStack Query itself and never
-// actually change `info`'s identity (see query-core's replaceEqualDeep) -
-// that would make this test pass for the wrong reason on both old and new
-// code. Disabling structuralSharing here lets us push a genuinely new
-// reference through, which is what a real refetch's queryFn result is
-// BEFORE structural sharing dedupes it - i.e. exactly the identity the old
-// effect (keyed on `[info]`) would react to.
+// The realistic trigger is a SIBLING field changing, not identical bytes
+// arriving twice: structural sharing (query-core's replaceEqualDeep, on by
+// default, and used by the fetch-success path too) hands back the PRIOR object
+// whenever the refetched payload is deep-equal, so a content-identical refetch
+// never changes `info`'s identity. It DOES return a new top-level object as
+// soon as any field differs - e.g. `has_token` flipping once a token is stored,
+// or any other field the server reports differently - and that new reference is
+// exactly what the old effect reacted to. Simulate that on the DEFAULT
+// QueryClient (no structuralSharing override) so the identity change is one
+// production can actually produce.
 test("a background refetch does not clobber in-progress edits", async () => {
   vi.spyOn(api, "getConnection").mockResolvedValue(INFO);
-  const qc = new QueryClient({
-    defaultOptions: { queries: { retry: false, structuralSharing: false } },
-  });
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={qc}>
       <ConnectionForm />
@@ -83,13 +83,12 @@ test("a background refetch does not clobber in-progress edits", async () => {
   await waitFor(() => expect(host).toHaveValue("localhost"));
   await userEvent.clear(host);
   await userEvent.type(host, "otherhost");
-  // simulate a focus-refetch landing: same content, new object identity.
   // notifyManager schedules observer notifications via a real setTimeout(0)
   // (see query-core's timeoutManager), so the update must be flushed past
   // that macrotask - a synchronous act() would let this assertion pass for
   // the wrong reason (the re-render simply hasn't happened yet).
   await act(async () => {
-    qc.setQueryData(["connection"], { ...INFO });
+    qc.setQueryData(["connection"], { ...INFO, has_token: true });
     await new Promise((resolve) => setTimeout(resolve, 0));
   });
   expect(host).toHaveValue("otherhost");

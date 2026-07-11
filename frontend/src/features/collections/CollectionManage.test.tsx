@@ -29,12 +29,19 @@ function renderManage(props: {
   const qc = props.qc ?? new QueryClient();
   function Harness() {
     const [open, setOpen] = useState(false);
+    // App mounts CollectionManage WITHOUT a `key`, so a rename does not remount
+    // it - only the `name` prop swaps. Model that here: onRenamed feeds the new
+    // name straight back in as a prop change.
+    const [name, setName] = useState(props.name);
     return (
       <CollectionManage
-        name={props.name}
+        name={name}
         open={open}
         onOpenChange={setOpen}
-        onRenamed={props.onRenamed ?? (() => {})}
+        onRenamed={(n) => {
+          setName(n);
+          props.onRenamed?.(n);
+        }}
         onDeleted={props.onDeleted ?? (() => {})}
       />
     );
@@ -104,35 +111,86 @@ test("a failed delete shows an inline error", async () => {
   expect(await screen.findByRole("alert")).toHaveTextContent(/cannot delete/i);
 });
 
-// audit M-3: the old hydration effect re-seeds `metaText` from `data` on
-// every new object reference, even when the content is unchanged. That means
-// a background refetch (refetchOnWindowFocus is on by default) landing while
-// the user is mid-edit silently wipes what they typed.
+// audit M-3: the hydration effect re-seeds `metaText` from `data` on every new
+// object reference. A background refetch (refetchOnWindowFocus is on by
+// default) landing while the user is mid-edit would silently wipe what they
+// typed.
 //
-// structuralSharing defaults to true, so `setQueryData(key, {...DETAILS})`
-// would otherwise be deduped by TanStack Query and never actually change
-// `data`'s identity (see query-core's replaceEqualDeep), making this test
-// pass for the wrong reason. Disabling it lets us push a genuinely new
-// reference through - the identity a real refetch's raw result has before
-// structural sharing dedupes it, i.e. exactly what the old effect reacted to.
+// The production trigger is a SIBLING field changing, NOT identical bytes
+// arriving twice: structural sharing (query-core's replaceEqualDeep, on by
+// default) hands back the PRIOR object whenever the new payload is deep-equal,
+// and the fetch-success path goes through the same replaceData, so a
+// byte-identical refetch never changes `data`'s identity. But replaceEqualDeep
+// returns a NEW top-level object as soon as ANY field differs, and
+// CollectionDetails carries `count`/`dimensionality` - which move whenever
+// anything writes the collection (an ingest script in another terminal, the
+// ImportPanel, another tab). Open Manage, start editing metadata, alt-tab to
+// the indexer, come back: focus-refetch, count 3 -> 4, new reference, edit
+// gone, even though `metadata` itself never moved. That is what this simulates,
+// on the DEFAULT QueryClient so the identity change is one production can
+// actually produce.
 test("a details refetch does not clobber an in-progress metadata edit", async () => {
   vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
-  const qc = new QueryClient({
-    defaultOptions: { queries: { retry: false, structuralSharing: false } },
-  });
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   renderManage({ name: "docs", qc });
   await userEvent.click(screen.getByRole("button", { name: /^manage$/i }));
-  const editor = await screen.findByLabelText(/collection metadata/i);
-  await userEvent.clear(editor);
-  await userEvent.type(editor, "{{");
-  // simulate a background refetch landing: same content, new object identity.
+  const editor = await screen.findByRole("textbox", { name: /collection metadata/i });
+  await waitFor(() => expect(editor).toHaveValue("{}")); // hydrated from the server
+  fireEvent.change(editor, { target: { value: '{"draft":1}' } });
   // notifyManager schedules observer notifications via a real setTimeout(0)
-  // (see query-core's timeoutManager), so the update must be flushed past
-  // that macrotask - a synchronous act() would let this assertion pass for
-  // the wrong reason (the re-render simply hasn't happened yet).
+  // (see query-core's timeoutManager), so the update must be flushed past that
+  // macrotask - a synchronous act() would let this assertion pass for the wrong
+  // reason (the re-render simply hasn't happened yet).
   await act(async () => {
-    qc.setQueryData(["collection", "docs"], { ...DETAILS });
+    qc.setQueryData(["collection", "docs"], { ...DETAILS, count: 4 });
     await new Promise((resolve) => setTimeout(resolve, 0));
   });
-  expect(editor).not.toHaveValue(JSON.stringify(DETAILS.metadata ?? {}, null, 2));
+  expect(editor).toHaveValue('{"draft":1}');
+});
+
+// audit M-3 follow-up: clearing the dirty flag on save re-runs the reseed
+// effect, so the cache MUST already hold the saved details by then. Otherwise
+// the editor reverts to the pre-save metadata the moment the toast fires, and a
+// second Save click PUTs that stale value, destroying the metadata server-side.
+test("a successful metadata save leaves the saved metadata in the editor", async () => {
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
+  const saved = { ...DETAILS, metadata: { a: 1 } };
+  vi.spyOn(api, "updateCollection").mockResolvedValue(saved);
+  const qc = renderManage({ name: "docs" });
+  await userEvent.click(screen.getByRole("button", { name: /^manage$/i }));
+  const box = await screen.findByRole("textbox", { name: /collection metadata/i });
+  await waitFor(() => expect(box).toHaveValue("{}"));
+  fireEvent.change(box, { target: { value: '{"a":1}' } });
+  await userEvent.click(screen.getByRole("button", { name: /^save metadata$/i }));
+  await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith("Collection metadata saved"));
+  await waitFor(() => expect(box).toHaveValue(JSON.stringify({ a: 1 }, null, 2)));
+  expect(qc.getQueryData(["collection", "docs"])).toEqual(saved);
+});
+
+// audit M-3 follow-up: a rename swaps the `name` prop without remounting, so an
+// abandoned metadata edit (and its dirty flag) would otherwise ride along and
+// pin the editor to the OLD collection's text - which "Save metadata" would
+// then write onto the renamed collection.
+test("renaming drops an abandoned metadata edit and reseeds from the new collection", async () => {
+  const renamed = { ...DETAILS, name: "newname", metadata: { owner: "kai" } };
+  vi.spyOn(api, "getCollectionDetails").mockImplementation(async (n: string) =>
+    (n === "docs" ? DETAILS : renamed));
+  vi.spyOn(api, "updateCollection").mockResolvedValue(renamed);
+  renderManage({ name: "docs" });
+  await userEvent.click(screen.getByRole("button", { name: /^manage$/i }));
+  const box = await screen.findByRole("textbox", { name: /collection metadata/i });
+  await waitFor(() => expect(box).toHaveValue("{}"));
+  fireEvent.change(box, { target: { value: '{"junk":1}' } }); // abandoned mid-edit
+
+  const input = screen.getByLabelText(/^rename$/i);
+  await userEvent.clear(input);
+  await userEvent.type(input, "newname");
+  await userEvent.click(screen.getByRole("button", { name: /^save name$/i }));
+  await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith("Renamed to newname"));
+
+  await userEvent.click(screen.getByRole("button", { name: /^manage$/i }));
+  const reopened = await screen.findByRole("textbox", { name: /collection metadata/i });
+  await waitFor(() =>
+    expect(reopened).toHaveValue(JSON.stringify(renamed.metadata, null, 2)),
+  );
 });
