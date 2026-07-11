@@ -5,8 +5,12 @@ import { afterEach, expect, test, vi } from "vitest";
 import { CompareQuery } from "./CompareQuery";
 import { api } from "../../api/client";
 import { SelectionProvider } from "../../lib/selection";
+import { getHistory, clearHistory } from "../../lib/queryHistory";
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  clearHistory();
+});
 function wrap(ui: React.ReactNode) {
   const qc = new QueryClient();
   return <QueryClientProvider client={qc}><SelectionProvider resetKey="docs/query">{ui}</SelectionProvider></QueryClientProvider>;
@@ -27,4 +31,18 @@ test("runs both queries and renders a compare with only-A / only-B", async () =>
   await userEvent.click(screen.getByRole("button", { name: /run both/i }));
   await waitFor(() => expect(screen.getByText(/only A/i)).toBeInTheDocument());
   expect(screen.getByText(/only B/i)).toBeInTheDocument();
+});
+
+test("running both records each side in the session history", async () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
+  vi.spyOn(api, "query").mockResolvedValue({ hits: [] });
+  render(wrap(<CompareQuery name="docs" />));
+  const texts = screen.getAllByLabelText(/query text/i); // [0] = side A, [1] = side B
+  await userEvent.type(texts[0], "left");
+  await userEvent.type(texts[1], "right");
+  await userEvent.click(screen.getByRole("button", { name: /run both/i }));
+  await waitFor(() => expect(getHistory("docs")).toHaveLength(2));
+  expect(getHistory("docs").map((e) => e.label).sort()).toEqual(["left · n=10", "right · n=10"]);
 });

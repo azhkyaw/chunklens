@@ -12,6 +12,7 @@ import { GuardBanner } from "../retrieval/GuardBanner";
 import { evaluateGuards, defaultQueryMode } from "../retrieval/guards";
 import { interpretQueryError } from "../retrieval/errorInterpret";
 import { newQuerySpec, serializeSpec, specErrors, vectorError, type QuerySpec } from "./querySpec";
+import { consumeReplay, recordQuery, subscribeReplay } from "../../lib/queryHistory";
 
 export function SingleQuery({ name }: { name: string }) {
   const [spec, setSpec] = useState<QuerySpec>(() => newQuerySpec());
@@ -66,6 +67,27 @@ export function SingleQuery({ name }: { name: string }) {
     }
   }, [details, embedders, name]);
 
+  function runQuery(s: QuerySpec) {
+    run.mutate(serializeSpec(s), { onSuccess: () => recordQuery(name, s) });
+  }
+
+  // Palette re-run: consume a pending replay for this collection, whether it
+  // was requested before mount (palette navigated here) or while mounted.
+  useEffect(() => {
+    const check = () => {
+      const replay = consumeReplay(name);
+      if (replay) {
+        appliedFor.current = name; // a replayed spec IS the mode choice
+        setSpec(replay);
+        runQuery(replay);
+      }
+    };
+    check();
+    return subscribeReplay(check);
+    // run.mutate is referentially stable in TanStack Query v5
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [name]);
+
   const errors = specErrors(spec);
   const verr = vectorError(spec, details);
   const guards = evaluateGuards({ details, mode: spec.mode, text: spec.text, hasEmbedding: spec.mode === "vector" && verr === null, embedderSelected: provider !== undefined || Boolean(spec.embedder?.provider) });
@@ -78,7 +100,7 @@ export function SingleQuery({ name }: { name: string }) {
       <QueryForm name={name} spec={spec} details={details} onChange={setSpec} inputRef={queryInput} />
       <GuardBanner guards={guards} />
       <div className="form-actions">
-        <button className="btn-primary" onClick={() => run.mutate(serializeSpec(spec))}
+        <button className="btn-primary" onClick={() => runQuery(spec)}
                 disabled={!ready || errors.length > 0 || blocked || run.isPending}>Run</button>
         <button type="button" className="btn-sm" disabled={!ready || errors.length > 0 || !conn}
                 onClick={() => conn && copyText(queryAsPython(conn, name, serializeSpec(spec)), "Python snippet")}>

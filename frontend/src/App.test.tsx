@@ -6,12 +6,15 @@ import { Router } from "wouter";
 import { memoryLocation } from "wouter/memory-location";
 import { App } from "./App";
 import { api } from "./api/client";
+import { getHistory, recordQuery, clearHistory } from "./lib/queryHistory";
+import { newQuerySpec } from "./features/query/querySpec";
 
 afterEach(() => {
   vi.restoreAllMocks();
   sessionStorage.clear();
   localStorage.clear();
   delete document.documentElement.dataset.density;
+  clearHistory();
 });
 
 const CONN = {
@@ -350,4 +353,32 @@ test("Escape blurs a focused input", async () => {
   input.focus();
   fireEvent.keyDown(input, { key: "Escape" });
   expect(input).not.toHaveFocus();
+});
+
+test("the palette lists session history and re-runs an entry on the query tab", async () => {
+  mockHappyPath();
+  recordQuery("demo", { ...newQuerySpec(), text: "alpha from history" });
+  const q = vi.spyOn(api, "query").mockResolvedValue({ hits: [] });
+  const { history } = renderApp("/c/demo/records");
+  await screen.findByRole("grid");
+  fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+  const dialog = await screen.findByRole("dialog", { name: /command palette/i });
+  await userEvent.click(within(dialog).getByText(/alpha from history/));
+  await waitFor(() => expect(history[history.length - 1]).toBe("/c/demo/query"));
+  await waitFor(() =>
+    expect(q).toHaveBeenCalledWith("demo", expect.objectContaining({ query_text: "alpha from history" })),
+  );
+});
+
+test("saving the connection clears the session query history", async () => {
+  mockHappyPath();
+  vi.spyOn(api, "saveConnection").mockResolvedValue({ ...CONN, host: "otherhost" });
+  recordQuery("demo", { ...newQuerySpec(), text: "stale" });
+  renderApp("/c/demo/records");
+  await screen.findByRole("heading", { name: "demo", level: 2 });
+  // same open-then-connect flow as the switching-the-connection test above
+  await userEvent.click(await screen.findByRole("button", { name: /\bconnected\b/i }));
+  await userEvent.click(screen.getByRole("button", { name: /^connect$/i }));
+  await screen.findByText(/no collection selected/i);
+  expect(getHistory("demo")).toEqual([]);
 });

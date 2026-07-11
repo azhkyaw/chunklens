@@ -1,12 +1,17 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, expect, test, vi } from "vitest";
 import { SingleQuery } from "./SingleQuery";
 import { api } from "../../api/client";
 import { SelectionProvider } from "../../lib/selection";
+import { getHistory, requestReplay, clearHistory } from "../../lib/queryHistory";
+import { newQuerySpec } from "./querySpec";
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  clearHistory();
+});
 function wrap(ui: React.ReactNode) {
   const qc = new QueryClient();
   return <QueryClientProvider client={qc}><SelectionProvider resetKey="docs/query">{ui}</SelectionProvider></QueryClientProvider>;
@@ -180,4 +185,54 @@ test("copy JS is disabled until the query is ready", async () => {
   expect(btn).toBeDisabled(); // empty query text
   await userEvent.type(screen.getByLabelText(/query text/i), "hello");
   expect(btn).toBeEnabled();
+});
+
+test("a successful run records the query in the session history", async () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
+  vi.spyOn(api, "query").mockResolvedValue({ hits: [] });
+  render(wrap(<SingleQuery name="docs" />));
+  await userEvent.type(screen.getByLabelText(/query text/i), "alpha");
+  await userEvent.click(screen.getByRole("button", { name: /^run$/i }));
+  await waitFor(() => expect(getHistory("docs")).toHaveLength(1));
+  expect(getHistory("docs")[0].label).toContain("alpha");
+});
+
+test("a failed run is not recorded", async () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
+  vi.spyOn(api, "query").mockRejectedValue(new Error("boom"));
+  render(wrap(<SingleQuery name="docs" />));
+  await userEvent.type(screen.getByLabelText(/query text/i), "alpha");
+  await userEvent.click(screen.getByRole("button", { name: /^run$/i }));
+  await screen.findByRole("alert");
+  expect(getHistory("docs")).toHaveLength(0);
+});
+
+test("a pending replay is consumed on mount, restores the form, and auto-runs", async () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
+  const q = vi.spyOn(api, "query").mockResolvedValue({ hits: [] });
+  requestReplay("docs", { ...newQuerySpec(), text: "replayed" });
+  render(wrap(<SingleQuery name="docs" />));
+  await waitFor(() =>
+    expect(q).toHaveBeenCalledWith("docs", expect.objectContaining({ query_text: "replayed" })),
+  );
+  expect(screen.getByLabelText(/query text/i)).toHaveValue("replayed");
+});
+
+test("a replay requested while mounted runs immediately", async () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
+  vi.spyOn(api, "getCollectionDetails").mockResolvedValue(DETAILS);
+  const q = vi.spyOn(api, "query").mockResolvedValue({ hits: [] });
+  render(wrap(<SingleQuery name="docs" />));
+  await screen.findByLabelText(/query text/i);
+  act(() => requestReplay("docs", { ...newQuerySpec(), text: "live replay" }));
+  await waitFor(() =>
+    expect(q).toHaveBeenCalledWith("docs", expect.objectContaining({ query_text: "live replay" })),
+  );
 });

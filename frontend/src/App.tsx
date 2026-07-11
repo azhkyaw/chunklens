@@ -25,6 +25,7 @@ import { Palette, type PaletteCommand } from "./ui/Palette";
 import { ShortcutsHelp } from "./ui/ShortcutsHelp";
 import { SelectionProvider } from "./lib/selection";
 import { getInspectorOpen, setInspectorOpen, cycleThemePref, toggleDensity } from "./lib/prefs";
+import { clearHistory, getHistory, requestReplay } from "./lib/queryHistory";
 import { useShortcut, isMac } from "./lib/shortcuts";
 import {
   adjacentTab,
@@ -144,6 +145,22 @@ export function App() {
     { group: "Actions", label: "Connection settings", run: () => setShowConn(true) },
     { group: "Actions", label: "Toggle theme", keywords: ["dark", "light"], run: cycleThemePref },
     { group: "Actions", label: "Toggle density", keywords: ["compact", "comfortable", "rows"], run: toggleDensity },
+    ...(selected
+      ? getHistory(selected)
+          // display-dedupe by label: cmdk items are identified by their value, so
+          // two same-label entries (same text, different filters) would collide -
+          // the most recent variant wins
+          .filter((h, i, all) => all.findIndex((x) => x.label === h.label) === i)
+          .map((h) => ({
+            group: "Query history",
+            label: h.label,
+            keywords: ["history", "rerun", "query"],
+            run: () => {
+              requestReplay(selected, h.spec);
+              navigate(collectionPath(selected, "query"));
+            },
+          }))
+      : []),
   ];
 
   return (
@@ -180,6 +197,7 @@ export function App() {
                 qc.removeQueries({ queryKey: ["metadata-keys"] });
                 qc.removeQueries({ queryKey: ["sources"] });
                 qc.removeQueries({ queryKey: ["source-records"] });
+                clearHistory();
                 setShowConn(false);
                 navigate("/");
               }}

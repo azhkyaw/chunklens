@@ -8,6 +8,7 @@ import { GuardBanner } from "../retrieval/GuardBanner";
 import { evaluateGuards, defaultQueryMode } from "../retrieval/guards";
 import { interpretQueryError } from "../retrieval/errorInterpret";
 import { newQuerySpec, serializeSpec, specErrors, vectorError, type QuerySpec } from "./querySpec";
+import { recordQuery } from "../../lib/queryHistory";
 
 export function CompareQuery({ name }: { name: string }) {
   const [specA, setSpecA] = useState<QuerySpec>(() => newQuerySpec());
@@ -45,8 +46,8 @@ export function CompareQuery({ name }: { name: string }) {
   const readyB = specB.mode === "text" ? specB.text.trim() !== "" : verrB === null;
 
   function runBoth() {
-    runA.mutate(serializeSpec(specA));
-    runB.mutate(serializeSpec(specB));
+    runA.mutate(serializeSpec(specA), { onSuccess: () => recordQuery(name, specA) });
+    runB.mutate(serializeSpec(specB), { onSuccess: () => recordQuery(name, specB) });
   }
 
   return (
