@@ -6,6 +6,12 @@ import { EmbedderPicker } from "./EmbedderPicker";
 import { vectorError, type QuerySpec } from "./querySpec";
 import type { CollectionDetails } from "../../api/types";
 
+// Mirrors the bound the API enforces on QueryRequest.n_results. Without the
+// upper clamp the form can build a request the server answers with a 422, and a
+// long tail of results is a legitimate thing to ask for, so the field must stop
+// at the real limit rather than let the user walk into a rejection.
+const MAX_N_RESULTS = 1000;
+
 export function QueryForm({
   name, spec, details, onChange, inputRef,
 }: {
@@ -54,8 +60,8 @@ export function QueryForm({
           <label className="field" style={{ flex: 1 }}>Query text
             <input ref={inputRef as React.Ref<HTMLInputElement>} value={spec.text} onChange={(e) => onChange({ ...spec, text: e.target.value })} /></label>
         )}
-        <label className="field" style={{ width: 96 }}>n_results <input type="number" min={1} value={spec.nResults}
-          onChange={(e) => onChange({ ...spec, nResults: Math.max(1, Number(e.target.value) || 1) })} /></label>
+        <label className="field" style={{ width: 96 }}>n_results <input type="number" min={1} max={MAX_N_RESULTS} value={spec.nResults}
+          onChange={(e) => onChange({ ...spec, nResults: Math.min(MAX_N_RESULTS, Math.max(1, Number(e.target.value) || 1)) })} /></label>
       </div>
       {showPicker && (
         <EmbedderPicker name={name} details={details} embedders={embedders ?? []} spec={spec} onChange={onChange} />

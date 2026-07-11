@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, expect, test, vi } from "vitest";
 import { QueryForm } from "./QueryForm";
@@ -108,6 +108,24 @@ test("clearing the embedder to none survives the hint-invalidation refetch", asy
   // refetch resolves to `withoutHint` above (a real content change).
   await waitFor(() => expect(select).toHaveValue(""));
   expect(select).toHaveValue(""); // stays cleared, does not snap back to openai
+});
+
+test("n_results is clamped to the range the backend accepts", async () => {
+  vi.spyOn(api, "getMetadataKeys").mockResolvedValue({ keys: [], sampled: 0, total: 0 });
+  vi.spyOn(api, "listEmbedders").mockResolvedValue([]);
+  const onChange = vi.fn();
+  render(wrap(<QueryForm name="docs" spec={newQuerySpec()} onChange={onChange} />));
+  const n = screen.getByLabelText(/n_results/i);
+  expect(n).toHaveAttribute("min", "1");
+  expect(n).toHaveAttribute("max", "1000");
+
+  // The backend rejects anything outside 1..1000 with a 422, so the form must
+  // not be able to build such a request in the first place.
+  fireEvent.change(n, { target: { value: "2000" } });
+  expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ nResults: 1000 }));
+
+  fireEvent.change(n, { target: { value: "0" } });
+  expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ nResults: 1 }));
 });
 
 test("no embedder UI for a default-EF collection", async () => {
